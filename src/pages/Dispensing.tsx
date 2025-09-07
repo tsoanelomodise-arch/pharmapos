@@ -6,9 +6,27 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, User, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { usePendingPrescriptions, usePrescriptions } from "@/hooks/usePrescriptions";
+import { useCustomerSearch } from "@/hooks/useCustomers";
 
 const Dispensing = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [customerSearch, setCustomerSearch] = useState("");
+  
+  const { data: pendingPrescriptions = [], isLoading } = usePendingPrescriptions();
+  const { data: allPrescriptions = [] } = usePrescriptions();
+  const { data: customerResults = [] } = useCustomerSearch(customerSearch);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Pharmacy Dispensing</h1>
+          <Badge variant="secondary">Loading...</Badge>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -59,55 +77,33 @@ const Dispensing = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <User className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-medium">Sarah Johnson</h3>
-                      <p className="text-sm text-muted-foreground">ID: 8501234567890</p>
-                      <p className="text-sm text-muted-foreground">Dr. Smith - Rx #12345</p>
+                {pendingPrescriptions.map((prescription: any) => (
+                  <div key={prescription.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <User className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">{prescription.customers?.name || 'Unknown Patient'}</h3>
+                        <p className="text-sm text-muted-foreground">Phone: {prescription.customers?.phone || 'N/A'}</p>
+                        <p className="text-sm text-muted-foreground">
+                          Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'}>
+                        {prescription.status}
+                      </Badge>
+                      <Button size="sm">Process</Button>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary">Waiting</Badge>
-                    <Badge variant="outline">Medical Aid</Badge>
-                    <Button size="sm">Process</Button>
+                ))}
+                
+                {pendingPrescriptions.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No pending prescriptions</p>
                   </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <User className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-medium">Michael Brown</h3>
-                      <p className="text-sm text-muted-foreground">ID: 7802156789012</p>
-                      <p className="text-sm text-muted-foreground">Dr. Jones - Rx #12346</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="default">In Progress</Badge>
-                    <Badge variant="outline">Cash</Badge>
-                    <AlertTriangle className="h-4 w-4 text-yellow-500" />
-                    <Button size="sm" variant="outline">Continue</Button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <User className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-medium">Lisa Davis</h3>
-                      <p className="text-sm text-muted-foreground">ID: 9203098765432</p>
-                      <p className="text-sm text-muted-foreground">Dr. Wilson - Rx #12347</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Badge variant="secondary" className="bg-green-100 text-green-800">Ready</Badge>
-                    <Badge variant="outline">Discovery</Badge>
-                    <CheckCircle className="h-4 w-4 text-green-500" />
-                    <Button size="sm">Collect</Button>
-                  </div>
-                </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -129,6 +125,8 @@ const Dispensing = () => {
                         id="patient-search"
                         placeholder="Search by name, ID number, or medical aid number..."
                         className="pl-10"
+                        value={customerSearch}
+                        onChange={(e) => setCustomerSearch(e.target.value)}
                       />
                     </div>
                   </div>
@@ -144,32 +142,39 @@ const Dispensing = () => {
                     <Button variant="outline" size="sm">View All</Button>
                   </div>
                   <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <User className="h-6 w-6" />
-                        <div>
-                          <p className="font-medium">Sarah Johnson</p>
-                          <p className="text-sm text-muted-foreground">Last visit: Today</p>
+                    {customerResults.length > 0 ? (
+                      customerResults.map((customer) => (
+                        <div key={customer.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <User className="h-6 w-6" />
+                            <div>
+                              <p className="font-medium">{customer.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {customer.phone ? `Phone: ${customer.phone}` : 'No phone'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge variant="outline">
+                              {customer.current_balance > 0 ? `Owes R${customer.current_balance.toFixed(2)}` : 'No Balance'}
+                            </Badge>
+                            <Button size="sm" variant="outline">View</Button>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge variant="outline">Discovery</Badge>
-                        <Button size="sm" variant="outline">View</Button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <User className="h-6 w-6" />
-                        <div>
-                          <p className="font-medium">Michael Brown</p>
-                          <p className="text-sm text-muted-foreground">Last visit: Yesterday</p>
+                      ))
+                    ) : (
+                      <>
+                        <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <User className="h-6 w-6" />
+                            <div>
+                              <p className="font-medium">Recent patients will show here</p>
+                              <p className="text-sm text-muted-foreground">Use search above to find patients</p>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Badge variant="outline">Cash Patient</Badge>
-                        <Button size="sm" variant="outline">View</Button>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -219,8 +224,8 @@ const Dispensing = () => {
                   <CardContent>
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between">
-                        <span>Total interactions checked today:</span>
-                        <Badge variant="secondary">45</Badge>
+                      <span>Total interactions checked today:</span>
+                      <Badge variant="secondary">{allPrescriptions.length}</Badge>
                       </div>
                       <div className="flex justify-between">
                         <span>Warnings issued:</span>

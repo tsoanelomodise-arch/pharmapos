@@ -14,7 +14,332 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      customers: {
+        Row: {
+          address: string | null
+          created_at: string
+          credit_limit: number | null
+          current_balance: number | null
+          date_of_birth: string | null
+          email: string | null
+          id: string
+          insurance_info: Json | null
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          current_balance?: number | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          insurance_info?: Json | null
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          created_at?: string
+          credit_limit?: number | null
+          current_balance?: number | null
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string
+          insurance_info?: Json | null
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      prescriptions: {
+        Row: {
+          created_at: string
+          customer_id: string
+          dispensed_at: string | null
+          doctor_license: string | null
+          doctor_name: string
+          id: string
+          medications: Json
+          notes: string | null
+          prescription_date: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id: string
+          dispensed_at?: string | null
+          doctor_license?: string | null
+          doctor_name: string
+          id?: string
+          medications: Json
+          notes?: string | null
+          prescription_date: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string
+          dispensed_at?: string | null
+          doctor_license?: string | null
+          doctor_name?: string
+          id?: string
+          medications?: Json
+          notes?: string | null
+          prescription_date?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prescriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      products: {
+        Row: {
+          barcode: string | null
+          batch_number: string | null
+          brand: string | null
+          category: Database["public"]["Enums"]["product_category"]
+          cost_price: number
+          created_at: string
+          description: string | null
+          expiry_date: string | null
+          generic_name: string | null
+          id: string
+          minimum_stock: number
+          name: string
+          requires_prescription: boolean
+          stock_quantity: number
+          supplier_id: string | null
+          unit_price: number
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          batch_number?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["product_category"]
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          expiry_date?: string | null
+          generic_name?: string | null
+          id?: string
+          minimum_stock?: number
+          name: string
+          requires_prescription?: boolean
+          stock_quantity?: number
+          supplier_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          batch_number?: string | null
+          brand?: string | null
+          category?: Database["public"]["Enums"]["product_category"]
+          cost_price?: number
+          created_at?: string
+          description?: string | null
+          expiry_date?: string | null
+          generic_name?: string | null
+          id?: string
+          minimum_stock?: number
+          name?: string
+          requires_prescription?: boolean
+          stock_quantity?: number
+          supplier_id?: string | null
+          unit_price?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_products_supplier"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sale_items: {
+        Row: {
+          created_at: string
+          id: string
+          product_id: string
+          quantity: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          product_id: string
+          quantity: number
+          sale_id: string
+          total_price: number
+          unit_price: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          product_id?: string
+          quantity?: number
+          sale_id?: string
+          total_price?: number
+          unit_price?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sale_items_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sale_items_sale_id_fkey"
+            columns: ["sale_id"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sales: {
+        Row: {
+          created_at: string
+          customer_id: string | null
+          discount_amount: number | null
+          id: string
+          notes: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status: string | null
+          prescription_id: string | null
+          tax_amount: number | null
+          total_amount: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          customer_id?: string | null
+          discount_amount?: number | null
+          id?: string
+          notes?: string | null
+          payment_method: Database["public"]["Enums"]["payment_method"]
+          payment_status?: string | null
+          prescription_id?: string | null
+          tax_amount?: number | null
+          total_amount: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          customer_id?: string | null
+          discount_amount?: number | null
+          id?: string
+          notes?: string | null
+          payment_method?: Database["public"]["Enums"]["payment_method"]
+          payment_status?: string | null
+          prescription_id?: string | null
+          tax_amount?: number | null
+          total_amount?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_movements: {
+        Row: {
+          created_at: string
+          id: string
+          movement_type: Database["public"]["Enums"]["transaction_type"]
+          notes: string | null
+          product_id: string
+          quantity: number
+          reference_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          movement_type: Database["public"]["Enums"]["transaction_type"]
+          notes?: string | null
+          product_id: string
+          quantity: number
+          reference_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          movement_type?: Database["public"]["Enums"]["transaction_type"]
+          notes?: string | null
+          product_id?: string
+          quantity?: number
+          reference_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_movements_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address: string | null
+          contact_person: string | null
+          created_at: string
+          email: string | null
+          id: string
+          name: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          address?: string | null
+          contact_person?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          name?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -23,7 +348,14 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      payment_method: "cash" | "card" | "credit" | "insurance"
+      product_category:
+        | "prescription"
+        | "otc"
+        | "supplement"
+        | "medical_device"
+        | "cosmetic"
+      transaction_type: "sale" | "return" | "adjustment"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +482,16 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      payment_method: ["cash", "card", "credit", "insurance"],
+      product_category: [
+        "prescription",
+        "otc",
+        "supplement",
+        "medical_device",
+        "cosmetic",
+      ],
+      transaction_type: ["sale", "return", "adjustment"],
+    },
   },
 } as const

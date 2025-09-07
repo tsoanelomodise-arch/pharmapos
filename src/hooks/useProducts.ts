@@ -1,0 +1,130 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from '@/hooks/use-toast';
+
+export interface Product {
+  id: string;
+  name: string;
+  generic_name?: string;
+  brand?: string;
+  category: 'prescription' | 'otc' | 'supplement' | 'medical_device' | 'cosmetic';
+  barcode?: string;
+  description?: string;
+  unit_price: number;
+  cost_price: number;
+  stock_quantity: number;
+  minimum_stock: number;
+  expiry_date?: string;
+  batch_number?: string;
+  supplier_id?: string;
+  requires_prescription: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export function useProducts() {
+  return useQuery({
+    queryKey: ['products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      return data as Product[];
+    }
+  });
+}
+
+export function useLowStockProducts() {
+  return useQuery({
+    queryKey: ['low-stock-products'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .lt('stock_quantity', 'minimum_stock')
+        .order('stock_quantity');
+      
+      if (error) throw error;
+      return data as Product[];
+    }
+  });
+}
+
+export function useProductSearch(searchTerm: string) {
+  return useQuery({
+    queryKey: ['products-search', searchTerm],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('products')
+        .select('*')
+        .or(`name.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%`)
+        .order('name');
+      
+      if (error) throw error;
+      return data as Product[];
+    },
+    enabled: searchTerm.length > 0
+  });
+}
+
+export function useUpdateStockMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ productId, quantity, movementType, notes }: {
+      productId: string;
+      quantity: number;
+      movementType: 'sale' | 'return' | 'adjustment';
+      notes?: string;
+    }) => {
+      // Update product stock
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', productId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const newQuantity = movementType === 'sale' 
+        ? product.stock_quantity - quantity 
+        : product.stock_quantity + quantity;
+      
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ stock_quantity: newQuantity })
+        .eq('id', productId);
+      
+      if (updateError) throw updateError;
+      
+      // Record stock movement
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          product_id: productId,
+          movement_type: movementType,
+          quantity: movementType === 'sale' ? -quantity : quantity,
+          notes
+        });
+      
+      if (movementError) throw movementError;
+      
+      return { productId, newQuantity };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      toast({ title: 'Stock updated successfully' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error updating stock', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}

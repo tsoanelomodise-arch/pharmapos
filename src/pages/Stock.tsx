@@ -5,8 +5,39 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, TrendingDown, AlertTriangle, Plus, Search, FileText, Truck } from "lucide-react";
+import { useProducts, useLowStockProducts } from "@/hooks/useProducts";
+import { useState } from "react";
 
 const Stock = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: products = [], isLoading } = useProducts();
+  const { data: lowStockProducts = [] } = useLowStockProducts();
+  
+  const filteredProducts = products.filter(product =>
+    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (product.barcode && product.barcode.includes(searchTerm)) ||
+    (product.generic_name && product.generic_name.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const totalValue = products.reduce((sum, product) => sum + (product.cost_price * product.stock_quantity), 0);
+  const expiringProducts = products.filter(product => {
+    if (!product.expiry_date) return false;
+    const expiryDate = new Date(product.expiry_date);
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+    return expiryDate <= thirtyDaysFromNow;
+  });
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Stock Control</h1>
+          <Badge variant="secondary">Loading...</Badge>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -31,7 +62,7 @@ const Stock = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">2,847</div>
+            <div className="text-2xl font-bold">{products.length}</div>
             <p className="text-xs text-muted-foreground">Active products</p>
           </CardContent>
         </Card>
@@ -42,7 +73,7 @@ const Stock = () => {
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">23</div>
+            <div className="text-2xl font-bold">{lowStockProducts.length}</div>
             <p className="text-xs text-destructive">Requires immediate attention</p>
           </CardContent>
         </Card>
@@ -53,7 +84,7 @@ const Stock = () => {
             <TrendingDown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+            <div className="text-2xl font-bold">{expiringProducts.length}</div>
             <p className="text-xs text-yellow-600">Within 30 days</p>
           </CardContent>
         </Card>
@@ -64,7 +95,7 @@ const Stock = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R458,920</div>
+            <div className="text-2xl font-bold">R{totalValue.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">At cost price</p>
           </CardContent>
         </Card>
@@ -92,6 +123,8 @@ const Stock = () => {
                       id="stock-search"
                       placeholder="Search by product name, barcode, or category..."
                       className="pl-10"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
                     />
                   </div>
                 </div>
@@ -108,69 +141,43 @@ const Stock = () => {
               <CardTitle>Inventory Items</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-7 gap-4 p-3 bg-muted rounded-lg text-sm font-medium">
-                  <div>Product</div>
-                  <div>Category</div>
-                  <div>Current Stock</div>
-                  <div>Min Level</div>
-                  <div>Cost Price</div>
-                  <div>Sell Price</div>
-                  <div>Status</div>
+                <div className="space-y-4">
+                  {filteredProducts.map((product) => (
+                    <div key={product.id} className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.barcode ? `Barcode: ${product.barcode}` : 'No barcode'}
+                        </p>
+                      </div>
+                      <div className="capitalize">{product.category}</div>
+                      <div className={`font-medium ${product.stock_quantity <= product.minimum_stock ? 'text-red-600' : ''}`}>
+                        {product.stock_quantity}
+                      </div>
+                      <div>{product.minimum_stock}</div>
+                      <div>R{product.cost_price.toFixed(2)}</div>
+                      <div>R{product.unit_price.toFixed(2)}</div>
+                      <div>
+                        <Badge variant={
+                          product.stock_quantity === 0 ? "destructive" :
+                          product.stock_quantity <= product.minimum_stock ? "destructive" : 
+                          "secondary"
+                        }>
+                          {product.stock_quantity === 0 ? "Out of Stock" :
+                           product.stock_quantity <= product.minimum_stock ? "Low Stock" : 
+                           "In Stock"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                  
+                  {filteredProducts.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                      <p>No products found</p>
+                    </div>
+                  )}
                 </div>
-
-                <div className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
-                  <div>
-                    <p className="font-medium">Paracetamol 500mg</p>
-                    <p className="text-xs text-muted-foreground">Barcode: 123456789</p>
-                  </div>
-                  <div>Pain Relief</div>
-                  <div className="font-medium">150</div>
-                  <div>50</div>
-                  <div>R8.50</div>
-                  <div>R12.50</div>
-                  <div><Badge variant="secondary">In Stock</Badge></div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
-                  <div>
-                    <p className="font-medium">Vitamin C 1000mg</p>
-                    <p className="text-xs text-muted-foreground">Barcode: 123456790</p>
-                  </div>
-                  <div>Supplements</div>
-                  <div className="font-medium text-red-600">12</div>
-                  <div>25</div>
-                  <div>R65.00</div>
-                  <div>R89.99</div>
-                  <div><Badge variant="destructive">Low Stock</Badge></div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
-                  <div>
-                    <p className="font-medium">Amoxicillin 250mg</p>
-                    <p className="text-xs text-muted-foreground">Barcode: 123456791</p>
-                  </div>
-                  <div>Antibiotics</div>
-                  <div className="font-medium">75</div>
-                  <div>30</div>
-                  <div>R25.00</div>
-                  <div>R45.00</div>
-                  <div><Badge variant="secondary">In Stock</Badge></div>
-                </div>
-
-                <div className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
-                  <div>
-                    <p className="font-medium">Insulin Rapid</p>
-                    <p className="text-xs text-muted-foreground">Barcode: 123456792</p>
-                  </div>
-                  <div>Diabetes</div>
-                  <div className="font-medium text-yellow-600">8</div>
-                  <div>15</div>
-                  <div>R120.00</div>
-                  <div>R185.00</div>
-                  <div><Badge variant="outline">Critical</Badge></div>
-                </div>
-              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -187,39 +194,39 @@ const Stock = () => {
               <div className="space-y-4">
                 <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-red-800">Critical - Out of Stock</h4>
-                    <Badge variant="destructive">3 items</Badge>
+                    <h4 className="font-medium text-red-800">Critical - Low/Out of Stock</h4>
+                    <Badge variant="destructive">{lowStockProducts.filter(p => p.stock_quantity === 0).length} out of stock</Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Insulin Rapid Acting</span>
-                      <span className="font-medium">0 units</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Blood Pressure Monitor</span>
-                      <span className="font-medium">0 units</span>
-                    </div>
+                    {lowStockProducts.slice(0, 5).map(product => (
+                      <div key={product.id} className="flex justify-between text-sm">
+                        <span>{product.name}</span>
+                        <span className="font-medium">{product.stock_quantity} units (Min: {product.minimum_stock})</span>
+                      </div>
+                    ))}
+                    {lowStockProducts.length > 5 && (
+                      <p className="text-sm text-muted-foreground">... and {lowStockProducts.length - 5} more items</p>
+                    )}
                   </div>
                 </div>
 
                 <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-yellow-800">Low Stock Warning</h4>
-                    <Badge variant="outline">20 items</Badge>
+                    <h4 className="font-medium text-yellow-800">Expiring Soon</h4>
+                    <Badge variant="outline">{expiringProducts.length} items</Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Vitamin C 1000mg</span>
-                      <span className="font-medium">12 units (Min: 25)</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Face Masks</span>
-                      <span className="font-medium">15 units (Min: 50)</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Hand Sanitizer 500ml</span>
-                      <span className="font-medium">8 units (Min: 20)</span>
-                    </div>
+                    {expiringProducts.slice(0, 3).map(product => (
+                      <div key={product.id} className="flex justify-between text-sm">
+                        <span>{product.name}</span>
+                        <span className="font-medium">
+                          Expires: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}
+                        </span>
+                      </div>
+                    ))}
+                    {expiringProducts.length > 3 && (
+                      <p className="text-sm text-muted-foreground">... and {expiringProducts.length - 3} more items</p>
+                    )}
                   </div>
                 </div>
 

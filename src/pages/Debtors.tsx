@@ -5,8 +5,26 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, FileText, AlertCircle, DollarSign, Calendar, Search, Plus } from "lucide-react";
+import { useCustomersWithDebt } from "@/hooks/useCustomers";
+import { useState } from "react";
 
 const Debtors = () => {
+  const [searchTerm, setSearchTerm] = useState("");
+  const { data: debtorCustomers = [], isLoading } = useCustomersWithDebt();
+  
+  const totalDebt = debtorCustomers.reduce((sum, customer) => sum + customer.current_balance, 0);
+  const overdueAccounts = debtorCustomers.filter(customer => customer.current_balance > 1000).length;
+  
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold">Debtors Management</h1>
+          <Badge variant="secondary">Loading...</Badge>
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -31,8 +49,8 @@ const Debtors = () => {
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R125,840</div>
-            <p className="text-xs text-muted-foreground">+R2,340 from last month</p>
+            <div className="text-2xl font-bold">R{totalDebt.toFixed(2)}</div>
+            <p className="text-xs text-muted-foreground">Total outstanding debt</p>
           </CardContent>
         </Card>
 
@@ -42,8 +60,8 @@ const Debtors = () => {
             <AlertCircle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">15</div>
-            <p className="text-xs text-destructive">R45,230 overdue</p>
+            <div className="text-2xl font-bold">{overdueAccounts}</div>
+            <p className="text-xs text-destructive">High balance accounts</p>
           </CardContent>
         </Card>
 
@@ -53,8 +71,8 @@ const Debtors = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">127</div>
-            <p className="text-xs text-muted-foreground">8 new this month</p>
+            <div className="text-2xl font-bold">{debtorCustomers.length}</div>
+            <p className="text-xs text-muted-foreground">Customers with debt</p>
           </CardContent>
         </Card>
 
