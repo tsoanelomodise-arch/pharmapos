@@ -6,10 +6,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, Search } from "lucide-react";
 import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { toast } from "@/hooks/use-toast";
+import { ReceiptDialog } from "@/components/ReceiptDialog";
 
 interface CartItem {
   id: string;
@@ -23,6 +24,8 @@ const POS = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit' | 'insurance'>('cash');
+  const [lastSaleId, setLastSaleId] = useState<string | null>(null);
+  const [showLastReceipt, setShowLastReceipt] = useState(false);
   
   const { data: searchResults = [] } = useProductSearch(searchTerm);
   const { data: recentSales = [] } = useRecentSales(5);
@@ -73,6 +76,24 @@ const POS = () => {
     setCartItems([]);
   };
 
+  const startNewSale = () => {
+    clearCart();
+    setSearchTerm("");
+    setPaymentMethod('cash');
+    toast({ title: "New sale started", description: "Cart cleared and ready for new transaction" });
+  };
+
+  const handleBarcodeSearch = () => {
+    if (!searchTerm.trim()) {
+      toast({ title: "Enter barcode", description: "Please enter a barcode or product name to search" });
+      return;
+    }
+    // The search will be triggered automatically by the searchTerm change
+    if (searchResults.length === 1) {
+      addToCart(searchResults[0]);
+    }
+  };
+
   const processPayment = async () => {
     if (cartItems.length === 0) return;
 
@@ -87,9 +108,13 @@ const POS = () => {
       paymentMethod,
       notes: `POS Sale - ${paymentMethod} payment`
     }, {
-      onSuccess: () => {
+      onSuccess: (sale) => {
+        setLastSaleId(sale.id);
         clearCart();
-        toast({ title: "Payment processed successfully!" });
+        toast({ 
+          title: "Payment processed successfully!", 
+          description: `Transaction #${sale.id.slice(-8)} completed`
+        });
       }
     });
   };
@@ -99,11 +124,15 @@ const POS = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Point of Sale</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setShowLastReceipt(true)}
+            disabled={!lastSaleId}
+          >
             <Receipt className="mr-2 h-4 w-4" />
             Last Receipt
           </Button>
-          <Button>New Sale</Button>
+          <Button onClick={startNewSale}>New Sale</Button>
         </div>
       </div>
 
@@ -129,7 +158,7 @@ const POS = () => {
                     onChange={(e) => setSearchTerm(e.target.value)}
                   />
                 </div>
-                <Button size="lg" className="mt-6">
+                <Button size="lg" className="mt-6" onClick={handleBarcodeSearch}>
                   <Scan className="h-4 w-4" />
                 </Button>
               </div>
@@ -290,7 +319,12 @@ const POS = () => {
               <CardTitle>Quick Actions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              <Button variant="outline" className="w-full justify-start">
+              <Button 
+                variant="outline" 
+                className="w-full justify-start"
+                onClick={() => setShowLastReceipt(true)}
+                disabled={!lastSaleId}
+              >
                 <Receipt className="mr-2 h-4 w-4" />
                 Reprint Receipt
               </Button>
@@ -315,16 +349,28 @@ const POS = () => {
         <CardContent>
           <div className="space-y-3">
             {recentSales.map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between p-3 border rounded-lg">
+              <div key={sale.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors">
                 <div>
                   <p className="font-medium">Transaction #{sale.id.slice(-8)}</p>
                   <p className="text-sm text-muted-foreground">
                     {new Date(sale.created_at).toLocaleTimeString()} - {sale.payment_method} Payment
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="font-medium">R{sale.total_amount.toFixed(2)}</p>
-                  <Badge variant="secondary">{sale.payment_status}</Badge>
+                <div className="text-right flex items-center gap-2">
+                  <div>
+                    <p className="font-medium">R{sale.total_amount.toFixed(2)}</p>
+                    <Badge variant="secondary">{sale.payment_status}</Badge>
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="outline"
+                    onClick={() => {
+                      setLastSaleId(sale.id);
+                      setShowLastReceipt(true);
+                    }}
+                  >
+                    <Receipt className="h-3 w-3" />
+                  </Button>
                 </div>
               </div>
             ))}
@@ -338,6 +384,15 @@ const POS = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Receipt Dialog */}
+      {lastSaleId && (
+        <ReceiptDialog
+          saleId={lastSaleId}
+          open={showLastReceipt}
+          onOpenChange={setShowLastReceipt}
+        />
+      )}
     </div>
   );
 };

@@ -57,16 +57,20 @@ export function useProductSearch(searchTerm: string) {
   return useQuery({
     queryKey: ['products-search', searchTerm],
     queryFn: async () => {
+      if (searchTerm.length < 2) return [];
+      
       const { data, error } = await supabase
         .from('products')
         .select('*')
         .or(`name.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%`)
-        .order('name');
+        .gt('stock_quantity', 0)
+        .order('name')
+        .limit(10);
       
       if (error) throw error;
       return data as Product[];
     },
-    enabled: searchTerm.length > 0
+    enabled: searchTerm.length >= 2
   });
 }
 
