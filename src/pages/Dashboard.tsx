@@ -123,14 +123,20 @@ const Dashboard = () => {
                 Urgent
               </Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+            <div 
+              className="flex items-center justify-between p-3 bg-accent rounded-lg cursor-pointer hover:bg-accent/80 transition-colors"
+              onClick={() => navigate('/reports')}
+            >
               <div>
                 <p className="text-sm font-medium">Medical aid claim pending</p>
                 <p className="text-xs text-muted-foreground">Discovery Health - Patient ID: 12345</p>
               </div>
               <Badge variant="secondary">Pending</Badge>
             </div>
-            <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+            <div 
+              className="flex items-center justify-between p-3 bg-accent rounded-lg cursor-pointer hover:bg-accent/80 transition-colors"
+              onClick={() => navigate('/stock')}
+            >
               <div>
                 <p className="text-sm font-medium">Stock delivery expected today</p>
                 <p className="text-xs text-muted-foreground">Supplier: Pharma Distributors</p>
@@ -148,28 +154,40 @@ const Dashboard = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex items-center gap-3 p-2">
+            <div 
+              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              onClick={() => navigate('/dispensing')}
+            >
               <Pill className="h-4 w-4 text-primary" />
               <div className="flex-1">
                 <p className="text-sm">Prescription dispensed</p>
                 <p className="text-xs text-muted-foreground">Patient: Sarah Johnson - 09:45</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-2">
+            <div 
+              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              onClick={() => navigate('/pos')}
+            >
               <ShoppingCart className="h-4 w-4 text-primary" />
               <div className="flex-1">
                 <p className="text-sm">OTC sale completed</p>
                 <p className="text-xs text-muted-foreground">Amount: R125.50 - 09:30</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-2">
+            <div 
+              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              onClick={() => navigate('/stock')}
+            >
               <Package className="h-4 w-4 text-primary" />
               <div className="flex-1">
                 <p className="text-sm">Stock received</p>
                 <p className="text-xs text-muted-foreground">50 items from ABC Pharma - 08:15</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-2">
+            <div 
+              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              onClick={() => navigate('/debtors')}
+            >
               <Users className="h-4 w-4 text-primary" />
               <div className="flex-1">
                 <p className="text-sm">Payment received</p>
