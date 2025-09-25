@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, User, FileText, AlertTriangle, CheckCircle } from "lucide-react";
+import { Search, Plus, User, FileText, AlertTriangle, CheckCircle, Edit2 } from "lucide-react";
 import { usePendingPrescriptions, usePrescriptions } from "@/hooks/usePrescriptions";
 import { useCustomerSearch } from "@/hooks/useCustomers";
+import { PrescriptionForm } from "@/components/PrescriptionForm";
+import { CustomerForm } from "@/components/CustomerForm";
 
 const Dispensing = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -32,10 +34,7 @@ const Dispensing = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Pharmacy Dispensing</h1>
-        <Button>
-          <Plus className="mr-2 h-4 w-4" />
-          New Prescription
-        </Button>
+          <PrescriptionForm />
       </div>
 
       <Tabs defaultValue="prescriptions" className="space-y-6">
@@ -93,7 +92,8 @@ const Dispensing = () => {
                       <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'}>
                         {prescription.status}
                       </Badge>
-                      <Button size="sm">Process</Button>
+                      <Button size="sm" variant="outline">Process</Button>
+                      <PrescriptionForm prescription={prescription} />
                     </div>
                   </div>
                 ))}
@@ -130,10 +130,7 @@ const Dispensing = () => {
                       />
                     </div>
                   </div>
-                  <Button className="mt-6">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Patient
-                  </Button>
+                  <CustomerForm />
                 </div>
 
                 <div className="border rounded-lg p-4">

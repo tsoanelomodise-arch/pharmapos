@@ -3,13 +3,23 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BarChart3, FileText, Download, Calendar, TrendingUp, Users, Package, DollarSign } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 
 const Reports = () => {
+  const navigate = useNavigate();
+
+  const handleExportReport = (reportType: string) => {
+    toast({ 
+      title: `Exporting ${reportType}...`, 
+      description: "Report will be downloaded shortly" 
+    });
+  };
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-        <Button>
+        <Button onClick={() => handleExportReport('All Reports')}>
           <Download className="mr-2 h-4 w-4" />
           Export All Reports
         </Button>

@@ -1,10 +1,13 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
+import { useNavigate } from "react-router-dom";
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useDashboardStats();
+  const navigate = useNavigate();
 
   if (isLoading) {
     return (
@@ -21,7 +24,13 @@ const Dashboard = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Dashboard</h1>
-        <Badge variant="secondary">Today: {new Date().toLocaleDateString()}</Badge>
+        <div className="flex gap-2">
+          <Badge variant="secondary">Today: {new Date().toLocaleDateString()}</Badge>
+          <Button onClick={() => navigate('/pos')}>
+            <Plus className="mr-2 h-4 w-4" />
+            New Sale
+          </Button>
+        </div>
       </div>
 
       {/* Key Metrics */}
@@ -32,7 +41,12 @@ const Dashboard = () => {
             <Pill className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.prescriptionsToday || 0}</div>
+            <div 
+              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              onClick={() => navigate('/dispensing')}
+            >
+              {stats?.prescriptionsToday || 0}
+            </div>
             <p className="text-xs text-muted-foreground">Processed today</p>
           </CardContent>
         </Card>
@@ -43,7 +57,12 @@ const Dashboard = () => {
             <ShoppingCart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R{stats?.salesToday.toFixed(2) || '0.00'}</div>
+            <div 
+              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              onClick={() => navigate('/pos')}
+            >
+              R{stats?.salesToday.toFixed(2) || '0.00'}
+            </div>
             <p className="text-xs text-muted-foreground">Total revenue today</p>
           </CardContent>
         </Card>
@@ -54,7 +73,12 @@ const Dashboard = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats?.lowStockItems || 0}</div>
+            <div 
+              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              onClick={() => navigate('/stock')}
+            >
+              {stats?.lowStockItems || 0}
+            </div>
             <p className="text-xs text-destructive">Requires attention</p>
           </CardContent>
         </Card>
@@ -65,7 +89,12 @@ const Dashboard = () => {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">R{stats?.totalDebt.toFixed(2) || '0.00'}</div>
+            <div 
+              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              onClick={() => navigate('/debtors')}
+            >
+              R{stats?.totalDebt.toFixed(2) || '0.00'}
+            </div>
             <p className="text-xs text-muted-foreground">{stats?.debtorsCount || 0} overdue accounts</p>
           </CardContent>
         </Card>
@@ -86,7 +115,13 @@ const Dashboard = () => {
                 <p className="text-sm font-medium">{stats?.expiringItems || 0} items expire within 30 days</p>
                 <p className="text-xs text-muted-foreground">Check stock control for details</p>
               </div>
-              <Badge variant="destructive">Urgent</Badge>
+              <Badge 
+                variant="destructive" 
+                className="cursor-pointer hover:bg-destructive/80" 
+                onClick={() => navigate('/stock')}
+              >
+                Urgent
+              </Badge>
             </div>
             <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
               <div>

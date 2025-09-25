@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, FileText, AlertCircle, DollarSign, Calendar, Search, Plus } from "lucide-react";
+import { Users, FileText, AlertCircle, DollarSign, Calendar, Search, Plus, Eye, Edit2, Mail } from "lucide-react";
 import { useCustomersWithDebt } from "@/hooks/useCustomers";
+import { CustomerForm } from "@/components/CustomerForm";
 import { useState } from "react";
 
 const Debtors = () => {
@@ -34,10 +35,7 @@ const Debtors = () => {
             <FileText className="mr-2 h-4 w-4" />
             Generate Statements
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            New Account
-          </Button>
+          <CustomerForm />
         </div>
       </div>
 
@@ -126,25 +124,38 @@ const Debtors = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    <Users className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-medium">City Medical Centre</h3>
-                      <p className="text-sm text-muted-foreground">Account: ACC001</p>
-                      <p className="text-sm text-muted-foreground">Contact: Dr. Sarah Smith</p>
+                {debtorCustomers.map((customer) => (
+                  <div key={customer.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex items-center gap-4">
+                      <Users className="h-8 w-8 text-muted-foreground" />
+                      <div>
+                        <h3 className="font-medium">{customer.name}</h3>
+                        <p className="text-sm text-muted-foreground">{customer.phone || 'No phone'}</p>
+                        <p className="text-sm text-muted-foreground">{customer.email || 'No email'}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-lg">R{customer.current_balance.toFixed(2)}</p>
+                      <Badge variant={customer.current_balance > 1000 ? "destructive" : "secondary"}>
+                        {customer.current_balance > 1000 ? "High Balance" : "Current"}
+                      </Badge>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Credit Limit: R{customer.credit_limit.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-1 ml-4">
+                      <Button size="sm" variant="outline">
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Mail className="mr-2 h-4 w-4" />
+                        Statement
+                      </Button>
+                      <CustomerForm customer={customer} />
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-bold text-lg">R15,450.00</p>
-                    <Badge variant="destructive">15 days overdue</Badge>
-                    <p className="text-xs text-muted-foreground mt-1">Last payment: 45 days ago</p>
-                  </div>
-                  <div className="flex flex-col gap-1 ml-4">
-                    <Button size="sm">View Account</Button>
-                    <Button size="sm" variant="outline">Send Statement</Button>
-                  </div>
-                </div>
+                ))}
 
                 <div className="flex items-center justify-between p-4 border rounded-lg">
                   <div className="flex items-center gap-4">

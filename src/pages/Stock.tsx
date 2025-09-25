@@ -4,8 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingDown, AlertTriangle, Plus, Search, FileText, Truck } from "lucide-react";
+import { Package, TrendingDown, AlertTriangle, Plus, Search, FileText, Truck, Edit2 } from "lucide-react";
 import { useProducts, useLowStockProducts } from "@/hooks/useProducts";
+import { ProductForm } from "@/components/ProductForm";
 import { useState } from "react";
 
 const Stock = () => {
@@ -47,10 +48,7 @@ const Stock = () => {
             <FileText className="mr-2 h-4 w-4" />
             Stock Report
           </Button>
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Add Stock
-          </Button>
+          <ProductForm />
         </div>
       </div>
 
@@ -143,7 +141,7 @@ const Stock = () => {
             <CardContent>
                 <div className="space-y-4">
                   {filteredProducts.map((product) => (
-                    <div key={product.id} className="grid grid-cols-7 gap-4 p-3 border rounded-lg items-center">
+                    <div key={product.id} className="grid grid-cols-8 gap-4 p-3 border rounded-lg items-center">
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-xs text-muted-foreground">
@@ -167,6 +165,9 @@ const Stock = () => {
                            product.stock_quantity <= product.minimum_stock ? "Low Stock" : 
                            "In Stock"}
                         </Badge>
+                      </div>
+                      <div>
+                        <ProductForm product={product} />
                       </div>
                     </div>
                   ))}
