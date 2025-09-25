@@ -75,3 +75,58 @@ export function useTodaysPrescriptions() {
     }
   });
 }
+
+export function useRecentPatients() {
+  return useQuery({
+    queryKey: ['recent-patients'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('customers')
+        .select(`
+          *,
+          prescriptions!inner(id, created_at)
+        `)
+        .order('prescriptions.created_at', { ascending: false })
+        .limit(5);
+      
+      if (error) throw error;
+      return data;
+    }
+  });
+}
+
+export function useProcessPrescription() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (prescriptionId: string) => {
+      const { data, error } = await supabase
+        .from('prescriptions')
+        .update({ 
+          status: 'dispensed',
+          dispensed_at: new Date().toISOString()
+        })
+        .eq('id', prescriptionId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-prescriptions'] });
+      toast({
+        title: "Prescription Processed",
+        description: "Prescription has been successfully dispensed.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to process prescription. Please try again.",
+        variant: "destructive",
+      });
+    }
+  });
+}

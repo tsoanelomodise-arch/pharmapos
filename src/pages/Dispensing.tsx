@@ -6,18 +6,26 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, User, FileText, AlertTriangle, CheckCircle, Edit2 } from "lucide-react";
-import { usePendingPrescriptions, usePrescriptions } from "@/hooks/usePrescriptions";
+import { usePendingPrescriptions, usePrescriptions, useRecentPatients, useProcessPrescription } from "@/hooks/usePrescriptions";
 import { useCustomerSearch } from "@/hooks/useCustomers";
+import { useNavigate } from "react-router-dom";
 import { PrescriptionForm } from "@/components/PrescriptionForm";
 import { CustomerForm } from "@/components/CustomerForm";
 
 const Dispensing = () => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [customerSearch, setCustomerSearch] = useState("");
+  const [patientSearch, setPatientSearch] = useState("");
+  const navigate = useNavigate();
   
   const { data: pendingPrescriptions = [], isLoading } = usePendingPrescriptions();
   const { data: allPrescriptions = [] } = usePrescriptions();
-  const { data: customerResults = [] } = useCustomerSearch(customerSearch);
+  const { data: patientResults = [] } = useCustomerSearch(patientSearch);
+  const { data: recentPatients = [] } = useRecentPatients();
+  const processPrescrition = useProcessPrescription();
+
+  const handleProcessPrescription = (prescriptionId: string) => {
+    processPrescrition.mutate(prescriptionId);
+  };
 
   if (isLoading) {
     return (
@@ -92,7 +100,14 @@ const Dispensing = () => {
                       <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'}>
                         {prescription.status}
                       </Badge>
-                      <Button size="sm" variant="outline">Process</Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => handleProcessPrescription(prescription.id)}
+                        disabled={processPrescrition.isPending}
+                      >
+                        {processPrescrition.isPending ? 'Processing...' : 'Process'}
+                      </Button>
                       <PrescriptionForm prescription={prescription} />
                     </div>
                   </div>
@@ -116,22 +131,22 @@ const Dispensing = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <div className="flex gap-4">
-                  <div className="flex-1">
-                    <Label htmlFor="patient-search">Find Patient</Label>
-                    <div className="relative">
-                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        id="patient-search"
-                        placeholder="Search by name, ID number, or medical aid number..."
-                        className="pl-10"
-                        value={customerSearch}
-                        onChange={(e) => setCustomerSearch(e.target.value)}
-                      />
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <Label htmlFor="patient-search">Find Patient</Label>
+                      <div className="relative">
+                        <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="patient-search"
+                          placeholder="Search by name, phone, or email..."
+                          className="pl-10"
+                          value={patientSearch}
+                          onChange={(e) => setPatientSearch(e.target.value)}
+                        />
+                      </div>
                     </div>
+                    <CustomerForm />
                   </div>
-                  <CustomerForm />
-                </div>
 
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
@@ -139,38 +154,56 @@ const Dispensing = () => {
                     <Button variant="outline" size="sm">View All</Button>
                   </div>
                   <div className="space-y-3">
-                    {customerResults.length > 0 ? (
-                      customerResults.map((customer) => (
-                        <div key={customer.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                    {patientResults.length > 0 ? (
+                      patientResults.map((patient) => (
+                        <div key={patient.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
                           <div className="flex items-center gap-3">
                             <User className="h-6 w-6" />
                             <div>
-                              <p className="font-medium">{customer.name}</p>
+                              <p className="font-medium">{patient.name}</p>
                               <p className="text-sm text-muted-foreground">
-                                {customer.phone ? `Phone: ${customer.phone}` : 'No phone'}
+                                {patient.phone ? `Phone: ${patient.phone}` : 'No phone'}
                               </p>
                             </div>
                           </div>
                           <div className="flex gap-2">
                             <Badge variant="outline">
-                              {customer.current_balance > 0 ? `Owes R${customer.current_balance.toFixed(2)}` : 'No Balance'}
+                              {patient.current_balance > 0 ? `Owes R${patient.current_balance.toFixed(2)}` : 'No Balance'}
+                            </Badge>
+                            <Button size="sm" variant="outline">View</Button>
+                          </div>
+                        </div>
+                      ))
+                    ) : recentPatients.length > 0 ? (
+                      recentPatients.map((patient) => (
+                        <div key={patient.id} className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                          <div className="flex items-center gap-3">
+                            <User className="h-6 w-6" />
+                            <div>
+                              <p className="font-medium">{patient.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {patient.phone ? `Phone: ${patient.phone}` : 'No phone'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <Badge variant="outline">
+                              {patient.current_balance > 0 ? `Owes R${patient.current_balance.toFixed(2)}` : 'No Balance'}
                             </Badge>
                             <Button size="sm" variant="outline">View</Button>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <>
-                        <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
-                          <div className="flex items-center gap-3">
-                            <User className="h-6 w-6" />
-                            <div>
-                              <p className="font-medium">Recent patients will show here</p>
-                              <p className="text-sm text-muted-foreground">Use search above to find patients</p>
-                            </div>
+                      <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <User className="h-6 w-6" />
+                          <div>
+                            <p className="font-medium">No recent patients</p>
+                            <p className="text-sm text-muted-foreground">Use search above to find patients</p>
                           </div>
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -220,15 +253,24 @@ const Dispensing = () => {
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
-                      <span>Total interactions checked today:</span>
-                      <Badge variant="secondary">{allPrescriptions.length}</Badge>
+                      <div 
+                        className="flex justify-between cursor-pointer hover:bg-accent p-2 rounded transition-colors"
+                        onClick={() => navigate('/reports')}
+                      >
+                        <span>Total interactions checked today:</span>
+                        <Badge variant="secondary">{allPrescriptions.length}</Badge>
                       </div>
-                      <div className="flex justify-between">
+                      <div 
+                        className="flex justify-between cursor-pointer hover:bg-accent p-2 rounded transition-colors"
+                        onClick={() => navigate('/reports')}
+                      >
                         <span>Warnings issued:</span>
                         <Badge variant="destructive">3</Badge>
                       </div>
-                      <div className="flex justify-between">
+                      <div 
+                        className="flex justify-between cursor-pointer hover:bg-accent p-2 rounded transition-colors"
+                        onClick={() => navigate('/reports')}
+                      >
                         <span>Contraindications prevented:</span>
                         <Badge variant="outline">1</Badge>
                       </div>
