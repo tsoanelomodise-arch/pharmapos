@@ -8,11 +8,13 @@ import { Package, TrendingDown, AlertTriangle, Plus, Search, FileText, Truck, Ed
 import { useProducts, useLowStockProducts } from "@/hooks/useProducts";
 import { ProductForm } from "@/components/ProductForm";
 import { useState } from "react";
+import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
 const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const { data: products = [], isLoading } = useProducts();
   const { data: lowStockProducts = [] } = useLowStockProducts();
+  const canAccessFinancialData = useCanAccessFinancialData();
   
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -20,7 +22,9 @@ const Stock = () => {
     (product.generic_name && product.generic_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
-  const totalValue = products.reduce((sum, product) => sum + (product.cost_price * product.stock_quantity), 0);
+  const totalValue = canAccessFinancialData 
+    ? products.reduce((sum, product) => sum + (product.cost_price * product.stock_quantity), 0)
+    : 0;
   const expiringProducts = products.filter(product => {
     if (!product.expiry_date) return false;
     const expiryDate = new Date(product.expiry_date);
@@ -87,16 +91,18 @@ const Stock = () => {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">R{totalValue.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">At cost price</p>
-          </CardContent>
-        </Card>
+        {canAccessFinancialData && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
+              <Package className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R{totalValue.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">At cost price</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       <Tabs defaultValue="inventory" className="space-y-6">
@@ -139,46 +145,58 @@ const Stock = () => {
               <CardTitle>Inventory Items</CardTitle>
             </CardHeader>
             <CardContent>
-                <div className="space-y-4">
-                  {filteredProducts.map((product) => (
-                    <div key={product.id} className="grid grid-cols-8 gap-4 p-3 border rounded-lg items-center">
-                      <div>
-                        <p className="font-medium">{product.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {product.barcode ? `Barcode: ${product.barcode}` : 'No barcode'}
-                        </p>
-                      </div>
-                      <div className="capitalize">{product.category}</div>
-                      <div className={`font-medium ${product.stock_quantity <= product.minimum_stock ? 'text-red-600' : ''}`}>
-                        {product.stock_quantity}
-                      </div>
-                      <div>{product.minimum_stock}</div>
-                      <div>R{product.cost_price.toFixed(2)}</div>
-                      <div>R{product.unit_price.toFixed(2)}</div>
-                      <div>
-                        <Badge variant={
-                          product.stock_quantity === 0 ? "destructive" :
-                          product.stock_quantity <= product.minimum_stock ? "destructive" : 
-                          "secondary"
-                        }>
-                          {product.stock_quantity === 0 ? "Out of Stock" :
-                           product.stock_quantity <= product.minimum_stock ? "Low Stock" : 
-                           "In Stock"}
-                        </Badge>
-                      </div>
-                      <div>
-                        <ProductForm product={product} />
-                      </div>
+              {/* Table Headers */}
+              <div className={`grid ${canAccessFinancialData ? 'grid-cols-8' : 'grid-cols-7'} gap-4 p-3 border-b font-medium text-sm text-muted-foreground`}>
+                <div>Product</div>
+                <div>Category</div>
+                <div>Stock</div>
+                <div>Min Stock</div>
+                {canAccessFinancialData && <div>Cost Price</div>}
+                <div>Unit Price</div>
+                <div>Status</div>
+                <div>Actions</div>
+              </div>
+              
+              <div className="space-y-4 mt-4">
+                {filteredProducts.map((product) => (
+                  <div key={product.id} className={`grid ${canAccessFinancialData ? 'grid-cols-8' : 'grid-cols-7'} gap-4 p-3 border rounded-lg items-center`}>
+                    <div>
+                      <p className="font-medium">{product.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {product.barcode ? `Barcode: ${product.barcode}` : 'No barcode'}
+                      </p>
                     </div>
-                  ))}
-                  
-                  {filteredProducts.length === 0 && (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                      <p>No products found</p>
+                    <div className="capitalize">{product.category}</div>
+                    <div className={`font-medium ${product.stock_quantity <= product.minimum_stock ? 'text-red-600' : ''}`}>
+                      {product.stock_quantity}
                     </div>
-                  )}
-                </div>
+                    <div>{product.minimum_stock}</div>
+                    {canAccessFinancialData && <div>R{product.cost_price.toFixed(2)}</div>}
+                    <div>R{product.unit_price.toFixed(2)}</div>
+                    <div>
+                      <Badge variant={
+                        product.stock_quantity === 0 ? "destructive" :
+                        product.stock_quantity <= product.minimum_stock ? "destructive" : 
+                        "secondary"
+                      }>
+                        {product.stock_quantity === 0 ? "Out of Stock" :
+                         product.stock_quantity <= product.minimum_stock ? "Low Stock" : 
+                         "In Stock"}
+                      </Badge>
+                    </div>
+                    <div>
+                      <ProductForm product={product} />
+                    </div>
+                  </div>
+                ))}
+                
+                {filteredProducts.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No products found</p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

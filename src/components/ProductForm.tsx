@@ -15,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit2 } from "lucide-react";
 import type { Product } from "@/hooks/useProducts";
+import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -24,7 +25,7 @@ const productSchema = z.object({
   barcode: z.string().optional(),
   description: z.string().optional(),
   unit_price: z.number().min(0, "Price must be positive"),
-  cost_price: z.number().min(0, "Cost must be positive"),
+  cost_price: z.number().min(0, "Cost must be positive").optional(),
   stock_quantity: z.number().min(0, "Stock must be non-negative"),
   minimum_stock: z.number().min(0, "Minimum stock must be non-negative"),
   expiry_date: z.string().optional(),
@@ -42,6 +43,7 @@ interface ProductFormProps {
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
+  const canAccessFinancialData = useCanAccessFinancialData();
   
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -86,7 +88,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         barcode: data.barcode || null,
         description: data.description || null,
         unit_price: data.unit_price,
-        cost_price: data.cost_price,
+        cost_price: canAccessFinancialData ? data.cost_price : (product?.cost_price || 0),
         stock_quantity: data.stock_quantity,
         minimum_stock: data.minimum_stock,
         expiry_date: data.expiry_date || null,
@@ -270,24 +272,26 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="cost_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Cost Price (R) *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {canAccessFinancialData && (
+                <FormField
+                  control={form.control}
+                  name="cost_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Cost Price (R) *</FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-4">
