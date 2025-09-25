@@ -1,239 +1,213 @@
 import { useState } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from '@/hooks/use-toast';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Pill } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 
-const authSchema = z.object({
-  email: z.string().email('Invalid email address'),
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
-  fullName: z.string().min(2, 'Full name must be at least 2 characters').optional(),
 });
 
+const signupSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  fullName: z.string().min(2, 'Full name must be at least 2 characters'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+type SignupFormData = z.infer<typeof signupSchema>;
+
 export default function Auth() {
-  const { user, loading, signIn, signUp } = useAuth();
-  const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    fullName: '',
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const { signIn, signUp } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const from = (location.state as any)?.from?.pathname || '/';
+
+  const loginForm = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
-  // Redirect if already authenticated
-  if (user && !loading) {
-    return <Navigate to="/" replace />;
-  }
+  const signupForm = useForm<SignupFormData>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      fullName: '',
+    },
+  });
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+  const handleLogin = async (data: LoginFormData) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
-  const handleSignIn = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+    const { error } = await signIn(data.email, data.password);
 
-    try {
-      const validatedData = authSchema.parse({
-        email: formData.email,
-        password: formData.password,
-      });
-
-      const { error } = await signIn(validatedData.email, validatedData.password);
-      
-      if (error) {
-        if (error.message.includes('Invalid login credentials')) {
-          toast({
-            title: 'Login Failed',
-            description: 'Invalid email or password. Please check your credentials.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Login Failed',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
-      } else {
-        toast({
-          title: 'Welcome!',
-          description: 'You have successfully signed in.',
-        });
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: error.errors[0].message,
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      navigate(from, { replace: true });
     }
+
+    setLoading(false);
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const handleSignup = async (data: SignupFormData) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
 
-    try {
-      const validatedData = authSchema.parse({
-        email: formData.email,
-        password: formData.password,
-        fullName: formData.fullName,
-      });
+    const { error } = await signUp(data.email, data.password, data.fullName);
 
-      const { error } = await signUp(
-        validatedData.email, 
-        validatedData.password, 
-        validatedData.fullName
-      );
-      
-      if (error) {
-        if (error.message.includes('User already registered')) {
-          toast({
-            title: 'Account Already Exists',
-            description: 'An account with this email already exists. Please sign in instead.',
-            variant: 'destructive',
-          });
-        } else {
-          toast({
-            title: 'Sign Up Failed',
-            description: error.message,
-            variant: 'destructive',
-          });
-        }
-      } else {
-        toast({
-          title: 'Account Created!',
-          description: 'Please check your email to confirm your account.',
-        });
-      }
-    } catch (error) {
-      if (error instanceof z.ZodError) {
-        toast({
-          title: 'Validation Error',
-          description: error.errors[0].message,
-          variant: 'destructive',
-        });
-      }
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess('Account created successfully! Please check your email to verify your account.');
     }
-  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setLoading(false);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
+          <div className="flex items-center justify-center mb-4">
+            <div className="bg-blue-600 p-3 rounded-full">
+              <Pill className="h-8 w-8 text-white" />
+            </div>
+          </div>
           <CardTitle className="text-2xl font-bold">PharmaPOS</CardTitle>
           <CardDescription>
             Secure pharmacy management system
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="signin" className="w-full">
+          <Tabs defaultValue="login" className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="login">Login</TabsTrigger>
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
-
-            <TabsContent value="signin">
-              <form onSubmit={handleSignIn} className="space-y-4">
+            
+            <TabsContent value="login">
+              <form onSubmit={loginForm.handleSubmit(handleLogin)} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email">Email</Label>
+                  <Label htmlFor="login-email">Email</Label>
                   <Input
-                    id="signin-email"
-                    name="email"
+                    id="login-email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="pharmacist@pharmacy.com"
-                    required
+                    placeholder="Enter your email"
+                    {...loginForm.register('email')}
                   />
+                  {loginForm.formState.errors.email && (
+                    <p className="text-sm text-red-600">{loginForm.formState.errors.email.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password">Password</Label>
+                  <Label htmlFor="login-password">Password</Label>
                   <Input
-                    id="signin-password"
-                    name="password"
+                    id="login-password"
                     type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
                     placeholder="Enter your password"
-                    required
+                    {...loginForm.register('password')}
                   />
+                  {loginForm.formState.errors.password && (
+                    <p className="text-sm text-red-600">{loginForm.formState.errors.password.message}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Signing In...' : 'Sign In'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
                 </Button>
               </form>
             </TabsContent>
-
+            
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
+              <form onSubmit={signupForm.handleSubmit(handleSignup)} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name">Full Name</Label>
                   <Input
                     id="signup-name"
-                    name="fullName"
                     type="text"
-                    value={formData.fullName}
-                    onChange={handleInputChange}
-                    placeholder="John Doe"
-                    required
+                    placeholder="Enter your full name"
+                    {...signupForm.register('fullName')}
                   />
+                  {signupForm.formState.errors.fullName && (
+                    <p className="text-sm text-red-600">{signupForm.formState.errors.fullName.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
-                    name="email"
                     type="email"
-                    value={formData.email}
-                    onChange={handleInputChange}
-                    placeholder="pharmacist@pharmacy.com"
-                    required
+                    placeholder="Enter your email"
+                    {...signupForm.register('email')}
                   />
+                  {signupForm.formState.errors.email && (
+                    <p className="text-sm text-red-600">{signupForm.formState.errors.email.message}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
-                    name="password"
                     type="password"
-                    value={formData.password}
-                    onChange={handleInputChange}
-                    placeholder="Choose a secure password"
-                    required
+                    placeholder="Create a password"
+                    {...signupForm.register('password')}
                   />
+                  {signupForm.formState.errors.password && (
+                    <p className="text-sm text-red-600">{signupForm.formState.errors.password.message}</p>
+                  )}
                 </div>
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? 'Creating Account...' : 'Create Account'}
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </form>
             </TabsContent>
           </Tabs>
+          
+          {error && (
+            <Alert className="mt-4" variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          
+          {success && (
+            <Alert className="mt-4">
+              <AlertDescription>{success}</AlertDescription>
+            </Alert>
+          )}
         </CardContent>
       </Card>
     </div>

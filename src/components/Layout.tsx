@@ -1,6 +1,6 @@
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
-import { useAuth } from "@/hooks/useAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -13,19 +13,11 @@ export function Layout({ children }: LayoutProps) {
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    const { error } = await signOut();
-    if (error) {
-      toast({
-        title: 'Sign Out Failed',
-        description: error.message,
-        variant: 'destructive',
-      });
-    } else {
-      toast({
-        title: 'Signed Out',
-        description: 'You have been successfully signed out.',
-      });
-    }
+    await signOut();
+    toast({
+      title: 'Signed Out',
+      description: 'You have been successfully signed out.',
+    });
   };
 
   return (
