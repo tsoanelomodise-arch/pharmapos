@@ -23,14 +23,20 @@ const signupSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters'),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email('Please enter a valid email address'),
+});
+
 type LoginFormData = z.infer<typeof loginSchema>;
 type SignupFormData = z.infer<typeof signupSchema>;
+type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export default function Auth() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const { signIn, signUp } = useAuth();
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const { signIn, signUp, resetPassword } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -50,6 +56,13 @@ export default function Auth() {
       email: '',
       password: '',
       fullName: '',
+    },
+  });
+
+  const forgotPasswordForm = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
     },
   });
 
@@ -80,6 +93,23 @@ export default function Auth() {
       setError(error.message);
     } else {
       setSuccess('Account created successfully! Please check your email to verify your account.');
+    }
+
+    setLoading(false);
+  };
+
+  const handleForgotPassword = async (data: ForgotPasswordFormData) => {
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+    const { error } = await resetPassword(data.email);
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess('Password reset email sent! Please check your email for instructions.');
+      setShowForgotPassword(false);
     }
 
     setLoading(false);
@@ -132,17 +162,26 @@ export default function Auth() {
                     <p className="text-sm text-red-600">{loginForm.formState.errors.password.message}</p>
                   )}
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
-                </Button>
-              </form>
+                 <Button type="submit" className="w-full" disabled={loading}>
+                   {loading ? (
+                     <>
+                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                       Signing in...
+                     </>
+                   ) : (
+                     'Sign In'
+                   )}
+                 </Button>
+                 <div className="text-center mt-4">
+                   <button
+                     type="button"
+                     onClick={() => setShowForgotPassword(true)}
+                     className="text-sm text-muted-foreground hover:text-primary underline-offset-4 hover:underline"
+                   >
+                     Forgot your password?
+                   </button>
+                 </div>
+               </form>
             </TabsContent>
             
             <TabsContent value="signup">
@@ -210,6 +249,57 @@ export default function Auth() {
           )}
         </CardContent>
       </Card>
+
+      {/* Forgot Password Modal */}
+      {showForgotPassword && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md">
+            <CardHeader>
+              <CardTitle>Reset Password</CardTitle>
+              <CardDescription>
+                Enter your email address and we'll send you a link to reset your password.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={forgotPasswordForm.handleSubmit(handleForgotPassword)} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="reset-email">Email</Label>
+                  <Input
+                    id="reset-email"
+                    type="email"
+                    placeholder="Enter your email"
+                    {...forgotPasswordForm.register('email')}
+                  />
+                  {forgotPasswordForm.formState.errors.email && (
+                    <p className="text-sm text-destructive">{forgotPasswordForm.formState.errors.email.message}</p>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="flex-1"
+                    onClick={() => setShowForgotPassword(false)}
+                    disabled={loading}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="flex-1" disabled={loading}>
+                    {loading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending...
+                      </>
+                    ) : (
+                      'Send Reset Email'
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }
