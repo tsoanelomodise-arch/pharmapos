@@ -6,26 +6,25 @@ export function useUserRole() {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['user-role', user?.id],
+    queryKey: ['user-roles', user?.id],
     queryFn: async () => {
-      if (!user) return null;
+      if (!user) return [];
       
       const { data, error } = await supabase
-        .from('profiles')
+        .from('user_roles')
         .select('role')
-        .eq('id', user.id)
-        .single();
+        .eq('user_id', user.id);
         
       if (error) throw error;
-      return data?.role || null;
+      return data?.map(r => r.role) || [];
     },
     enabled: !!user,
   });
 }
 
 export function useCanAccessFinancialData() {
-  const { data: role } = useUserRole();
+  const { data: roles } = useUserRole();
   
   // Only managers, admins, and owners can access cost pricing and supplier data
-  return role && ['manager', 'admin', 'owner'].includes(role);
+  return roles && roles.some(role => ['manager', 'admin', 'owner'].includes(role));
 }
