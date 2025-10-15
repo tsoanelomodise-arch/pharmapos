@@ -2,13 +2,15 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
+export type UserRole = 'pharmacist' | 'admin' | 'manager' | 'owner';
+
 export function useUserRole() {
   const { user } = useAuth();
   
   return useQuery({
-    queryKey: ['user-roles', user?.id],
+    queryKey: ['user-role', user?.id],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return null;
       
       const { data, error } = await supabase
         .from('user_roles')
@@ -16,15 +18,17 @@ export function useUserRole() {
         .eq('user_id', user.id);
         
       if (error) throw error;
-      return data?.map(r => r.role) || [];
+      
+      // Return the first role if multiple exist, or null if none
+      return (data?.[0]?.role as UserRole) || null;
     },
     enabled: !!user,
   });
 }
 
 export function useCanAccessFinancialData() {
-  const { data: roles } = useUserRole();
+  const { data: role } = useUserRole();
   
   // Only managers, admins, and owners can access cost pricing and supplier data
-  return roles && roles.some(role => ['manager', 'admin', 'owner'].includes(role));
+  return role && (['manager', 'admin', 'owner'] as UserRole[]).includes(role);
 }
