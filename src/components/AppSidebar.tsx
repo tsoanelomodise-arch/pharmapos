@@ -46,7 +46,7 @@ export function AppSidebar() {
         {state !== "collapsed" && (
           <div className="flex items-center gap-2">
             <Pill className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-lg">MediMaster Suite</span>
+            <span className="font-semibold text-lg">PharmaPos</span>
           </div>
         )}
       </SidebarHeader>
