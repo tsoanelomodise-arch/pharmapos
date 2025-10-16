@@ -12,13 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, UserPlus, Stethoscope, Users } from "lucide-react";
+import { Trash2, Search, UserPlus, Stethoscope, Users, Shield } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
 import { useUsers } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
+import { ModulePermissionsManager } from "@/components/ModulePermissionsManager";
 import { useUserRole } from "@/hooks/useUserRole";
 import { format } from "date-fns";
 import {
@@ -88,7 +89,7 @@ export default function Management() {
       </div>
 
       <Tabs defaultValue="patients" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : 'grid-cols-3'}`}>
           <TabsTrigger value="patients">
             <UserPlus className="h-4 w-4 mr-2" />
             Patients
@@ -101,6 +102,12 @@ export default function Management() {
             <Users className="h-4 w-4 mr-2" />
             Users
           </TabsTrigger>
+          {isOwner && (
+            <TabsTrigger value="permissions">
+              <Shield className="h-4 w-4 mr-2" />
+              Module Permissions
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="patients" className="space-y-4">
@@ -344,6 +351,22 @@ export default function Management() {
           </Card>
           )}
         </TabsContent>
+
+        {isOwner && (
+          <TabsContent value="permissions" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Module Permissions</CardTitle>
+                <CardDescription>
+                  Control which modules each user can access. Owners always have full access.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ModulePermissionsManager />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   );

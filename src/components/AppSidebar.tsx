@@ -13,20 +13,32 @@ import {
   SidebarHeader,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { useUserModules, AppModule } from "@/hooks/useModulePermissions";
 
-const navigationItems = [
-  { title: "Dashboard", url: "/", icon: BarChart3 },
-  { title: "Dispensing", url: "/dispensing", icon: Pill },
-  { title: "POS & Sales", url: "/pos", icon: ShoppingCart },
-  { title: "Debtors", url: "/debtors", icon: Users },
-  { title: "Stock Control", url: "/stock", icon: Package },
-  { title: "Reports", url: "/reports", icon: Receipt },
-  { title: "Management", url: "/management", icon: Settings },
-  { title: "Help", url: "/help", icon: BookOpen },
+const navigationItems: { 
+  title: string; 
+  url: string; 
+  icon: any; 
+  module: AppModule 
+}[] = [
+  { title: "Dashboard", url: "/", icon: BarChart3, module: "dashboard" },
+  { title: "Dispensing", url: "/dispensing", icon: Pill, module: "dispensing" },
+  { title: "POS & Sales", url: "/pos", icon: ShoppingCart, module: "pos" },
+  { title: "Debtors", url: "/debtors", icon: Users, module: "debtors" },
+  { title: "Stock Control", url: "/stock", icon: Package, module: "stock" },
+  { title: "Reports", url: "/reports", icon: Receipt, module: "reports" },
+  { title: "Management", url: "/management", icon: Settings, module: "management" },
+  { title: "Help", url: "/help", icon: BookOpen, module: "help" },
 ];
 
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { data: userModules = [] } = useUserModules();
+
+  // Filter navigation items based on user's module permissions
+  const accessibleItems = navigationItems.filter(item => 
+    userModules.includes(item.module)
+  );
 
   return (
     <Sidebar collapsible="icon">
@@ -44,7 +56,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navigationItems.map((item) => (
+              {accessibleItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink 

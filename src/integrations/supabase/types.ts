@@ -406,6 +406,30 @@ export type Database = {
         }
         Relationships: []
       }
+      user_module_permissions: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          module: Database["public"]["Enums"]["app_module"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module: Database["public"]["Enums"]["app_module"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          module?: Database["public"]["Enums"]["app_module"]
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -432,6 +456,19 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_user_modules: {
+        Args: { _user_id: string }
+        Returns: {
+          module: Database["public"]["Enums"]["app_module"]
+        }[]
+      }
+      has_module_access: {
+        Args: {
+          _module: Database["public"]["Enums"]["app_module"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -441,6 +478,15 @@ export type Database = {
       }
     }
     Enums: {
+      app_module:
+        | "dashboard"
+        | "dispensing"
+        | "pos"
+        | "debtors"
+        | "stock"
+        | "reports"
+        | "management"
+        | "help"
       app_role: "pharmacist" | "admin" | "manager" | "owner"
       payment_method: "cash" | "card" | "credit" | "insurance"
       product_category:
@@ -577,6 +623,16 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_module: [
+        "dashboard",
+        "dispensing",
+        "pos",
+        "debtors",
+        "stock",
+        "reports",
+        "management",
+        "help",
+      ],
       app_role: ["pharmacist", "admin", "manager", "owner"],
       payment_method: ["cash", "card", "credit", "insurance"],
       product_category: [
