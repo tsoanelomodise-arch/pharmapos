@@ -48,13 +48,74 @@ export function useDashboardStats() {
         .lt('expiry_date', thirtyDaysFromNow.toISOString().split('T')[0])
         .not('expiry_date', 'is', null);
       
+      // Sales trend for last 7 days
+      const salesTrend = [];
+      for (let i = 6; i >= 0; i--) {
+        const date = new Date();
+        date.setDate(date.getDate() - i);
+        const dateStr = date.toISOString().split('T')[0];
+        
+        const { data: daySales } = await supabase
+          .from('sales')
+          .select('total_amount')
+          .gte('created_at', `${dateStr}T00:00:00`)
+          .lt('created_at', `${dateStr}T23:59:59`);
+        
+        const dayTotal = daySales?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
+        salesTrend.push({
+          date: date.toLocaleDateString('en-ZA', { month: 'short', day: 'numeric' }),
+          amount: dayTotal
+        });
+      }
+      
+      // Add sample data if no sales data exists
+      const hasSalesData = salesTrend.some(day => day.amount > 0);
+      const finalSalesTrend = hasSalesData ? salesTrend : [
+        { date: 'Jan 10', amount: 4500 },
+        { date: 'Jan 11', amount: 5200 },
+        { date: 'Jan 12', amount: 4800 },
+        { date: 'Jan 13', amount: 6100 },
+        { date: 'Jan 14', amount: 5500 },
+        { date: 'Jan 15', amount: 7200 },
+        { date: 'Jan 16', amount: 6800 }
+      ];
+      
+      // Category breakdown - get sample data
+      const categoryData = [
+        { name: 'Prescription', value: 45, color: '#3BB3B0' },
+        { name: 'OTC', value: 30, color: '#F9C74F' },
+        { name: 'Supplements', value: 15, color: '#90BE6D' },
+        { name: 'Personal Care', value: 10, color: '#F8961E' }
+      ];
+      
+      // Top selling products
+      const { data: topProducts } = await supabase
+        .from('sale_items')
+        .select('product_id, quantity, products(name)')
+        .limit(5)
+        .order('quantity', { ascending: false });
+      
+      const topProductsData = topProducts?.map(item => ({
+        name: item.products?.name || 'Unknown',
+        sales: item.quantity || 0
+      })) || [
+        { name: 'Panado 500mg', sales: 145 },
+        { name: 'Allergex 10mg', sales: 98 },
+        { name: 'Bioplus Vitamin C', sales: 87 },
+        { name: 'Corenza C', sales: 76 },
+        { name: 'Disprin', sales: 65 }
+      ];
+
       return {
         prescriptionsToday: prescriptionsCount || 0,
         salesToday,
         lowStockItems: lowStockCount || 0,
         totalDebt,
         debtorsCount,
-        expiringItems: expiringCount || 0
+        expiringItems: expiringCount || 0,
+        salesTrend: finalSalesTrend,
+        categoryData,
+        topProducts: topProductsData
       };
     }
   });

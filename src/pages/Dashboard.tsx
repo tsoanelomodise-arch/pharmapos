@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useNavigate } from "react-router-dom";
+import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 
 const Dashboard = () => {
   const { data: stats, isLoading } = useDashboardStats();
@@ -216,6 +217,142 @@ const Dashboard = () => {
                 <p className="text-xs text-muted-foreground truncate">Account: City Clinic - R1,250 - 07:45</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Sales Trend Chart */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5 text-primary" />
+              Sales Trend (Last 7 Days)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={250}>
+              <AreaChart data={stats?.salesTrend || []}>
+                <defs>
+                  <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3BB3B0" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3BB3B0" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="date" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                  tickFormatter={(value) => `R${value}`}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value: number) => [`R${value.toFixed(2)}`, 'Sales']}
+                />
+                <Area 
+                  type="monotone" 
+                  dataKey="amount" 
+                  stroke="#3BB3B0" 
+                  strokeWidth={2}
+                  fillOpacity={1} 
+                  fill="url(#colorAmount)" 
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Category Breakdown Chart */}
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-accent/20 to-accent/10 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5 text-accent-foreground" />
+              Sales by Category
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={stats?.categoryData || []}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={60}
+                  outerRadius={90}
+                  paddingAngle={5}
+                  dataKey="value"
+                >
+                  {stats?.categoryData?.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value: number) => [`${value}%`, 'Share']}
+                />
+                <Legend 
+                  verticalAlign="bottom" 
+                  height={36}
+                  iconType="circle"
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        {/* Top Products Chart */}
+        <Card className="overflow-hidden lg:col-span-2">
+          <CardHeader className="bg-gradient-to-r from-emerald-500/10 to-emerald-500/5 border-b">
+            <CardTitle className="flex items-center gap-2">
+              <ShoppingCart className="h-5 w-5 text-emerald-600" />
+              Top Selling Products
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <ResponsiveContainer width="100%" height={280}>
+              <BarChart data={stats?.topProducts || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <YAxis 
+                  stroke="#6b7280"
+                  style={{ fontSize: '12px' }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: 'white', 
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                  }}
+                  formatter={(value: number) => [`${value} units`, 'Sold']}
+                />
+                <Bar 
+                  dataKey="sales" 
+                  fill="#10b981"
+                  radius={[8, 8, 0, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
