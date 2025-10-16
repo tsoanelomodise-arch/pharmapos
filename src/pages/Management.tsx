@@ -154,8 +154,8 @@ export default function Management() {
                           <TableCell className="font-medium">{customer.name}</TableCell>
                           <TableCell>{customer.phone || "-"}</TableCell>
                           <TableCell>{customer.email || "-"}</TableCell>
-                          <TableCell>${customer.current_balance?.toFixed(2) || "0.00"}</TableCell>
-                          <TableCell>${customer.credit_limit?.toFixed(2) || "0.00"}</TableCell>
+                          <TableCell>R{customer.current_balance?.toFixed(2) || "0.00"}</TableCell>
+                          <TableCell>R{customer.credit_limit?.toFixed(2) || "0.00"}</TableCell>
                           <TableCell className="text-right">
                             <CustomerForm customer={customer} />
                           </TableCell>
