@@ -12,6 +12,7 @@ import POS from "./pages/POS";
 import Debtors from "./pages/Debtors";
 import Stock from "./pages/Stock";
 import Reports from "./pages/Reports";
+import Management from "./pages/Management";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -36,6 +37,7 @@ const App = () => (
                     <Route path="/debtors" element={<Debtors />} />
                     <Route path="/stock" element={<Stock />} />
                     <Route path="/reports" element={<Reports />} />
+                    <Route path="/management" element={<Management />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

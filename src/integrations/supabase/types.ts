@@ -56,6 +56,39 @@ export type Database = {
         }
         Relationships: []
       }
+      doctors: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          license_number: string | null
+          name: string
+          phone: string | null
+          specialization: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name: string
+          phone?: string | null
+          specialization?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          license_number?: string | null
+          name?: string
+          phone?: string | null
+          specialization?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prescriptions: {
         Row: {
           created_at: string
