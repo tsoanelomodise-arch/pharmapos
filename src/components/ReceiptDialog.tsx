@@ -49,6 +49,13 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
         
         if (profile?.full_name) {
           processorName = profile.full_name;
+        } else {
+          // Fallback: try to get email from auth user
+          const { data: { user } } = await supabase.auth.admin.getUserById(sale.processed_by);
+          if (user?.email) {
+            // Extract name from email (before @)
+            processorName = user.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+          }
         }
       }
 

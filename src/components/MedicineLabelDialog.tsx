@@ -24,6 +24,14 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
         
         if (profile?.full_name) {
           setDispensedBy(profile.full_name);
+        } else {
+          // Fallback: Get current user if they're the one who dispensed it
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user?.id === prescription.dispensed_by && user?.email) {
+            // Extract name from email (before @)
+            const emailName = user.email.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+            setDispensedBy(emailName);
+          }
         }
       }
     };
