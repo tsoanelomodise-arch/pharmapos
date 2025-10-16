@@ -167,13 +167,29 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
             </div>
           </div>
 
-          <div className="payment-info text-center">
-            <p className="text-sm">
-              <strong>Payment Method:</strong> {saleData.payment_method.toUpperCase()}
-            </p>
-            <p className="text-sm">
-              <strong>Status:</strong> {saleData.payment_status.toUpperCase()}
-            </p>
+          <div className="payment-info space-y-1">
+            <div className="line text-sm">
+              <span><strong>Payment Method:</strong></span>
+              <span>{saleData.payment_method.toUpperCase()}</span>
+            </div>
+            {saleData.payment_method === 'cash' && saleData.cash_paid && (
+              <>
+                <div className="line text-sm">
+                  <span>Cash Paid:</span>
+                  <span>R{saleData.cash_paid.toFixed(2)}</span>
+                </div>
+                {saleData.change_given !== undefined && saleData.change_given > 0 && (
+                  <div className="line text-sm font-medium">
+                    <span>Change Given:</span>
+                    <span>R{saleData.change_given.toFixed(2)}</span>
+                  </div>
+                )}
+              </>
+            )}
+            <div className="line text-sm">
+              <span><strong>Status:</strong></span>
+              <span>{saleData.payment_status.toUpperCase()}</span>
+            </div>
           </div>
 
           {saleData.notes && (

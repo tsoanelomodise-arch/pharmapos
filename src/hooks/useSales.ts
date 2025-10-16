@@ -12,6 +12,8 @@ export interface Sale {
   payment_status: string;
   prescription_id?: string;
   notes?: string;
+  cash_paid?: number;
+  change_given?: number;
   created_at: string;
   updated_at: string;
 }
@@ -67,13 +69,17 @@ export function useCreateSaleMutation() {
       customerId, 
       items, 
       paymentMethod, 
-      discountAmount = 0, 
+      discountAmount = 0,
+      cashPaid,
+      changeGiven,
       notes 
     }: {
       customerId?: string;
       items: Array<{ productId: string; quantity: number; unitPrice: number }>;
       paymentMethod: 'cash' | 'card' | 'credit' | 'insurance';
       discountAmount?: number;
+      cashPaid?: number;
+      changeGiven?: number;
       notes?: string;
     }) => {
       const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -89,6 +95,8 @@ export function useCreateSaleMutation() {
           discount_amount: discountAmount,
           tax_amount: taxAmount,
           payment_method: paymentMethod,
+          cash_paid: cashPaid,
+          change_given: changeGiven,
           notes
         })
         .select()

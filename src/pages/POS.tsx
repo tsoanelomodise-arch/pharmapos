@@ -24,6 +24,7 @@ const POS = () => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit' | 'insurance'>('cash');
+  const [cashPaid, setCashPaid] = useState<string>("");
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
   
@@ -34,6 +35,8 @@ const POS = () => {
   const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
   const tax = subtotal * 0.15;
   const total = subtotal + tax;
+  const cashAmount = parseFloat(cashPaid) || 0;
+  const changeAmount = cashAmount - total;
 
   const addToCart = (product: any) => {
     const existingItem = cartItems.find(item => item.id === product.id);
@@ -80,6 +83,7 @@ const POS = () => {
     clearCart();
     setSearchTerm("");
     setPaymentMethod('cash');
+    setCashPaid("");
     toast({ title: "New sale started", description: "Cart cleared and ready for new transaction" });
   };
 
@@ -97,6 +101,18 @@ const POS = () => {
   const processPayment = async () => {
     if (cartItems.length === 0) return;
 
+    // Validate cash payment
+    if (paymentMethod === 'cash') {
+      if (!cashPaid || cashAmount < total) {
+        toast({ 
+          title: "Insufficient cash", 
+          description: `Amount paid (R${cashAmount.toFixed(2)}) is less than total (R${total.toFixed(2)})`,
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
     const items = cartItems.map(item => ({
       productId: item.id,
       quantity: item.quantity,
@@ -106,15 +122,20 @@ const POS = () => {
     createSaleMutation.mutate({
       items,
       paymentMethod,
+      cashPaid: paymentMethod === 'cash' ? cashAmount : undefined,
+      changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
       notes: `POS Sale - ${paymentMethod} payment`
     }, {
       onSuccess: (sale) => {
         setLastSaleId(sale.id);
         setShowLastReceipt(true);
         clearCart();
+        setCashPaid("");
         toast({ 
           title: "Payment processed successfully!", 
-          description: `Transaction #${sale.id.slice(-8)} completed - Receipt ready to print`
+          description: paymentMethod === 'cash' 
+            ? `Change: R${changeAmount.toFixed(2)} - Receipt ready to print`
+            : `Transaction #${sale.id.slice(-8)} completed - Receipt ready to print`
         });
       }
     });
@@ -261,6 +282,35 @@ const POS = () => {
 
               <div className="space-y-3">
                 <h4 className="font-medium">Payment Method</h4>
+                
+                {paymentMethod === 'cash' && (
+                  <div className="space-y-2 p-3 bg-accent rounded-lg">
+                    <Label htmlFor="cash-paid">Cash Paid</Label>
+                    <Input
+                      id="cash-paid"
+                      type="number"
+                      step="0.01"
+                      placeholder="0.00"
+                      value={cashPaid}
+                      onChange={(e) => setCashPaid(e.target.value)}
+                      className="text-lg"
+                    />
+                    {cashPaid && cashAmount >= total && (
+                      <div className="text-sm">
+                        <div className="flex justify-between font-medium text-primary">
+                          <span>Change:</span>
+                          <span>R{changeAmount.toFixed(2)}</span>
+                        </div>
+                      </div>
+                    )}
+                    {cashPaid && cashAmount < total && (
+                      <p className="text-sm text-destructive">
+                        Insufficient amount (need R{(total - cashAmount).toFixed(2)} more)
+                      </p>
+                    )}
+                  </div>
+                )}
+                
                 <div className="grid grid-cols-2 gap-2">
                   <Button 
                     variant={paymentMethod === 'card' ? 'default' : 'outline'} 
@@ -307,7 +357,11 @@ const POS = () => {
 
               <Button 
                 className="w-full h-12 text-lg" 
-                disabled={cartItems.length === 0 || createSaleMutation.isPending}
+                disabled={
+                  cartItems.length === 0 || 
+                  createSaleMutation.isPending ||
+                  (paymentMethod === 'cash' && (!cashPaid || cashAmount < total))
+                }
                 onClick={processPayment}
               >
                 {createSaleMutation.isPending ? 'Processing...' : 'Process Payment'}

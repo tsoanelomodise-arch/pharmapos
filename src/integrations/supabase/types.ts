@@ -242,6 +242,8 @@ export type Database = {
       }
       sales: {
         Row: {
+          cash_paid: number | null
+          change_given: number | null
           created_at: string
           customer_id: string | null
           discount_amount: number | null
@@ -255,6 +257,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          cash_paid?: number | null
+          change_given?: number | null
           created_at?: string
           customer_id?: string | null
           discount_amount?: number | null
@@ -268,6 +272,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          cash_paid?: number | null
+          change_given?: number | null
           created_at?: string
           customer_id?: string | null
           discount_amount?: number | null
