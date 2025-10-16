@@ -118,6 +118,9 @@ export function useCreateSaleMutation() {
       changeGiven?: number;
       notes?: string;
     }) => {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) throw new Error("User not authenticated");
+
       const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
       const taxAmount = (subtotal - discountAmount) * 0.15;
       const totalAmount = subtotal - discountAmount + taxAmount;
@@ -134,7 +137,8 @@ export function useCreateSaleMutation() {
           payment_method: paymentMethod,
           cash_paid: cashPaid,
           change_given: changeGiven,
-          notes
+          notes,
+          processed_by: user.id,
         })
         .select()
         .single();

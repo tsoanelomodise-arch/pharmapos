@@ -37,7 +37,22 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
         .single();
 
       if (saleError) throw saleError;
-      return sale;
+
+      // Fetch processor profile if processed_by exists
+      let processorName = 'N/A';
+      if (sale.processed_by) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', sale.processed_by)
+          .single();
+        
+        if (profile?.full_name) {
+          processorName = profile.full_name;
+        }
+      }
+
+      return { ...sale, processor_name: processorName };
     },
     enabled: open && !!saleId
   });
@@ -189,6 +204,10 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
             <div className="line text-sm">
               <span><strong>Status:</strong></span>
               <span>{saleData.payment_status.toUpperCase()}</span>
+            </div>
+            <div className="line text-sm">
+              <span><strong>Processed By:</strong></span>
+              <span>{saleData.processor_name}</span>
             </div>
           </div>
 

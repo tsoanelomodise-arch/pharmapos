@@ -61,6 +61,7 @@ export type Database = {
           created_at: string
           customer_id: string
           dispensed_at: string | null
+          dispensed_by: string | null
           doctor_license: string | null
           doctor_name: string
           id: string
@@ -74,6 +75,7 @@ export type Database = {
           created_at?: string
           customer_id: string
           dispensed_at?: string | null
+          dispensed_by?: string | null
           doctor_license?: string | null
           doctor_name: string
           id?: string
@@ -87,6 +89,7 @@ export type Database = {
           created_at?: string
           customer_id?: string
           dispensed_at?: string | null
+          dispensed_by?: string | null
           doctor_license?: string | null
           doctor_name?: string
           id?: string
@@ -252,6 +255,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status: string | null
           prescription_id: string | null
+          processed_by: string | null
           tax_amount: number | null
           total_amount: number
           updated_at: string
@@ -267,6 +271,7 @@ export type Database = {
           payment_method: Database["public"]["Enums"]["payment_method"]
           payment_status?: string | null
           prescription_id?: string | null
+          processed_by?: string | null
           tax_amount?: number | null
           total_amount: number
           updated_at?: string
@@ -282,6 +287,7 @@ export type Database = {
           payment_method?: Database["public"]["Enums"]["payment_method"]
           payment_status?: string | null
           prescription_id?: string | null
+          processed_by?: string | null
           tax_amount?: number | null
           total_amount?: number
           updated_at?: string

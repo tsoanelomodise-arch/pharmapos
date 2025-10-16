@@ -100,6 +100,9 @@ export function useProcessPrescription() {
   
   return useMutation({
     mutationFn: async (prescriptionId: string) => {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) throw new Error("User not authenticated");
+
       // First, fetch the prescription with all details
       const { data: prescription, error: fetchError } = await supabase
         .from('prescriptions')
@@ -137,7 +140,8 @@ export function useProcessPrescription() {
           tax_amount: taxAmount,
           payment_method: 'card', // Default to card for prescription sales
           payment_status: 'completed',
-          notes: `Prescription dispensed - Dr. ${prescription.doctor_name}`
+          notes: `Prescription dispensed - Dr. ${prescription.doctor_name}`,
+          processed_by: user.id,
         })
         .select()
         .single();
@@ -190,7 +194,8 @@ export function useProcessPrescription() {
         .from('prescriptions')
         .update({ 
           status: 'dispensed',
-          dispensed_at: new Date().toISOString()
+          dispensed_at: new Date().toISOString(),
+          dispensed_by: user.id,
         })
         .eq('id', prescriptionId)
         .select()

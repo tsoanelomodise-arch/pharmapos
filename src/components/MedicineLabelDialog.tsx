@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import type { Prescription } from "@/hooks/usePrescriptions";
 
 interface MedicineLabelDialogProps {
@@ -10,6 +11,27 @@ interface MedicineLabelDialogProps {
 
 export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) {
   const [open, setOpen] = useState(false);
+  const [dispensedBy, setDispensedBy] = useState<string>("N/A");
+
+  useEffect(() => {
+    const fetchDispensedBy = async () => {
+      if (prescription.dispensed_by) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', prescription.dispensed_by)
+          .single();
+        
+        if (profile?.full_name) {
+          setDispensedBy(profile.full_name);
+        }
+      }
+    };
+    
+    if (open) {
+      fetchDispensedBy();
+    }
+  }, [open, prescription.dispensed_by]);
 
   const handlePrint = () => {
     const printWindow = window.open('', '_blank');
@@ -253,6 +275,15 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
                 <span className="doctor-line">{prescription.doctor_name}</span>
               </div>
             </div>
+
+            {prescription.status === 'dispensed' && (
+              <div className="doctor-section" style={{ marginTop: '0.1in', fontSize: '9pt' }}>
+                <div className="doctor-field">
+                  <span className="font-bold">Dispensed By:</span>
+                  <span className="doctor-line">{dispensedBy}</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
