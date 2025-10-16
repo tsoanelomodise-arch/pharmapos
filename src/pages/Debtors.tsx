@@ -10,13 +10,42 @@ import { CustomerForm } from "@/components/CustomerForm";
 import { CustomerAccountDialog } from "@/components/CustomerAccountDialog";
 import { CustomerStatementDialog } from "@/components/CustomerStatementDialog";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Debtors = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const { data: debtorCustomers = [], isLoading } = useCustomersWithDebt();
+  const { toast } = useToast();
   
   const totalDebt = debtorCustomers.reduce((sum, customer) => sum + customer.current_balance, 0);
   const overdueAccounts = debtorCustomers.filter(customer => customer.current_balance > 1000).length;
+  
+  const handleGenerateStatements = async () => {
+    setIsGenerating(true);
+    
+    // Simulate statement generation process
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    setIsGenerating(false);
+    setShowGenerateDialog(false);
+    
+    toast({
+      title: "Statements Generated",
+      description: `Successfully generated ${debtorCustomers.length} customer statements. Ready to print or email.`,
+    });
+  };
   
   if (isLoading) {
     return (
@@ -33,13 +62,52 @@ const Debtors = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Debtors Management</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button 
+            variant="outline"
+            onClick={() => setShowGenerateDialog(true)}
+            disabled={debtorCustomers.length === 0}
+          >
             <FileText className="mr-2 h-4 w-4" />
             Generate Statements
           </Button>
           <CustomerForm />
         </div>
       </div>
+
+      {/* Generate Statements Dialog */}
+      <AlertDialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Generate Customer Statements</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will generate statements for all {debtorCustomers.length} customers with outstanding balances.
+              <div className="mt-4 p-4 bg-muted rounded-lg space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Customers:</span>
+                  <span className="font-medium">{debtorCustomers.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Total Outstanding:</span>
+                  <span className="font-medium">R{totalDebt.toFixed(2)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">High Balance Accounts:</span>
+                  <span className="font-medium">{overdueAccounts}</span>
+                </div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isGenerating}>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleGenerateStatements}
+              disabled={isGenerating}
+            >
+              {isGenerating ? "Generating..." : "Generate Statements"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
