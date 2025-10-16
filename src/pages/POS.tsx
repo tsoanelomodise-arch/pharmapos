@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +11,9 @@ import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
+import { useLocation } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CartItem {
   id: string;
@@ -21,16 +24,57 @@ interface CartItem {
 }
 
 const POS = () => {
+  const location = useLocation();
+  const queryClient = useQueryClient();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit' | 'insurance'>('cash');
   const [cashPaid, setCashPaid] = useState<string>("");
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
+  const [activePrescription, setActivePrescription] = useState<any>(null);
   
   const { data: searchResults = [] } = useProductSearch(searchTerm);
   const { data: recentSales = [] } = useRecentSales(5);
   const createSaleMutation = useCreateSaleMutation();
+
+  // Pre-populate cart from prescription
+  useEffect(() => {
+    const prescription = location.state?.prescription;
+    if (prescription && prescription.medications) {
+      setActivePrescription(prescription);
+      
+      // Fetch product details for medications
+      const loadPrescriptionItems = async () => {
+        const medications = prescription.medications as any[];
+        const productIds = medications.map((med: any) => med.product_id);
+        
+        const { data: products } = await supabase
+          .from('products')
+          .select('id, name')
+          .in('id', productIds);
+        
+        const prescriptionItems: CartItem[] = medications.map((med: any) => {
+          const product = products?.find(p => p.id === med.product_id);
+          return {
+            id: med.product_id,
+            name: product?.name || `Product ${med.product_id}`,
+            price: parseFloat(med.unit_price),
+            quantity: parseInt(med.quantity),
+            total: parseFloat(med.unit_price) * parseInt(med.quantity)
+          };
+        });
+        
+        setCartItems(prescriptionItems);
+        toast({
+          title: "Prescription loaded",
+          description: `Processing prescription for ${prescription.customers?.name || 'patient'}`
+        });
+      };
+      
+      loadPrescriptionItems();
+    }
+  }, [location.state]);
 
   const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
   const tax = subtotal * 0.15;
@@ -122,15 +166,34 @@ const POS = () => {
     createSaleMutation.mutate({
       items,
       paymentMethod,
+      customerId: activePrescription?.customer_id,
+      prescriptionId: activePrescription?.id,
       cashPaid: paymentMethod === 'cash' ? cashAmount : undefined,
       changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
-      notes: `POS Sale - ${paymentMethod} payment`
+      notes: activePrescription 
+        ? `Prescription dispensed - Dr. ${activePrescription.doctor_name}` 
+        : `POS Sale - ${paymentMethod} payment`
     }, {
-      onSuccess: (sale) => {
+      onSuccess: async (sale) => {
+        // Update prescription status if this was a prescription sale
+        if (activePrescription) {
+          await supabase
+            .from('prescriptions')
+            .update({ 
+              status: 'dispensed',
+              dispensed_at: new Date().toISOString()
+            })
+            .eq('id', activePrescription.id);
+          
+          queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
+          queryClient.invalidateQueries({ queryKey: ['pending-prescriptions'] });
+        }
+        
         setLastSaleId(sale.id);
         setShowLastReceipt(true);
         clearCart();
         setCashPaid("");
+        setActivePrescription(null);
         toast({ 
           title: "Payment processed successfully!", 
           description: paymentMethod === 'cash' 

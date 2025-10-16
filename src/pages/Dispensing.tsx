@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, Plus, User, FileText, AlertTriangle, CheckCircle, Edit2 } from "lucide-react";
-import { usePendingPrescriptions, usePrescriptions, useRecentPatients, useProcessPrescription } from "@/hooks/usePrescriptions";
+import { usePendingPrescriptions, usePrescriptions, useRecentPatients } from "@/hooks/usePrescriptions";
 import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useNavigate } from "react-router-dom";
 import { PrescriptionForm } from "@/components/PrescriptionForm";
@@ -22,10 +22,9 @@ const Dispensing = () => {
   const { data: allPrescriptions = [] } = usePrescriptions();
   const { data: patientResults = [] } = useCustomerSearch(patientSearch);
   const { data: recentPatients = [] } = useRecentPatients();
-  const processPrescrition = useProcessPrescription();
 
-  const handleProcessPrescription = (prescriptionId: string) => {
-    processPrescrition.mutate(prescriptionId);
+  const handleProcessPrescription = (prescription: any) => {
+    navigate('/pos', { state: { prescription } });
   };
 
   if (isLoading) {
@@ -105,10 +104,9 @@ const Dispensing = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => handleProcessPrescription(prescription.id)}
-                        disabled={processPrescrition.isPending}
+                        onClick={() => handleProcessPrescription(prescription)}
                       >
-                        {processPrescrition.isPending ? 'Processing...' : 'Process'}
+                        Process
                       </Button>
                       <PrescriptionForm prescription={prescription} />
                     </div>

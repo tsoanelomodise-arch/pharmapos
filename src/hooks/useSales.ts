@@ -100,7 +100,8 @@ export function useCreateSaleMutation() {
   
   return useMutation({
     mutationFn: async ({ 
-      customerId, 
+      customerId,
+      prescriptionId,
       items, 
       paymentMethod, 
       discountAmount = 0,
@@ -109,6 +110,7 @@ export function useCreateSaleMutation() {
       notes 
     }: {
       customerId?: string;
+      prescriptionId?: string;
       items: Array<{ productId: string; quantity: number; unitPrice: number }>;
       paymentMethod: 'cash' | 'card' | 'credit' | 'insurance';
       discountAmount?: number;
@@ -125,6 +127,7 @@ export function useCreateSaleMutation() {
         .from('sales')
         .insert({
           customer_id: customerId,
+          prescription_id: prescriptionId,
           total_amount: totalAmount,
           discount_amount: discountAmount,
           tax_amount: taxAmount,
