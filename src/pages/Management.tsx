@@ -21,6 +21,7 @@ import { DoctorForm } from "@/components/DoctorForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
 import { ModulePermissionsManager } from "@/components/ModulePermissionsManager";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useUserModules } from "@/hooks/useModulePermissions";
 import { format } from "date-fns";
 import {
   AlertDialog,
@@ -36,6 +37,7 @@ import {
 
 export default function Management() {
   const { data: role } = useUserRole();
+  const { data: userModules = [] } = useUserModules();
   const [patientSearch, setPatientSearch] = useState("");
   const [doctorSearch, setDoctorSearch] = useState("");
   const [userSearch, setUserSearch] = useState("");
@@ -48,6 +50,8 @@ export default function Management() {
 
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
   const isOwner = role === 'owner';
+  const canAccessPatients = userModules.includes('patients');
+  const canAccessDoctors = userModules.includes('doctors');
 
   const filteredPatients = customers?.filter(customer =>
     customer.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
@@ -86,23 +90,33 @@ export default function Management() {
     <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Management</h1>
-        <p className="text-muted-foreground">Manage patients and doctors</p>
+        <p className="text-muted-foreground">
+          {canAccessPatients || canAccessDoctors 
+            ? "Manage patients and doctors" 
+            : "User and module management"}
+        </p>
       </div>
 
-      <Tabs defaultValue="patients" className="w-full">
+      <Tabs defaultValue={canAccessPatients ? "patients" : isOwner ? "users" : "patients"} className="w-full">
         <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : 'grid-cols-3'}`}>
-          <TabsTrigger value="patients">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Patients
-          </TabsTrigger>
-          <TabsTrigger value="doctors">
-            <Stethoscope className="h-4 w-4 mr-2" />
-            Doctors
-          </TabsTrigger>
-          <TabsTrigger value="users">
-            <Users className="h-4 w-4 mr-2" />
-            Users
-          </TabsTrigger>
+          {canAccessPatients && (
+            <TabsTrigger value="patients">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Patients
+            </TabsTrigger>
+          )}
+          {canAccessDoctors && (
+            <TabsTrigger value="doctors">
+              <Stethoscope className="h-4 w-4 mr-2" />
+              Doctors
+            </TabsTrigger>
+          )}
+          {isOwner && (
+            <TabsTrigger value="users">
+              <Users className="h-4 w-4 mr-2" />
+              Users
+            </TabsTrigger>
+          )}
           {isOwner && (
             <TabsTrigger value="permissions">
               <Shield className="h-4 w-4 mr-2" />
@@ -111,7 +125,8 @@ export default function Management() {
           )}
         </TabsList>
 
-        <TabsContent value="patients" className="space-y-4">
+        {canAccessPatients && (
+          <TabsContent value="patients" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -175,9 +190,11 @@ export default function Management() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+          </TabsContent>
+        )}
 
-        <TabsContent value="doctors" className="space-y-4">
+        {canAccessDoctors && (
+          <TabsContent value="doctors" className="space-y-4">
           <Card>
             <CardHeader>
               <div className="flex justify-between items-center">
@@ -265,9 +282,11 @@ export default function Management() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
+          </TabsContent>
+        )}
 
-        <TabsContent value="users" className="space-y-4">
+        {isOwner && (
+          <TabsContent value="users" className="space-y-4">
           {!isOwner ? (
             <Card>
               <CardHeader>
@@ -375,7 +394,8 @@ export default function Management() {
             </CardContent>
           </Card>
           )}
-        </TabsContent>
+          </TabsContent>
+        )}
 
         {isOwner && (
           <TabsContent value="permissions" className="space-y-4">

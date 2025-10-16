@@ -490,6 +490,8 @@ export type Database = {
         | "reports"
         | "management"
         | "help"
+        | "patients"
+        | "doctors"
       app_role: "pharmacist" | "admin" | "manager" | "owner"
       payment_method: "cash" | "card" | "credit" | "insurance"
       product_category:
@@ -635,6 +637,8 @@ export const Constants = {
         "reports",
         "management",
         "help",
+        "patients",
+        "doctors",
       ],
       app_role: ["pharmacist", "admin", "manager", "owner"],
       payment_method: ["cash", "card", "credit", "insurance"],

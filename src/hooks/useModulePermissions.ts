@@ -11,6 +11,8 @@ export type AppModule =
   | 'stock'
   | 'reports'
   | 'management'
+  | 'patients'
+  | 'doctors'
   | 'help';
 
 export interface ModulePermission {

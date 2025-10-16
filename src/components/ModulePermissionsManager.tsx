@@ -14,6 +14,8 @@ const ALL_MODULES: { value: AppModule; label: string; description: string }[] = 
   { value: 'stock', label: 'Stock', description: 'Manage inventory' },
   { value: 'reports', label: 'Reports', description: 'View and generate reports' },
   { value: 'management', label: 'Management', description: 'Manage users and settings' },
+  { value: 'patients', label: 'Patient Management', description: 'View and manage patient records' },
+  { value: 'doctors', label: 'Doctor Management', description: 'View and manage doctor records' },
   { value: 'help', label: 'Help', description: 'Access help documentation' },
 ];
 
