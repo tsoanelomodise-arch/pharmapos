@@ -65,9 +65,9 @@ export function ModulePermissionsManager() {
     <div className="space-y-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground bg-muted/50 p-4 rounded-lg">
         <Shield className="h-5 w-5 text-primary" />
-        <p>
+        <div>
           Control which modules each user can access. Owners always have access to all modules.
-        </p>
+        </div>
       </div>
 
       {users?.map((user) => (

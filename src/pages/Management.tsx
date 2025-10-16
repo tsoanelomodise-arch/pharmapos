@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, UserPlus, Stethoscope, Users, Shield } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
-import { useUsers } from "@/hooks/useUsers";
+import { useUsers, useDeleteUser } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
@@ -44,6 +44,7 @@ export default function Management() {
   const { data: doctors, isLoading: loadingDoctors } = useDoctors();
   const { data: users, isLoading: loadingUsers } = useUsers();
   const deleteDoctor = useDeleteDoctor();
+  const deleteUser = useDeleteUser();
 
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
   const isOwner = role === 'owner';
@@ -338,8 +339,32 @@ export default function Management() {
                             )}
                           </TableCell>
                           <TableCell>{format(new Date(user.created_at), 'PP')}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right space-x-2">
                             <UserRoleDialog user={user} />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete User</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {user.full_name || user.email}? This will permanently remove their account and all associated data. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteUser.mutate(user.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))
