@@ -1,4 +1,4 @@
-import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings } from "lucide-react";
+import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen } from "lucide-react";
 import { NavLink } from "react-router-dom";
 
 import {
@@ -22,6 +22,7 @@ const navigationItems = [
   { title: "Stock Control", url: "/stock", icon: Package },
   { title: "Reports", url: "/reports", icon: Receipt },
   { title: "Management", url: "/management", icon: Settings },
+  { title: "Help", url: "/help", icon: BookOpen },
 ];
 
 export function AppSidebar() {

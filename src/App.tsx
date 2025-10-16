@@ -13,6 +13,7 @@ import Debtors from "./pages/Debtors";
 import Stock from "./pages/Stock";
 import Reports from "./pages/Reports";
 import Management from "./pages/Management";
+import Help from "./pages/Help";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -38,6 +39,7 @@ const App = () => (
                     <Route path="/stock" element={<Stock />} />
                     <Route path="/reports" element={<Reports />} />
                     <Route path="/management" element={<Management />} />
+                    <Route path="/help" element={<Help />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
