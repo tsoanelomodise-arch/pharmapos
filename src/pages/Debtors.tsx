@@ -7,6 +7,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, FileText, AlertCircle, DollarSign, Calendar, Search, Plus, Eye, Edit2, Mail } from "lucide-react";
 import { useCustomersWithDebt } from "@/hooks/useCustomers";
 import { CustomerForm } from "@/components/CustomerForm";
+import { CustomerAccountDialog } from "@/components/CustomerAccountDialog";
+import { CustomerStatementDialog } from "@/components/CustomerStatementDialog";
 import { useState } from "react";
 
 const Debtors = () => {
@@ -144,14 +146,8 @@ const Debtors = () => {
                       </p>
                     </div>
                     <div className="flex flex-col gap-1 ml-4">
-                      <Button size="sm" variant="outline">
-                        <Eye className="mr-2 h-4 w-4" />
-                        View
-                      </Button>
-                      <Button size="sm" variant="outline">
-                        <Mail className="mr-2 h-4 w-4" />
-                        Statement
-                      </Button>
+                      <CustomerAccountDialog customer={customer} />
+                      <CustomerStatementDialog customer={customer} />
                       <CustomerForm customer={customer} />
                     </div>
                   </div>
