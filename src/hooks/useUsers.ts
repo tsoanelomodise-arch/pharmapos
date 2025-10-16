@@ -15,10 +15,10 @@ export function useUsers() {
   return useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // Fetch profiles with their roles
+      // Fetch profiles with email
       const { data: profiles, error: profilesError } = await supabase
         .from('profiles')
-        .select('id, full_name, created_at');
+        .select('id, full_name, email, created_at');
       
       if (profilesError) throw profilesError;
 
@@ -29,21 +29,13 @@ export function useUsers() {
       
       if (rolesError) throw rolesError;
 
-      // Get auth users to get emails
-      const { data, error: usersError } = await supabase.auth.admin.listUsers();
-      
-      if (usersError) throw usersError;
-
-      const authUsers = data.users || [];
-
       // Combine the data
       const usersWithRoles: UserWithRole[] = profiles.map(profile => {
-        const authUser = authUsers.find(u => u.id === profile.id);
         const userRole = roles?.find(r => r.user_id === profile.id);
         
         return {
           id: profile.id,
-          email: authUser?.email || 'N/A',
+          email: profile.email || 'N/A',
           full_name: profile.full_name,
           role: (userRole?.role as UserRole) || null,
           created_at: profile.created_at,
@@ -100,8 +92,11 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Delete user from auth (this will cascade to profiles, roles, etc.)
-      const { error } = await supabase.auth.admin.deleteUser(userId);
+      // Delete from profiles (this will cascade due to foreign key to auth.users)
+      const { error } = await supabase
+        .from('profiles')
+        .delete()
+        .eq('id', userId);
       
       if (error) throw error;
     },
