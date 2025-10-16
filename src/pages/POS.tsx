@@ -349,7 +349,14 @@ const POS = () => {
         <CardContent>
           <div className="space-y-3">
             {recentSales.map((sale) => (
-              <div key={sale.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors">
+              <div 
+                key={sale.id} 
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                onClick={() => {
+                  setLastSaleId(sale.id);
+                  setShowLastReceipt(true);
+                }}
+              >
                 <div>
                   <p className="font-medium">Transaction #{sale.id.slice(-8)}</p>
                   <p className="text-sm text-muted-foreground">
@@ -364,7 +371,8 @@ const POS = () => {
                   <Button 
                     size="sm" 
                     variant="outline"
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setLastSaleId(sale.id);
                       setShowLastReceipt(true);
                     }}
