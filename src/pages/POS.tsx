@@ -110,10 +110,11 @@ const POS = () => {
     }, {
       onSuccess: (sale) => {
         setLastSaleId(sale.id);
+        setShowLastReceipt(true);
         clearCart();
         toast({ 
           title: "Payment processed successfully!", 
-          description: `Transaction #${sale.id.slice(-8)} completed`
+          description: `Transaction #${sale.id.slice(-8)} completed - Receipt ready to print`
         });
       }
     });
