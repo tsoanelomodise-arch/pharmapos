@@ -11,6 +11,7 @@ import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useNavigate } from "react-router-dom";
 import { PrescriptionForm } from "@/components/PrescriptionForm";
 import { CustomerForm } from "@/components/CustomerForm";
+import { MedicineLabelDialog } from "@/components/MedicineLabelDialog";
 
 const Dispensing = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -100,6 +101,7 @@ const Dispensing = () => {
                       <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'}>
                         {prescription.status}
                       </Badge>
+                      <MedicineLabelDialog prescription={prescription} />
                       <Button 
                         size="sm" 
                         variant="outline"
