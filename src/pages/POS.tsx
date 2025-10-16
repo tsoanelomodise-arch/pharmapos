@@ -56,12 +56,16 @@ const POS = () => {
         
         const prescriptionItems: CartItem[] = medications.map((med: any) => {
           const product = products?.find(p => p.id === med.product_id);
+          // Handle both number and string types, with proper fallbacks
+          const unitPrice = typeof med.unit_price === 'number' ? med.unit_price : parseFloat(med.unit_price) || 0;
+          const quantity = typeof med.quantity === 'number' ? med.quantity : parseInt(med.quantity) || 1;
+          
           return {
             id: med.product_id,
             name: product?.name || `Product ${med.product_id}`,
-            price: parseFloat(med.unit_price),
-            quantity: parseInt(med.quantity),
-            total: parseFloat(med.unit_price) * parseInt(med.quantity)
+            price: unitPrice,
+            quantity: quantity,
+            total: unitPrice * quantity
           };
         });
         
@@ -283,23 +287,23 @@ const POS = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 border rounded-lg">
+                {cartItems.map((item, index) => (
+                  <div key={`${item.id}-${index}`} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex-1">
                       <h4 className="font-medium">{item.name}</h4>
-                      <p className="text-sm text-muted-foreground">R{item.price.toFixed(2)} each</p>
+                      <p className="text-sm text-muted-foreground">R{(item.price || 0).toFixed(2)} each</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <Button size="sm" variant="outline" onClick={() => updateQuantity(item.id, item.quantity - 1)}>
                         <Minus className="h-3 w-3" />
                       </Button>
-                      <span className="w-8 text-center">{item.quantity}</span>
+                      <span className="w-8 text-center">{item.quantity || 0}</span>
                       <Button size="sm" variant="outline" onClick={() => updateQuantity(item.id, item.quantity + 1)}>
                         <Plus className="h-3 w-3" />
                       </Button>
                     </div>
                     <div className="text-right ml-4">
-                      <p className="font-medium">R{item.total.toFixed(2)}</p>
+                      <p className="font-medium">R{(item.total || 0).toFixed(2)}</p>
                       <Button size="sm" variant="ghost" onClick={() => removeFromCart(item.id)}>
                         <Trash2 className="h-3 w-3" />
                       </Button>
