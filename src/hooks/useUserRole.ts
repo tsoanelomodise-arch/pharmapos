@@ -23,6 +23,8 @@ export function useUserRole() {
       return (data?.[0]?.role as UserRole) || null;
     },
     enabled: !!user,
+    staleTime: 0, // Always consider data stale to refetch on mount
+    refetchOnMount: true, // Refetch when component mounts
   });
 }
 
