@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus } from "lucide-react";
+import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useNavigate } from "react-router-dom";
 
@@ -21,13 +21,19 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 p-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        <div className="flex gap-2">
-          <Badge variant="secondary">Today: {new Date().toLocaleDateString()}</Badge>
-          <Button onClick={() => navigate('/pos')}>
-            <Plus className="mr-2 h-4 w-4" />
+        <div>
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Dashboard</h1>
+          <p className="text-muted-foreground mt-1">Welcome back! Here's what's happening today.</p>
+        </div>
+        <div className="flex gap-3">
+          <Badge variant="secondary" className="px-4 py-2 text-sm">
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {new Date().toLocaleDateString('en-ZA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+          </Badge>
+          <Button onClick={() => navigate('/pos')} size="lg" className="shadow-lg">
+            <Plus className="mr-2 h-5 w-5" />
             New Sale
           </Button>
         </div>
@@ -35,163 +41,179 @@ const Dashboard = () => {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Prescriptions Today</CardTitle>
-            <Pill className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:border-primary/40 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Prescriptions Today</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+              <Pill className="h-5 w-5 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
             <div 
-              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              className="text-3xl font-bold cursor-pointer hover:text-primary transition-colors" 
               onClick={() => navigate('/dispensing')}
             >
               {stats?.prescriptionsToday || 0}
             </div>
-            <p className="text-xs text-muted-foreground">Processed today</p>
+            <p className="text-xs text-muted-foreground mt-1">Processed today</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Sales Today</CardTitle>
-            <ShoppingCart className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Sales Today</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <ShoppingCart className="h-5 w-5 text-emerald-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div 
-              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              className="text-3xl font-bold cursor-pointer hover:text-emerald-600 transition-colors" 
               onClick={() => navigate('/pos')}
             >
               R{stats?.salesToday.toFixed(2) || '0.00'}
             </div>
-            <p className="text-xs text-muted-foreground">Total revenue today</p>
+            <p className="text-xs text-muted-foreground mt-1">Total revenue today</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Low Stock Items</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-orange-500/5 to-orange-500/10 border-orange-500/20 hover:border-orange-500/40 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Low Stock Items</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center">
+              <Package className="h-5 w-5 text-orange-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div 
-              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              className="text-3xl font-bold cursor-pointer hover:text-orange-600 transition-colors" 
               onClick={() => navigate('/stock')}
             >
               {stats?.lowStockItems || 0}
             </div>
-            <p className="text-xs text-destructive">Requires attention</p>
+            <p className="text-xs text-destructive mt-1 font-medium">Requires attention</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Outstanding Debtors</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+        <Card className="bg-gradient-to-br from-blue-500/5 to-blue-500/10 border-blue-500/20 hover:border-blue-500/40 transition-colors">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-sm font-medium text-muted-foreground">Outstanding Debtors</CardTitle>
+            <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center">
+              <Users className="h-5 w-5 text-blue-600" />
+            </div>
           </CardHeader>
           <CardContent>
             <div 
-              className="text-2xl font-bold cursor-pointer hover:text-primary" 
+              className="text-3xl font-bold cursor-pointer hover:text-blue-600 transition-colors" 
               onClick={() => navigate('/debtors')}
             >
               R{stats?.totalDebt.toFixed(2) || '0.00'}
             </div>
-            <p className="text-xs text-muted-foreground">{stats?.debtorsCount || 0} overdue accounts</p>
+            <p className="text-xs text-muted-foreground mt-1">{stats?.debtorsCount || 0} overdue accounts</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Quick Actions & Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-destructive/10 to-destructive/5 border-b">
             <CardTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5" />
+              <AlertTriangle className="h-5 w-5 text-destructive" />
               Alerts & Notifications
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-destructive/10 rounded-lg">
+          <CardContent className="space-y-3 pt-6">
+            <div className="flex items-center justify-between p-4 bg-destructive/5 border border-destructive/20 rounded-xl hover:border-destructive/40 transition-colors">
               <div>
-                <p className="text-sm font-medium">{stats?.expiringItems || 0} items expire within 30 days</p>
-                <p className="text-xs text-muted-foreground">Check stock control for details</p>
+                <p className="text-sm font-semibold">{stats?.expiringItems || 0} items expire within 30 days</p>
+                <p className="text-xs text-muted-foreground mt-1">Check stock control for details</p>
               </div>
               <Badge 
                 variant="destructive" 
-                className="cursor-pointer hover:bg-destructive/80" 
+                className="cursor-pointer hover:bg-destructive/80 px-4 py-1.5 shadow-sm" 
                 onClick={() => navigate('/stock')}
               >
                 Urgent
               </Badge>
             </div>
             <div 
-              className="flex items-center justify-between p-3 bg-accent rounded-lg cursor-pointer hover:bg-accent/80 transition-colors"
+              className="flex items-center justify-between p-4 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors border border-transparent hover:border-border"
               onClick={() => navigate('/reports')}
             >
               <div>
-                <p className="text-sm font-medium">Medical aid claim pending</p>
-                <p className="text-xs text-muted-foreground">Discovery Health - Patient ID: 12345</p>
+                <p className="text-sm font-semibold">Medical aid claim pending</p>
+                <p className="text-xs text-muted-foreground mt-1">Discovery Health - Patient ID: 12345</p>
               </div>
-              <Badge variant="secondary">Pending</Badge>
+              <Badge variant="accent" className="shadow-sm">Pending</Badge>
             </div>
             <div 
-              className="flex items-center justify-between p-3 bg-accent rounded-lg cursor-pointer hover:bg-accent/80 transition-colors"
+              className="flex items-center justify-between p-4 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors border border-transparent hover:border-border"
               onClick={() => navigate('/stock')}
             >
               <div>
-                <p className="text-sm font-medium">Stock delivery expected today</p>
-                <p className="text-xs text-muted-foreground">Supplier: Pharma Distributors</p>
+                <p className="text-sm font-semibold">Stock delivery expected today</p>
+                <p className="text-xs text-muted-foreground mt-1">Supplier: Pharma Distributors</p>
               </div>
-              <Badge variant="secondary">Info</Badge>
+              <Badge variant="success" className="shadow-sm">Info</Badge>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
+        <Card className="overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
             <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
+              <TrendingUp className="h-5 w-5 text-primary" />
               Recent Activity
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2 pt-6">
             <div 
-              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-primary/5 transition-all border border-transparent hover:border-primary/20 hover:shadow-sm"
               onClick={() => navigate('/dispensing')}
             >
-              <Pill className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm">Prescription dispensed</p>
-                <p className="text-xs text-muted-foreground">Patient: Sarah Johnson - 09:45</p>
+              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                <Pill className="h-5 w-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Prescription dispensed</p>
+                <p className="text-xs text-muted-foreground truncate">Patient: Sarah Johnson - 09:45</p>
               </div>
             </div>
             <div 
-              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-emerald-500/5 transition-all border border-transparent hover:border-emerald-500/20 hover:shadow-sm"
               onClick={() => navigate('/pos')}
             >
-              <ShoppingCart className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm">OTC sale completed</p>
-                <p className="text-xs text-muted-foreground">Amount: R125.50 - 09:30</p>
+              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center flex-shrink-0">
+                <ShoppingCart className="h-5 w-5 text-emerald-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">OTC sale completed</p>
+                <p className="text-xs text-muted-foreground truncate">Amount: R125.50 - 09:30</p>
               </div>
             </div>
             <div 
-              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-orange-500/5 transition-all border border-transparent hover:border-orange-500/20 hover:shadow-sm"
               onClick={() => navigate('/stock')}
             >
-              <Package className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm">Stock received</p>
-                <p className="text-xs text-muted-foreground">50 items from ABC Pharma - 08:15</p>
+              <div className="h-10 w-10 rounded-full bg-orange-500/10 flex items-center justify-center flex-shrink-0">
+                <Package className="h-5 w-5 text-orange-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Stock received</p>
+                <p className="text-xs text-muted-foreground truncate">50 items from ABC Pharma - 08:15</p>
               </div>
             </div>
             <div 
-              className="flex items-center gap-3 p-2 cursor-pointer hover:bg-accent rounded-md transition-colors"
+              className="flex items-center gap-3 p-3 rounded-xl cursor-pointer hover:bg-blue-500/5 transition-all border border-transparent hover:border-blue-500/20 hover:shadow-sm"
               onClick={() => navigate('/debtors')}
             >
-              <Users className="h-4 w-4 text-primary" />
-              <div className="flex-1">
-                <p className="text-sm">Payment received</p>
-                <p className="text-xs text-muted-foreground">Account: City Clinic - R1,250 - 07:45</p>
+              <div className="h-10 w-10 rounded-full bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium">Payment received</p>
+                <p className="text-xs text-muted-foreground truncate">Account: City Clinic - R1,250 - 07:45</p>
               </div>
             </div>
           </CardContent>
