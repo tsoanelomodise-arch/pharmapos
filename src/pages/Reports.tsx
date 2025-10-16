@@ -1,13 +1,28 @@
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, FileText, Download, Calendar, TrendingUp, Users, Package, DollarSign } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { BarChart3, FileText, Download, Calendar, TrendingUp, Users, Package, DollarSign, Receipt, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
+import { useAllSales } from "@/hooks/useSales";
+import { ReceiptDialog } from "@/components/ReceiptDialog";
+import { format } from "date-fns";
 
 const Reports = () => {
   const navigate = useNavigate();
+  const [paymentMethodFilter, setPaymentMethodFilter] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
+  
+  const { data: allSales = [] } = useAllSales({
+    paymentMethod: paymentMethodFilter,
+  });
 
   const handleExportReport = (reportType: string) => {
     toast({ 
@@ -15,6 +30,18 @@ const Reports = () => {
       description: "Report will be downloaded shortly" 
     });
   };
+
+  const handleViewTransaction = (saleId: string) => {
+    setSelectedSaleId(saleId);
+    setShowReceipt(true);
+  };
+
+  const filteredSales = allSales.filter(sale => {
+    const matchesSearch = searchTerm === '' || 
+      sale.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      sale.notes?.toLowerCase().includes(searchTerm.toLowerCase());
+    return matchesSearch;
+  });
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -28,6 +55,7 @@ const Reports = () => {
       <Tabs defaultValue="dashboard" className="space-y-6">
         <TabsList>
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
+          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
           <TabsTrigger value="sales">Sales Reports</TabsTrigger>
           <TabsTrigger value="dispensing">Dispensing Reports</TabsTrigger>
           <TabsTrigger value="stock">Stock Reports</TabsTrigger>
@@ -141,6 +169,122 @@ const Reports = () => {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="transactions" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>All Transactions</CardTitle>
+                <div className="flex gap-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search transactions..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9 w-64"
+                    />
+                  </div>
+                  <Select value={paymentMethodFilter} onValueChange={setPaymentMethodFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Methods</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                      <SelectItem value="card">Card</SelectItem>
+                      <SelectItem value="credit">Credit</SelectItem>
+                      <SelectItem value="insurance">Medical Aid</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button onClick={() => handleExportReport('Transactions')}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export
+                  </Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Transaction ID</TableHead>
+                    <TableHead>Date & Time</TableHead>
+                    <TableHead>Payment Method</TableHead>
+                    <TableHead>Amount</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Cash Paid</TableHead>
+                    <TableHead>Change</TableHead>
+                    <TableHead className="text-right">Action</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredSales.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
+                        <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>No transactions found</p>
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    filteredSales.map((sale) => (
+                      <TableRow 
+                        key={sale.id} 
+                        className="cursor-pointer hover:bg-accent"
+                        onClick={() => handleViewTransaction(sale.id)}
+                      >
+                        <TableCell className="font-mono text-sm">
+                          #{sale.id.slice(-8)}
+                        </TableCell>
+                        <TableCell>
+                          <div>
+                            <p className="font-medium">
+                              {format(new Date(sale.created_at), 'MMM dd, yyyy')}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {format(new Date(sale.created_at), 'hh:mm a')}
+                            </p>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="capitalize">
+                            {sale.payment_method === 'insurance' ? 'Medical Aid' : sale.payment_method}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          R{sale.total_amount.toFixed(2)}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={sale.payment_status === 'completed' ? 'secondary' : 'destructive'}>
+                            {sale.payment_status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {sale.cash_paid ? `R${sale.cash_paid.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell>
+                          {sale.change_given ? `R${sale.change_given.toFixed(2)}` : '-'}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button 
+                            size="sm" 
+                            variant="ghost"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleViewTransaction(sale.id);
+                            }}
+                          >
+                            <Receipt className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="sales" className="space-y-6">
@@ -427,6 +571,15 @@ const Reports = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Receipt Dialog */}
+      {selectedSaleId && (
+        <ReceiptDialog
+          saleId={selectedSaleId}
+          open={showReceipt}
+          onOpenChange={setShowReceipt}
+        />
+      )}
     </div>
   );
 };

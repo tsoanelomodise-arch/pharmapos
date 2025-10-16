@@ -61,6 +61,40 @@ export function useRecentSales(limit = 10) {
   });
 }
 
+export function useAllSales(filters?: {
+  paymentMethod?: string;
+  startDate?: string;
+  endDate?: string;
+  searchTerm?: string;
+}) {
+  return useQuery({
+    queryKey: ['all-sales', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('sales')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (filters?.paymentMethod && filters.paymentMethod !== 'all') {
+        query = query.eq('payment_method', filters.paymentMethod as 'cash' | 'card' | 'credit' | 'insurance');
+      }
+      
+      if (filters?.startDate) {
+        query = query.gte('created_at', filters.startDate);
+      }
+      
+      if (filters?.endDate) {
+        query = query.lte('created_at', filters.endDate);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      return data as Sale[];
+    }
+  });
+}
+
 export function useCreateSaleMutation() {
   const queryClient = useQueryClient();
   
