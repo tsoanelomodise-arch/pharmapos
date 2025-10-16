@@ -45,6 +45,7 @@ export default function Management() {
   const deleteDoctor = useDeleteDoctor();
 
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
+  const isOwner = role === 'owner';
 
   const filteredPatients = customers?.filter(customer =>
     customer.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
@@ -259,16 +260,26 @@ export default function Management() {
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <div className="flex justify-between items-center">
-                <div>
-                  <CardTitle>User Management</CardTitle>
-                  <CardDescription>View and manage user roles and permissions</CardDescription>
+          {!isOwner ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Access Denied</CardTitle>
+                <CardDescription>
+                  Only owners can manage user accounts and roles.
+                </CardDescription>
+              </CardHeader>
+            </Card>
+          ) : (
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <CardTitle>User Management</CardTitle>
+                    <CardDescription>View and manage user roles and permissions</CardDescription>
+                  </div>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
+              </CardHeader>
+              <CardContent>
               <div className="mb-4">
                 <div className="relative">
                   <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -331,6 +342,7 @@ export default function Management() {
               </div>
             </CardContent>
           </Card>
+          )}
         </TabsContent>
       </Tabs>
     </div>
