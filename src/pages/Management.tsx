@@ -11,12 +11,16 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Trash2, Search, UserPlus, Stethoscope } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Trash2, Search, UserPlus, Stethoscope, Users } from "lucide-react";
 import { useCustomers } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
+import { useUsers } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
+import { UserRoleDialog } from "@/components/UserRoleDialog";
 import { useUserRole } from "@/hooks/useUserRole";
+import { format } from "date-fns";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,9 +37,11 @@ export default function Management() {
   const { data: role } = useUserRole();
   const [patientSearch, setPatientSearch] = useState("");
   const [doctorSearch, setDoctorSearch] = useState("");
+  const [userSearch, setUserSearch] = useState("");
   
   const { data: customers, isLoading: loadingCustomers } = useCustomers();
   const { data: doctors, isLoading: loadingDoctors } = useDoctors();
+  const { data: users, isLoading: loadingUsers } = useUsers();
   const deleteDoctor = useDeleteDoctor();
 
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
@@ -50,6 +56,12 @@ export default function Management() {
     doctor.name.toLowerCase().includes(doctorSearch.toLowerCase()) ||
     doctor.license_number?.toLowerCase().includes(doctorSearch.toLowerCase()) ||
     doctor.specialization?.toLowerCase().includes(doctorSearch.toLowerCase())
+  );
+
+  const filteredUsers = users?.filter(user =>
+    user.email.toLowerCase().includes(userSearch.toLowerCase()) ||
+    user.full_name?.toLowerCase().includes(userSearch.toLowerCase()) ||
+    user.role?.toLowerCase().includes(userSearch.toLowerCase())
   );
 
   if (!isAdmin) {
@@ -75,7 +87,7 @@ export default function Management() {
       </div>
 
       <Tabs defaultValue="patients" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="patients">
             <UserPlus className="h-4 w-4 mr-2" />
             Patients
@@ -83,6 +95,10 @@ export default function Management() {
           <TabsTrigger value="doctors">
             <Stethoscope className="h-4 w-4 mr-2" />
             Doctors
+          </TabsTrigger>
+          <TabsTrigger value="users">
+            <Users className="h-4 w-4 mr-2" />
+            Users
           </TabsTrigger>
         </TabsList>
 
@@ -231,6 +247,81 @@ export default function Management() {
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialog>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="users" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-center">
+                <div>
+                  <CardTitle>User Management</CardTitle>
+                  <CardDescription>View and manage user roles and permissions</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search users..."
+                    value={userSearch}
+                    onChange={(e) => setUserSearch(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Role</TableHead>
+                      <TableHead>Joined</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {loadingUsers ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center">Loading...</TableCell>
+                      </TableRow>
+                    ) : filteredUsers?.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center">No users found</TableCell>
+                      </TableRow>
+                    ) : (
+                      filteredUsers?.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell className="font-medium">{user.full_name || "—"}</TableCell>
+                          <TableCell>{user.email}</TableCell>
+                          <TableCell>
+                            {user.role ? (
+                              <Badge variant={
+                                user.role === 'owner' ? 'default' :
+                                user.role === 'admin' || user.role === 'manager' ? 'secondary' :
+                                'outline'
+                              }>
+                                {user.role}
+                              </Badge>
+                            ) : (
+                              <span className="text-muted-foreground">No role</span>
+                            )}
+                          </TableCell>
+                          <TableCell>{format(new Date(user.created_at), 'PP')}</TableCell>
+                          <TableCell className="text-right">
+                            <UserRoleDialog user={user} />
                           </TableCell>
                         </TableRow>
                       ))
