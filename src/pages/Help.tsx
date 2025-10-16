@@ -2,11 +2,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings } from "lucide-react";
-import dashboardImg from "@/assets/help-dashboard.jpg";
-import dispensingImg from "@/assets/help-dispensing.jpg";
-import posImg from "@/assets/help-pos.jpg";
-import stockImg from "@/assets/help-stock.jpg";
-import managementImg from "@/assets/help-management.jpg";
 
 export default function Help() {
   return (
@@ -109,7 +104,6 @@ export default function Help() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <img src={dashboardImg} alt="Dashboard Screenshot" className="w-full rounded-lg border" />
                 <div className="space-y-3">
                   <h4 className="font-semibold">What you'll see:</h4>
                   <ul className="space-y-2 text-sm">
@@ -140,7 +134,6 @@ export default function Help() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <img src={dispensingImg} alt="Dispensing Screenshot" className="w-full rounded-lg border" />
                 <div className="space-y-3">
                   <h4 className="font-semibold">How to dispense a prescription:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
@@ -173,7 +166,6 @@ export default function Help() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <img src={posImg} alt="POS Screenshot" className="w-full rounded-lg border" />
                 <div className="space-y-3">
                   <h4 className="font-semibold">How to process a sale:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
@@ -236,7 +228,6 @@ export default function Help() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <img src={stockImg} alt="Stock Screenshot" className="w-full rounded-lg border" />
                 <div className="space-y-3">
                   <h4 className="font-semibold">Managing inventory:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
@@ -308,7 +299,6 @@ export default function Help() {
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
-                <img src={managementImg} alt="Management Screenshot" className="w-full rounded-lg border" />
                 <div className="space-y-3">
                   <h4 className="font-semibold">Patients Tab (Admin+):</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
