@@ -44,16 +44,18 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
-        {state !== "collapsed" ? (
-          <div className="flex items-center gap-3">
-            <img src={pharmaposLogo} alt="PharmaPos" className="h-10 w-10" />
-            <span className="font-bold text-xl text-sidebar-foreground">PHARMAPOS</span>
-          </div>
-        ) : (
-          <div className="flex justify-center">
-            <img src={pharmaposLogo} alt="PharmaPos" className="h-8 w-8" />
-          </div>
-        )}
+        <NavLink to="/" className="block">
+          {state !== "collapsed" ? (
+            <div className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity">
+              <img src={pharmaposLogo} alt="PharmaPos" className="h-10 w-10" />
+              <span className="font-bold text-xl text-sidebar-foreground">PHARMAPOS</span>
+            </div>
+          ) : (
+            <div className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity">
+              <img src={pharmaposLogo} alt="PharmaPos" className="h-8 w-8" />
+            </div>
+          )}
+        </NavLink>
       </SidebarHeader>
 
       <SidebarContent>
