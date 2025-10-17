@@ -48,10 +48,13 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
   const [medicationOpen, setMedicationOpen] = useState(false);
   const [selectedMedications, setSelectedMedications] = useState<Array<{
     id: string;
+    product_id: string;
     name: string;
     dosage?: string;
     frequency?: string;
     duration?: string;
+    unit_price: number;
+    quantity: number;
   }>>([]);
   
   const queryClient = useQueryClient();
@@ -393,10 +396,13 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                                   onSelect={() => {
                                     const newMed = {
                                       id: product.id,
+                                      product_id: product.id,
                                       name: product.name,
                                       dosage: "",
                                       frequency: "",
-                                      duration: ""
+                                      duration: "",
+                                      unit_price: product.unit_price,
+                                      quantity: 1
                                     };
                                     setSelectedMedications([...selectedMedications, newMed]);
                                     field.onChange(JSON.stringify([...selectedMedications, newMed]));
@@ -429,8 +435,11 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                         {selectedMedications.map((med, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
                             <div className="flex-1">
-                              <div className="font-medium text-sm">{med.name}</div>
-                              <div className="grid grid-cols-3 gap-2 mt-1">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium text-sm">{med.name}</span>
+                                <span className="text-xs text-muted-foreground">R{med.unit_price.toFixed(2)}</span>
+                              </div>
+                              <div className="grid grid-cols-4 gap-2 mt-1">
                                 <Input
                                   placeholder="Dosage"
                                   value={med.dosage || ""}
@@ -463,6 +472,19 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                                     field.onChange(JSON.stringify(updated));
                                   }}
                                   className="text-xs h-8"
+                                />
+                                <Input
+                                  type="number"
+                                  placeholder="Qty"
+                                  value={med.quantity || 1}
+                                  onChange={(e) => {
+                                    const updated = [...selectedMedications];
+                                    updated[index].quantity = parseInt(e.target.value) || 1;
+                                    setSelectedMedications(updated);
+                                    field.onChange(JSON.stringify(updated));
+                                  }}
+                                  className="text-xs h-8"
+                                  min="1"
                                 />
                               </div>
                             </div>

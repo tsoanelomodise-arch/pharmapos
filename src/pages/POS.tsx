@@ -46,23 +46,42 @@ const POS = () => {
       
       // Fetch product details for medications
       const loadPrescriptionItems = async () => {
-        const medications = prescription.medications as any[];
-        const productIds = medications.map((med: any) => med.product_id);
+        const medications = Array.isArray(prescription.medications) 
+          ? prescription.medications 
+          : typeof prescription.medications === 'string'
+            ? JSON.parse(prescription.medications)
+            : [];
+        
+        // Get product IDs from medications
+        const productIds = medications
+          .map((med: any) => med.product_id || med.id)
+          .filter(Boolean);
+        
+        if (productIds.length === 0) {
+          toast({
+            title: "No medications found",
+            description: "This prescription doesn't have any medications",
+            variant: "destructive"
+          });
+          return;
+        }
         
         const { data: products } = await supabase
           .from('products')
-          .select('id, name')
+          .select('id, name, unit_price')
           .in('id', productIds);
         
         const prescriptionItems: CartItem[] = medications.map((med: any) => {
-          const product = products?.find(p => p.id === med.product_id);
-          // Handle both number and string types, with proper fallbacks
-          const unitPrice = typeof med.unit_price === 'number' ? med.unit_price : parseFloat(med.unit_price) || 0;
-          const quantity = typeof med.quantity === 'number' ? med.quantity : parseInt(med.quantity) || 1;
+          const productId = med.product_id || med.id;
+          const product = products?.find(p => p.id === productId);
+          
+          // Use stored price or fetch from product
+          const unitPrice = med.unit_price || product?.unit_price || 0;
+          const quantity = med.quantity || 1;
           
           return {
-            id: med.product_id,
-            name: product?.name || `Product ${med.product_id}`,
+            id: productId,
+            name: med.name || product?.name || `Product ${productId}`,
             price: unitPrice,
             quantity: quantity,
             total: unitPrice * quantity
@@ -72,7 +91,7 @@ const POS = () => {
         setCartItems(prescriptionItems);
         toast({
           title: "Prescription loaded",
-          description: `Processing prescription for ${prescription.customers?.name || 'patient'}`
+          description: `${prescriptionItems.length} medication(s) added for ${prescription.customers?.name || 'patient'}`
         });
       };
       
