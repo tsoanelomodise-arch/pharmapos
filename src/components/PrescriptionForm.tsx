@@ -222,7 +222,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                               {displayCustomers.map((customer) => (
                                 <CommandItem
                                   key={customer.id}
-                                  value={customer.id}
+                                  value={`${customer.name} ${customer.phone || ''} ${customer.email || ''}`}
                                   onSelect={() => {
                                     field.onChange(customer.id);
                                     setCustomerOpen(false);
@@ -296,7 +296,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                               {displayDoctors.map((doctor) => (
                                 <CommandItem
                                   key={doctor.id}
-                                  value={doctor.id}
+                                  value={`${doctor.name} ${doctor.license_number || ''} ${doctor.specialization || ''}`}
                                   onSelect={() => {
                                     field.onChange(doctor.name);
                                     form.setValue("doctor_license", doctor.license_number || "");

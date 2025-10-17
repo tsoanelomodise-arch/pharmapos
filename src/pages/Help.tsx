@@ -119,7 +119,14 @@ export default function Help() {
                     <li>Monitor low stock alerts and reorder products as needed</li>
                     <li>Review recent sales and prescription activity</li>
                     <li>Click on any metric card for detailed information</li>
+                    <li>Click the logo to return to dashboard from any page</li>
                   </ol>
+                  <h4 className="font-semibold mt-4">Performance:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• Dashboard loads faster with optimized data fetching</li>
+                    <li>• Data is cached for 2 minutes to improve speed</li>
+                    <li>• All metrics load simultaneously for better performance</li>
+                  </ul>
                 </div>
               </AccordionContent>
             </AccordionItem>
@@ -138,13 +145,20 @@ export default function Help() {
                   <h4 className="font-semibold">How to dispense a prescription:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
                     <li><strong>Create New Prescription:</strong> Click "New Prescription" button</li>
-                    <li><strong>Select Patient:</strong> Choose from existing patients or add a new one</li>
-                    <li><strong>Enter Doctor Information:</strong> Select doctor or enter details manually</li>
+                    <li><strong>Select Patient:</strong> Search by typing patient name, phone, or email - the search works instantly as you type</li>
+                    <li><strong>Enter Doctor Information:</strong> Search by typing doctor name, license number, or specialization</li>
                     <li><strong>Add Medications:</strong> Search and add prescribed medications with dosage instructions</li>
                     <li><strong>Review Details:</strong> Verify all information is correct</li>
                     <li><strong>Save Prescription:</strong> Click "Save" to create the prescription</li>
                     <li><strong>Dispense:</strong> Click "Dispense" to process the medication and proceed to payment</li>
                   </ol>
+                  <h4 className="font-semibold mt-4">Search Tips:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• Patient search: Type any part of name, phone number, or email</li>
+                    <li>• Doctor search: Type name, license number, or specialization</li>
+                    <li>• Search filters results instantly - no need to press Enter</li>
+                    <li>• Clear search field to see all available options</li>
+                  </ul>
                   <h4 className="font-semibold mt-4">Managing existing prescriptions:</h4>
                   <ul className="space-y-1 text-sm">
                     <li>• View pending prescriptions in the list</li>
