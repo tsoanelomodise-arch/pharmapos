@@ -1,5 +1,6 @@
 import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen } from "lucide-react";
 import { NavLink } from "react-router-dom";
+import pharmaposLogo from "@/assets/pharmapos-logo.png";
 
 import {
   Sidebar,
@@ -43,10 +44,14 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
-        {state !== "collapsed" && (
-          <div className="flex items-center gap-2">
-            <Pill className="h-6 w-6 text-primary" />
-            <span className="font-semibold text-lg">PharmaPos</span>
+        {state !== "collapsed" ? (
+          <div className="flex items-center gap-3">
+            <img src={pharmaposLogo} alt="PharmaPos" className="h-10 w-10" />
+            <span className="font-bold text-xl text-sidebar-foreground">PHARMAPOS</span>
+          </div>
+        ) : (
+          <div className="flex justify-center">
+            <img src={pharmaposLogo} alt="PharmaPos" className="h-8 w-8" />
           </div>
         )}
       </SidebarHeader>
