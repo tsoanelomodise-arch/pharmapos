@@ -8,11 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useCustomers } from "@/hooks/useCustomers";
+import { useCustomers, useCustomerSearch } from "@/hooks/useCustomers";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Prescription } from "@/hooks/usePrescriptions";
 
 const prescriptionSchema = z.object({
@@ -34,8 +37,11 @@ interface PrescriptionFormProps {
 
 export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormProps) {
   const [open, setOpen] = useState(false);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [customerOpen, setCustomerOpen] = useState(false);
   const queryClient = useQueryClient();
   const { data: customers = [] } = useCustomers();
+  const { data: searchResults = [] } = useCustomerSearch(customerSearch);
   
   const form = useForm<PrescriptionFormData>({
     resolver: zodResolver(prescriptionSchema),
@@ -147,26 +153,75 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
             <FormField
               control={form.control}
               name="customer_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Customer *</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select customer" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {customers.map((customer) => (
-                        <SelectItem key={customer.id} value={customer.id}>
-                          {customer.name} {customer.phone && `(${customer.phone})`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={({ field }) => {
+                const displayCustomers = customerSearch.length > 2 ? searchResults : customers;
+                const selectedCustomer = customers.find(c => c.id === field.value);
+                
+                return (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Patient *</FormLabel>
+                    <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {selectedCustomer 
+                              ? `${selectedCustomer.name} ${selectedCustomer.phone ? `(${selectedCustomer.phone})` : ''}` 
+                              : "Search for patient..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search by name, phone, or email..." 
+                            value={customerSearch}
+                            onValueChange={setCustomerSearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No patient found.</CommandEmpty>
+                            <CommandGroup>
+                              {displayCustomers.map((customer) => (
+                                <CommandItem
+                                  key={customer.id}
+                                  value={customer.id}
+                                  onSelect={() => {
+                                    field.onChange(customer.id);
+                                    setCustomerOpen(false);
+                                    setCustomerSearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      customer.id === field.value ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{customer.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {customer.phone && `Phone: ${customer.phone}`}
+                                      {customer.email && ` | Email: ${customer.email}`}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <div className="grid grid-cols-2 gap-4">
