@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, UserPlus, Stethoscope, Users, Shield } from "lucide-react";
-import { useCustomers } from "@/hooks/useCustomers";
+import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
 import { useUsers, useDeleteUser } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
@@ -45,6 +45,7 @@ export default function Management() {
   const { data: customers, isLoading: loadingCustomers } = useCustomers();
   const { data: doctors, isLoading: loadingDoctors } = useDoctors();
   const { data: users, isLoading: loadingUsers } = useUsers();
+  const deleteCustomer = useDeleteCustomer();
   const deleteDoctor = useDeleteDoctor();
   const deleteUser = useDeleteUser();
 
@@ -179,8 +180,32 @@ export default function Management() {
                           <TableCell>{customer.email || "-"}</TableCell>
                           <TableCell>R{customer.current_balance?.toFixed(2) || "0.00"}</TableCell>
                           <TableCell>R{customer.credit_limit?.toFixed(2) || "0.00"}</TableCell>
-                          <TableCell className="text-right">
+                          <TableCell className="text-right space-x-2">
                             <CustomerForm customer={customer} />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm">
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Delete Patient</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Are you sure you want to delete {customer.name}? This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => deleteCustomer.mutate(customer.id)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                           </TableCell>
                         </TableRow>
                       ))

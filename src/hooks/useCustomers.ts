@@ -63,3 +63,33 @@ export function useCustomerSearch(searchTerm: string) {
     enabled: searchTerm.length > 2
   });
 }
+
+export function useDeleteCustomer() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (customerId: string) => {
+      const { error } = await supabase
+        .from('customers')
+        .delete()
+        .eq('id', customerId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['customers'] });
+      queryClient.invalidateQueries({ queryKey: ['customers-with-debt'] });
+      toast({
+        title: "Success",
+        description: "Patient deleted successfully",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: "Failed to delete patient: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+}
