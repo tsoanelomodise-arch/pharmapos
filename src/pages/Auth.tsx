@@ -123,9 +123,9 @@ export default function Auth() {
           <div className="flex items-center justify-center mb-4">
             <img src={logo} alt="PharmaPOS Logo" className="h-16 w-auto" />
           </div>
-          <CardTitle className="text-2xl font-bold text-primary">PharmaPOS</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">Pharmacy Management System</CardTitle>
           <CardDescription>
-            Secure pharmacy management system
+            Powered by: The Wonderland Studio
           </CardDescription>
         </CardHeader>
         <CardContent>
