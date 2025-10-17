@@ -1,21 +1,33 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useNavigate } from "react-router-dom";
+import { memo, lazy, Suspense } from "react";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 
-const Dashboard = () => {
+const Dashboard = memo(() => {
   const { data: stats, isLoading } = useDashboardStats();
   const navigate = useNavigate();
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8 p-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <Badge variant="secondary">Loading...</Badge>
+          <Skeleton className="h-12 w-64" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[...Array(4)].map((_, i) => (
+            <Skeleton key={i} className="h-32" />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {[...Array(2)].map((_, i) => (
+            <Skeleton key={i} className="h-64" />
+          ))}
         </div>
       </div>
     );
@@ -358,6 +370,8 @@ const Dashboard = () => {
       </div>
     </div>
   );
-};
+});
+
+Dashboard.displayName = "Dashboard";
 
 export default Dashboard;
