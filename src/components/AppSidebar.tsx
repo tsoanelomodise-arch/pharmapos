@@ -27,7 +27,7 @@ const navigationItems: {
   { title: "Debtors", url: "/debtors", icon: Users, module: "debtors" },
   { title: "Stock Control", url: "/stock", icon: Package, module: "stock" },
   { title: "Reports", url: "/reports", icon: Receipt, module: "reports" },
-  { title: "Management", url: "/management", icon: Settings, module: "management" },
+  { title: "Admin", url: "/management", icon: Settings, module: "management" },
   { title: "Help", url: "/help", icon: BookOpen, module: "help" },
 ];
 
