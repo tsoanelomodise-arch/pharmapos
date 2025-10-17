@@ -10,11 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCustomers, useCustomerSearch } from "@/hooks/useCustomers";
+import { useDoctors, useDoctorSearch } from "@/hooks/useDoctors";
+import { useProducts, useProductSearch } from "@/hooks/useProducts";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Edit2, Check, ChevronsUpDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Prescription } from "@/hooks/usePrescriptions";
 
@@ -39,9 +42,25 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
   const [open, setOpen] = useState(false);
   const [customerSearch, setCustomerSearch] = useState("");
   const [customerOpen, setCustomerOpen] = useState(false);
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [doctorOpen, setDoctorOpen] = useState(false);
+  const [medicationSearch, setMedicationSearch] = useState("");
+  const [medicationOpen, setMedicationOpen] = useState(false);
+  const [selectedMedications, setSelectedMedications] = useState<Array<{
+    id: string;
+    name: string;
+    dosage?: string;
+    frequency?: string;
+    duration?: string;
+  }>>([]);
+  
   const queryClient = useQueryClient();
   const { data: customers = [] } = useCustomers();
   const { data: searchResults = [] } = useCustomerSearch(customerSearch);
+  const { data: doctors = [] } = useDoctors();
+  const { data: doctorSearchResults = [] } = useDoctorSearch(doctorSearch);
+  const { data: products = [] } = useProducts();
+  const { data: medicationSearchResults = [] } = useProductSearch(medicationSearch);
   
   const form = useForm<PrescriptionFormData>({
     resolver: zodResolver(prescriptionSchema),
@@ -66,21 +85,32 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
     },
   });
 
+  // Initialize selected medications from prescription
+  useState(() => {
+    if (prescription && prescription.medications) {
+      try {
+        const meds = typeof prescription.medications === 'string' 
+          ? JSON.parse(prescription.medications)
+          : prescription.medications;
+        if (Array.isArray(meds)) {
+          setSelectedMedications(meds);
+        }
+      } catch (e) {
+        // Handle parsing error silently
+      }
+    }
+  });
+
   const mutation = useMutation({
     mutationFn: async (data: PrescriptionFormData) => {
-      let medications;
-      try {
-        // Try to parse as JSON first, if it fails, treat as string
-        medications = JSON.parse(data.medications);
-      } catch {
-        // If parsing fails, create a simple medication object
-        medications = [{
-          name: data.medications,
-          dosage: "",
-          frequency: "",
-          duration: ""
-        }];
-      }
+      const medications = selectedMedications.length > 0 
+        ? selectedMedications 
+        : [{
+            name: data.medications,
+            dosage: "",
+            frequency: "",
+            duration: ""
+          }];
 
       const prescriptionData = {
         customer_id: data.customer_id,
@@ -114,6 +144,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
       });
       setOpen(false);
       form.reset();
+      setSelectedMedications([]);
       onSuccess?.();
     },
     onError: (error) => {
@@ -224,35 +255,94 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
               }}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="doctor_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doctor Name *</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
+            <FormField
+              control={form.control}
+              name="doctor_name"
+              render={({ field }) => {
+                const displayDoctors = doctorSearch.length > 2 ? doctorSearchResults : doctors;
+                const selectedDoctor = doctors.find(d => d.name === field.value);
+                
+                return (
+                  <FormItem className="flex flex-col">
+                    <FormLabel>Doctor *</FormLabel>
+                    <Popover open={doctorOpen} onOpenChange={setDoctorOpen}>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className={cn(
+                              "justify-between",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {selectedDoctor 
+                              ? selectedDoctor.name
+                              : field.value || "Search for doctor..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[400px] p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search by name, license, specialization..." 
+                            value={doctorSearch}
+                            onValueChange={setDoctorSearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No doctor found.</CommandEmpty>
+                            <CommandGroup>
+                              {displayDoctors.map((doctor) => (
+                                <CommandItem
+                                  key={doctor.id}
+                                  value={doctor.id}
+                                  onSelect={() => {
+                                    field.onChange(doctor.name);
+                                    form.setValue("doctor_license", doctor.license_number || "");
+                                    setDoctorOpen(false);
+                                    setDoctorSearch("");
+                                  }}
+                                >
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      doctor.name === field.value ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                  <div className="flex flex-col">
+                                    <span>{doctor.name}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                      {doctor.specialization && `${doctor.specialization}`}
+                                      {doctor.license_number && ` | License: ${doctor.license_number}`}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="doctor_license"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Doctor License</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                );
+              }}
+            />
+
+            <FormField
+              control={form.control}
+              name="doctor_license"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Doctor License</FormLabel>
+                  <FormControl>
+                    <Input {...field} readOnly />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <FormField
               control={form.control}
@@ -274,13 +364,126 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Medications *</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      {...field} 
-                      placeholder="Enter medication details (one per line or as JSON)"
-                      rows={4}
-                    />
-                  </FormControl>
+                  <div className="space-y-2">
+                    <Popover open={medicationOpen} onOpenChange={setMedicationOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          className="w-full justify-between"
+                        >
+                          Add medication from stock...
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[500px] p-0" align="start">
+                        <Command>
+                          <CommandInput 
+                            placeholder="Search medications by name or barcode..." 
+                            value={medicationSearch}
+                            onValueChange={setMedicationSearch}
+                          />
+                          <CommandList>
+                            <CommandEmpty>No medication found in stock.</CommandEmpty>
+                            <CommandGroup>
+                              {medicationSearchResults.map((product) => (
+                                <CommandItem
+                                  key={product.id}
+                                  value={product.id}
+                                  onSelect={() => {
+                                    const newMed = {
+                                      id: product.id,
+                                      name: product.name,
+                                      dosage: "",
+                                      frequency: "",
+                                      duration: ""
+                                    };
+                                    setSelectedMedications([...selectedMedications, newMed]);
+                                    field.onChange(JSON.stringify([...selectedMedications, newMed]));
+                                    setMedicationOpen(false);
+                                    setMedicationSearch("");
+                                  }}
+                                >
+                                  <div className="flex flex-col w-full">
+                                    <div className="flex items-center justify-between">
+                                      <span className="font-medium">{product.name}</span>
+                                      <Badge variant="secondary" className="ml-2">
+                                        Stock: {product.stock_quantity}
+                                      </Badge>
+                                    </div>
+                                    <span className="text-xs text-muted-foreground">
+                                      {product.generic_name && `Generic: ${product.generic_name}`}
+                                      {product.brand && ` | Brand: ${product.brand}`}
+                                    </span>
+                                  </div>
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    {selectedMedications.length > 0 && (
+                      <div className="space-y-2 mt-2">
+                        {selectedMedications.map((med, index) => (
+                          <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{med.name}</div>
+                              <div className="grid grid-cols-3 gap-2 mt-1">
+                                <Input
+                                  placeholder="Dosage"
+                                  value={med.dosage || ""}
+                                  onChange={(e) => {
+                                    const updated = [...selectedMedications];
+                                    updated[index].dosage = e.target.value;
+                                    setSelectedMedications(updated);
+                                    field.onChange(JSON.stringify(updated));
+                                  }}
+                                  className="text-xs h-8"
+                                />
+                                <Input
+                                  placeholder="Frequency"
+                                  value={med.frequency || ""}
+                                  onChange={(e) => {
+                                    const updated = [...selectedMedications];
+                                    updated[index].frequency = e.target.value;
+                                    setSelectedMedications(updated);
+                                    field.onChange(JSON.stringify(updated));
+                                  }}
+                                  className="text-xs h-8"
+                                />
+                                <Input
+                                  placeholder="Duration"
+                                  value={med.duration || ""}
+                                  onChange={(e) => {
+                                    const updated = [...selectedMedications];
+                                    updated[index].duration = e.target.value;
+                                    setSelectedMedications(updated);
+                                    field.onChange(JSON.stringify(updated));
+                                  }}
+                                  className="text-xs h-8"
+                                />
+                              </div>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                const updated = selectedMedications.filter((_, i) => i !== index);
+                                setSelectedMedications(updated);
+                                field.onChange(JSON.stringify(updated));
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
