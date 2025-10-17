@@ -6,8 +6,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Loader2, Pill } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import logo from '@/assets/pharmapos-logo.png';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -116,15 +117,13 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
+      <Card className="w-full max-w-md shadow-card">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="bg-blue-600 p-3 rounded-full">
-              <Pill className="h-8 w-8 text-white" />
-            </div>
+            <img src={logo} alt="PharmaPOS Logo" className="h-16 w-auto" />
           </div>
-          <CardTitle className="text-2xl font-bold">PharmaPOS</CardTitle>
+          <CardTitle className="text-2xl font-bold text-primary">PharmaPOS</CardTitle>
           <CardDescription>
             Secure pharmacy management system
           </CardDescription>
