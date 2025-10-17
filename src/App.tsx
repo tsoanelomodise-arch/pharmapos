@@ -6,18 +6,40 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { Layout } from "@/components/Layout";
-import Dashboard from "./pages/Dashboard";
-import Dispensing from "./pages/Dispensing";
-import POS from "./pages/POS";
-import Debtors from "./pages/Debtors";
-import Stock from "./pages/Stock";
-import Reports from "./pages/Reports";
-import Management from "./pages/Management";
-import Help from "./pages/Help";
-import Auth from "./pages/Auth";
-import NotFound from "./pages/NotFound";
+import { lazy, Suspense } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
-const queryClient = new QueryClient();
+// Lazy load all page components for code splitting
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Dispensing = lazy(() => import("./pages/Dispensing"));
+const POS = lazy(() => import("./pages/POS"));
+const Debtors = lazy(() => import("./pages/Debtors"));
+const Stock = lazy(() => import("./pages/Stock"));
+const Reports = lazy(() => import("./pages/Reports"));
+const Management = lazy(() => import("./pages/Management"));
+const Help = lazy(() => import("./pages/Help"));
+const Auth = lazy(() => import("./pages/Auth"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
+// Loading fallback component
+const PageLoader = () => (
+  <div className="flex flex-col gap-4 p-6">
+    <Skeleton className="h-12 w-[250px]" />
+    <Skeleton className="h-[400px] w-full" />
+  </div>
+);
+
+// Optimized QueryClient configuration
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes
+      gcTime: 10 * 60 * 1000, // 10 minutes (formerly cacheTime)
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -26,27 +48,31 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/*" element={
-              <ProtectedRoute>
-                <Layout>
-                  <Routes>
-                    <Route path="/" element={<Dashboard />} />
-                    <Route path="/dispensing" element={<Dispensing />} />
-                    <Route path="/pos" element={<POS />} />
-                    <Route path="/debtors" element={<Debtors />} />
-                    <Route path="/stock" element={<Stock />} />
-                    <Route path="/reports" element={<Reports />} />
-                    <Route path="/management" element={<Management />} />
-                    <Route path="/help" element={<Help />} />
-                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </Layout>
-              </ProtectedRoute>
-            } />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Suspense fallback={<PageLoader />}>
+                      <Routes>
+                        <Route path="/" element={<Dashboard />} />
+                        <Route path="/dispensing" element={<Dispensing />} />
+                        <Route path="/pos" element={<POS />} />
+                        <Route path="/debtors" element={<Debtors />} />
+                        <Route path="/stock" element={<Stock />} />
+                        <Route path="/reports" element={<Reports />} />
+                        <Route path="/management" element={<Management />} />
+                        <Route path="/help" element={<Help />} />
+                        {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </Suspense>
+                  </Layout>
+                </ProtectedRoute>
+              } />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

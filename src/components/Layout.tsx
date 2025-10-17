@@ -4,12 +4,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { memo } from "react";
 
 interface LayoutProps {
   children: React.ReactNode;
 }
 
-export function Layout({ children }: LayoutProps) {
+export const Layout = memo(function Layout({ children }: LayoutProps) {
   const { user, signOut } = useAuth();
 
   const handleSignOut = async () => {
@@ -45,4 +46,4 @@ export function Layout({ children }: LayoutProps) {
       </div>
     </SidebarProvider>
   );
-}
+});
