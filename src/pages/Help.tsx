@@ -165,6 +165,13 @@ export default function Help() {
                     <li>• Search by patient name, doctor, or prescription date</li>
                     <li>• Click on a prescription to view full details</li>
                     <li>• Dispense pending prescriptions when ready</li>
+                    <li>• When dispensing, medications automatically populate the POS cart with quantities</li>
+                  </ul>
+                  <h4 className="font-semibold mt-4">Recent Improvements:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• Improved search: Type instantly filters results for patients and doctors</li>
+                    <li>• Better modal scrolling: All save buttons are now visible even on smaller screens</li>
+                    <li>• Quantity tracking: Medications now include quantities when added to prescriptions</li>
                   </ul>
                 </div>
               </AccordionContent>
@@ -197,6 +204,13 @@ export default function Help() {
                     <li>• <strong>Cash:</strong> Enter amount paid, change calculated automatically</li>
                     <li>• <strong>Card:</strong> Process card payment</li>
                     <li>• <strong>Credit:</strong> Add to customer's account (requires customer selection)</li>
+                  </ul>
+                  <h4 className="font-semibold mt-4">Prescription Integration:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• When dispensing prescriptions, medications automatically populate the cart</li>
+                    <li>• Product details, prices, and quantities are pre-filled from the prescription</li>
+                    <li>• Review and adjust quantities if needed before completing the sale</li>
+                    <li>• System validates stock availability and shows clear error messages</li>
                   </ul>
                 </div>
               </AccordionContent>
