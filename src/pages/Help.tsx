@@ -349,7 +349,9 @@ export default function Help() {
                   <h4 className="font-semibold mt-4">Users Tab (Owner Only):</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
+                    <li>Add new user: Click "Add User" and enter email, password, name, and role</li>
                     <li>Assign or change user roles (Pharmacist, Admin, Manager, Owner)</li>
+                    <li>Delete users when needed</li>
                     <li>Monitor user activity</li>
                     <li>Search users by email or name</li>
                   </ol>

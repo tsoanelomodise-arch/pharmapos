@@ -18,6 +18,7 @@ import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
 import { useUsers, useDeleteUser } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
+import { UserForm } from "@/components/UserForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
 import { ModulePermissionsManager } from "@/components/ModulePermissionsManager";
 import { useUserRole } from "@/hooks/useUserRole";
@@ -329,6 +330,7 @@ export default function Management() {
                     <CardTitle>User Management</CardTitle>
                     <CardDescription>View and manage user roles and permissions</CardDescription>
                   </div>
+                  <UserForm />
                 </div>
               </CardHeader>
               <CardContent>

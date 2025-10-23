@@ -11,6 +11,13 @@ export interface UserWithRole {
   created_at: string;
 }
 
+export interface CreateUserData {
+  email: string;
+  password: string;
+  full_name: string;
+  role: UserRole;
+}
+
 export function useUsers() {
   return useQuery({
     queryKey: ['users'],
@@ -83,6 +90,51 @@ export function useUpdateUserRole() {
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to update user role');
+    },
+  });
+}
+
+export function useCreateUser() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (userData: CreateUserData) => {
+      // Create the user account
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: userData.full_name,
+          },
+        },
+      });
+
+      if (authError) throw authError;
+      if (!authData.user) throw new Error('Failed to create user');
+
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Update the role if it's not the default pharmacist role
+      if (userData.role !== 'pharmacist') {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: userData.role })
+          .eq('user_id', authData.user.id);
+
+        if (roleError) throw roleError;
+      }
+
+      return authData.user;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('User created successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to create user');
     },
   });
 }
