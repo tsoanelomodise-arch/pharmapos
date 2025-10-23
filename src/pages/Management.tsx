@@ -52,6 +52,7 @@ export default function Management() {
 
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
   const isOwner = role === 'owner';
+  const canManageUsers = role && ['admin', 'owner'].includes(role);
   const canAccessPatients = userModules.includes('patients');
   const canAccessDoctors = userModules.includes('doctors');
 
@@ -99,8 +100,8 @@ export default function Management() {
         </p>
       </div>
 
-      <Tabs defaultValue={canAccessPatients ? "patients" : isOwner ? "users" : "patients"} className="w-full">
-        <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : 'grid-cols-3'}`}>
+      <Tabs defaultValue={canAccessPatients ? "patients" : canManageUsers ? "users" : "patients"} className="w-full">
+        <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : canManageUsers ? 'grid-cols-3' : 'grid-cols-2'}`}>
           {canAccessPatients && (
             <TabsTrigger value="patients">
               <UserPlus className="h-4 w-4 mr-2" />
@@ -113,7 +114,7 @@ export default function Management() {
               Doctors
             </TabsTrigger>
           )}
-          {isOwner && (
+          {canManageUsers && (
             <TabsTrigger value="users">
               <Users className="h-4 w-4 mr-2" />
               Users
@@ -311,14 +312,14 @@ export default function Management() {
           </TabsContent>
         )}
 
-        {isOwner && (
+        {canManageUsers && (
           <TabsContent value="users" className="space-y-4">
-          {!isOwner ? (
+          {!canManageUsers ? (
             <Card>
               <CardHeader>
                 <CardTitle>Access Denied</CardTitle>
                 <CardDescription>
-                  Only owners can manage user accounts and roles.
+                  Only admins and owners can manage user accounts and roles.
                 </CardDescription>
               </CardHeader>
             </Card>

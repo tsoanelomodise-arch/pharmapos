@@ -50,7 +50,7 @@ export default function Help() {
                 <li>✓ All Pharmacist Access</li>
                 <li>✓ Manage Patients</li>
                 <li>✓ Manage Doctors</li>
-                <li>✗ Manage Users</li>
+                <li>✓ Manage Users</li>
                 <li>✗ View Cost Pricing</li>
               </ul>
             </div>
@@ -346,22 +346,23 @@ export default function Help() {
                     <li>Search by name, license, or specialization</li>
                   </ol>
 
-                  <h4 className="font-semibold mt-4">Users Tab (Owner Only):</h4>
+                  <h4 className="font-semibold mt-4">Users Tab (Admin/Owner):</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
-                    <li>Add new user: Click "Add User" and enter email, password, name, and role</li>
-                    <li>Assign or change user roles (Pharmacist, Admin, Manager, Owner)</li>
-                    <li>Delete users when needed</li>
-                    <li>Monitor user activity</li>
-                    <li>Search users by email or name</li>
+                    <li>Add new user: Click "Add User" and enter email, password, full name, and role</li>
+                    <li>Roles are assigned during user creation (Pharmacist, Admin, Manager, Owner)</li>
+                    <li>Change user roles after creation: Click "Edit Role" on any user</li>
+                    <li>Delete users when needed (cannot be undone)</li>
+                    <li>Search users by email, name, or role</li>
                   </ol>
 
                   <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg mt-4">
                     <p className="text-sm font-semibold">⚠️ Important Access Notes:</p>
                     <ul className="text-sm space-y-1 mt-2">
                       <li>• Patients and Doctors tabs: Admin, Manager, and Owner</li>
-                      <li>• Users tab: Owner only</li>
-                      <li>• Only Owners can assign Owner role to other users</li>
+                      <li>• Users tab: Admin and Owner only</li>
+                      <li>• Both Admins and Owners can create and manage user accounts</li>
+                      <li>• User roles are assigned during account creation</li>
                     </ul>
                   </div>
                 </div>
