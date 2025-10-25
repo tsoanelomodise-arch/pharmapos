@@ -439,7 +439,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                               <div className="flex-1">
                                <div className="flex items-center justify-between mb-1">
                                  <span className="font-medium text-sm">{med.name}</span>
-                                 <span className="text-xs text-muted-foreground">R{med.unit_price.toFixed(2)}</span>
+                                 <span className="text-xs text-muted-foreground">R{(med.unit_price || 0).toFixed(2)}</span>
                                </div>
                                <div className="grid grid-cols-2 gap-2 mt-1">
                                  <div className="col-span-2 grid grid-cols-2 gap-2">
