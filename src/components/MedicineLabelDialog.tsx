@@ -56,97 +56,116 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
             @media print {
               @page {
                 size: 4in 3in;
-                margin: 0.25in;
+                margin: 0.15in;
               }
               body {
                 margin: 0;
                 padding: 0;
+                overflow: hidden;
               }
+              .label-container {
+                page-break-inside: avoid;
+                page-break-after: avoid;
+              }
+            }
+            
+            * {
+              box-sizing: border-box;
             }
             
             body {
               font-family: Arial, sans-serif;
               margin: 0;
               padding: 0;
+              width: 4in;
+              height: 3in;
+              overflow: hidden;
             }
             
             .label-container {
-              width: 4in;
-              height: 3in;
+              width: 100%;
+              height: 100%;
               border: 2px solid #000;
-              border-radius: 12px;
-              padding: 0.4in;
-              box-sizing: border-box;
-              page-break-after: always;
+              border-radius: 8px;
+              padding: 0.25in;
+              display: flex;
+              flex-direction: column;
+              justify-content: space-between;
             }
             
             .label-header {
               display: grid;
               grid-template-columns: 60% 40%;
-              gap: 0.2in;
-              margin-bottom: 0.2in;
+              gap: 0.1in;
+              margin-bottom: 0.1in;
             }
             
             .label-field {
-              border-bottom: 2px solid #000;
-              padding-bottom: 0.05in;
-              margin-bottom: 0.05in;
+              border-bottom: 1.5px solid #000;
+              padding-bottom: 0.02in;
+              margin-bottom: 0.02in;
             }
             
             .label-field-label {
-              font-size: 11pt;
+              font-size: 9pt;
               font-weight: bold;
               text-transform: uppercase;
-              letter-spacing: 0.5px;
+              letter-spacing: 0.3px;
+              line-height: 1.1;
             }
             
             .label-field-value {
-              font-size: 10pt;
-              margin-top: 0.05in;
+              font-size: 9pt;
+              margin-top: 0.02in;
+              line-height: 1.1;
             }
             
             .medication-section {
-              margin-bottom: 0.2in;
+              margin-bottom: 0.1in;
             }
             
             .medication-section .label-field-label {
-              font-size: 11pt;
+              font-size: 9pt;
             }
             
             .dosage-grid {
               display: grid;
-              grid-template-columns: 50% 50%;
-              gap: 0.15in;
-              margin-top: 0.1in;
+              grid-template-columns: 48% 48%;
+              gap: 0.08in;
+              margin-top: 0.08in;
+              margin-bottom: 0.08in;
             }
             
             .dosage-item {
               display: flex;
               align-items: center;
-              font-size: 9pt;
+              font-size: 8pt;
+              line-height: 1.2;
+              margin-bottom: 0.03in;
             }
             
             .dosage-line {
               border-bottom: 1.5px solid #000;
-              width: 0.4in;
+              width: 0.35in;
               display: inline-block;
-              margin-right: 0.05in;
+              margin-right: 0.03in;
             }
             
             .doctor-section {
-              margin-top: 0.15in;
+              margin-top: 0.08in;
             }
             
             .doctor-field {
               display: flex;
               align-items: center;
-              font-size: 10pt;
+              font-size: 8pt;
+              line-height: 1.1;
             }
             
             .doctor-line {
               flex: 1;
               border-bottom: 1.5px solid #000;
-              margin-left: 0.05in;
+              margin-left: 0.03in;
             }
           </style>
         </head>
@@ -281,28 +300,30 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
               </div>
             </div>
 
-            <div className="medication-section" style={{ marginTop: '0.15in' }}>
-              <div className="label-field">
-                <div className="label-field-label">TOTAL UNITS DISPENSED</div>
-                <div className="label-field-value">{getTotalUnits()} {getDosageForm()}</div>
-              </div>
-            </div>
-
-            <div className="doctor-section">
-              <div className="doctor-field">
-                <span className="font-bold">Dr.</span>
-                <span className="doctor-line">{prescription.doctor_name}</span>
-              </div>
-            </div>
-
-            {prescription.status === 'dispensed' && (
-              <div className="doctor-section" style={{ marginTop: '0.1in', fontSize: '9pt' }}>
-                <div className="doctor-field">
-                  <span className="font-bold">Dispensed By:</span>
-                  <span className="doctor-line">{dispensedBy}</span>
+            <div>
+              <div className="medication-section" style={{ marginBottom: '0.08in' }}>
+                <div className="label-field">
+                  <div className="label-field-label">TOTAL DISPENSED</div>
+                  <div className="label-field-value">{getTotalUnits()} {getDosageForm()}</div>
                 </div>
               </div>
-            )}
+
+              <div className="doctor-section">
+                <div className="doctor-field">
+                  <span className="font-bold">Dr.</span>
+                  <span className="doctor-line">{prescription.doctor_name}</span>
+                </div>
+              </div>
+
+              {prescription.status === 'dispensed' && (
+                <div className="doctor-section" style={{ marginTop: '0.06in' }}>
+                  <div className="doctor-field">
+                    <span className="font-bold">Dispensed:</span>
+                    <span className="doctor-line">{dispensedBy}</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
