@@ -262,41 +262,37 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
             <div className="dosage-grid">
               <div className="space-y-2">
                 <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Tablets' ? getDosageAmount() : ''}</span>
-                  <span className="ml-2">Tablets</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Capsules' ? getDosageAmount() : ''}</span>
-                  <span className="ml-2">Capsules</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Teaspoons' ? getDosageAmount() : ''}</span>
-                  <span className="ml-2">Teaspoons</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'mL' ? getDosageAmount() : ''}</span>
-                  <span className="ml-2">mL</span>
+                  <span className="dosage-line">{getDosageAmount()}</span>
+                  <span className="ml-2">{getDosageForm()}</span>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <div className="dosage-item">
-                  <span>Every</span>
-                  <span className="dosage-line mx-2">{getFrequencyDisplay().type === 'Hours' ? getFrequencyDisplay().value : ''}</span>
-                  <span>Hours</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getFrequencyDisplay().type === 'At bedtime' ? '✓' : ''}</span>
-                  <span className="ml-2">At bedtime</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getFrequencyDisplay().type === 'Times a day' ? getFrequencyDisplay().value : ''}</span>
-                  <span className="ml-2">Times a day</span>
-                </div>
-                <div className="dosage-item">
-                  <span className="dosage-line">{getFrequencyDisplay().type === 'As needed' ? '✓' : ''}</span>
-                  <span className="ml-2">As needed</span>
-                </div>
+                {getFrequencyDisplay().type === 'Hours' && (
+                  <div className="dosage-item">
+                    <span>Every</span>
+                    <span className="dosage-line mx-2">{getFrequencyDisplay().value}</span>
+                    <span>Hours</span>
+                  </div>
+                )}
+                {getFrequencyDisplay().type === 'At bedtime' && (
+                  <div className="dosage-item">
+                    <span className="dosage-line">✓</span>
+                    <span className="ml-2">At bedtime</span>
+                  </div>
+                )}
+                {getFrequencyDisplay().type === 'Times a day' && (
+                  <div className="dosage-item">
+                    <span className="dosage-line">{getFrequencyDisplay().value}</span>
+                    <span className="ml-2">Times a day</span>
+                  </div>
+                )}
+                {getFrequencyDisplay().type === 'As needed' && (
+                  <div className="dosage-item">
+                    <span className="dosage-line">✓</span>
+                    <span className="ml-2">As needed</span>
+                  </div>
+                )}
               </div>
             </div>
 
