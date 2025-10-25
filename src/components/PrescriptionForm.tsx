@@ -402,7 +402,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                                        dosage: "",
                                        dosage_form: "tablets",
                                        frequency: "3_times_daily",
-                                       duration: "",
+                                       duration: "7_days",
                                        unit_price: product.unit_price,
                                        quantity: 1
                                      };
@@ -501,17 +501,30 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                                      <SelectItem value="as_needed">As needed</SelectItem>
                                    </SelectContent>
                                  </Select>
-                                 <Input
-                                   placeholder="Duration (e.g., 7 days)"
-                                   value={med.duration || ""}
-                                   onChange={(e) => {
+                                 <Select
+                                   value={med.duration || "7_days"}
+                                   onValueChange={(value) => {
                                      const updated = [...selectedMedications];
-                                     updated[index].duration = e.target.value;
+                                     updated[index].duration = value;
                                      setSelectedMedications(updated);
                                      field.onChange(JSON.stringify(updated));
                                    }}
-                                   className="text-xs h-8"
-                                 />
+                                 >
+                                   <SelectTrigger className="text-xs h-8">
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent className="bg-popover z-50">
+                                     <SelectItem value="3_days">3 days</SelectItem>
+                                     <SelectItem value="5_days">5 days</SelectItem>
+                                     <SelectItem value="7_days">7 days</SelectItem>
+                                     <SelectItem value="10_days">10 days</SelectItem>
+                                     <SelectItem value="14_days">14 days</SelectItem>
+                                     <SelectItem value="21_days">21 days</SelectItem>
+                                     <SelectItem value="30_days">30 days</SelectItem>
+                                     <SelectItem value="60_days">60 days</SelectItem>
+                                     <SelectItem value="90_days">90 days</SelectItem>
+                                   </SelectContent>
+                                 </Select>
                                  <Input
                                    type="number"
                                    placeholder="Total Units"
