@@ -172,34 +172,34 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
   const firstMedication = medications[0];
   
   // Extract dosage form and frequency from medication data
+  const getDosageAmount = () => firstMedication?.dosage || '';
+  
   const getDosageForm = () => {
-    const dosage = firstMedication?.dosage?.toLowerCase() || '';
-    if (dosage.includes('tablet')) return 'Tablets';
-    if (dosage.includes('capsule')) return 'Capsules';
-    if (dosage.includes('teaspoon') || dosage.includes('syrup')) return 'Teaspoons';
+    const form = firstMedication?.dosage_form?.toLowerCase() || '';
+    if (form === 'tablets') return 'Tablets';
+    if (form === 'capsules') return 'Capsules';
+    if (form === 'teaspoons') return 'Teaspoons';
+    if (form === 'ml') return 'mL';
     return 'Tablets';
   };
 
-  const getFrequency = () => {
-    const frequency = firstMedication?.frequency?.toLowerCase() || '';
-    if (frequency.includes('hour')) return 'Hours';
-    if (frequency.includes('bedtime')) return 'At bedtime';
-    if (frequency.includes('daily') || frequency.includes('day')) return 'Times a day';
-    if (frequency.includes('needed')) return 'As needed';
-    return 'Times a day';
+  const getFrequencyDisplay = () => {
+    const freq = firstMedication?.frequency || '';
+    const frequencyMap: Record<string, { type: string; value: string }> = {
+      'once_daily': { type: 'Times a day', value: '1' },
+      'twice_daily': { type: 'Times a day', value: '2' },
+      '3_times_daily': { type: 'Times a day', value: '3' },
+      '4_times_daily': { type: 'Times a day', value: '4' },
+      'every_4_hours': { type: 'Hours', value: '4' },
+      'every_6_hours': { type: 'Hours', value: '6' },
+      'every_8_hours': { type: 'Hours', value: '8' },
+      'at_bedtime': { type: 'At bedtime', value: '✓' },
+      'as_needed': { type: 'As needed', value: '✓' },
+    };
+    return frequencyMap[freq] || { type: 'Times a day', value: '3' };
   };
 
-  const extractQuantity = () => {
-    const dosage = firstMedication?.dosage || '';
-    const match = dosage.match(/(\d+)/);
-    return match ? match[1] : '';
-  };
-
-  const extractFrequencyNumber = () => {
-    const frequency = firstMedication?.frequency?.toLowerCase() || '';
-    const match = frequency.match(/(\d+)/);
-    return match ? match[1] : '';
-  };
+  const getTotalUnits = () => firstMedication?.quantity || '';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -243,37 +243,48 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
             <div className="dosage-grid">
               <div className="space-y-2">
                 <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Tablets' ? extractQuantity() : ''}</span>
+                  <span className="dosage-line">{getDosageForm() === 'Tablets' ? getDosageAmount() : ''}</span>
                   <span className="ml-2">Tablets</span>
                 </div>
                 <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Capsules' ? extractQuantity() : ''}</span>
+                  <span className="dosage-line">{getDosageForm() === 'Capsules' ? getDosageAmount() : ''}</span>
                   <span className="ml-2">Capsules</span>
                 </div>
                 <div className="dosage-item">
-                  <span className="dosage-line">{getDosageForm() === 'Teaspoons' ? extractQuantity() : ''}</span>
+                  <span className="dosage-line">{getDosageForm() === 'Teaspoons' ? getDosageAmount() : ''}</span>
                   <span className="ml-2">Teaspoons</span>
+                </div>
+                <div className="dosage-item">
+                  <span className="dosage-line">{getDosageForm() === 'mL' ? getDosageAmount() : ''}</span>
+                  <span className="ml-2">mL</span>
                 </div>
               </div>
 
               <div className="space-y-2">
                 <div className="dosage-item">
                   <span>Every</span>
-                  <span className="dosage-line mx-2">{getFrequency() === 'Hours' ? extractFrequencyNumber() : ''}</span>
+                  <span className="dosage-line mx-2">{getFrequencyDisplay().type === 'Hours' ? getFrequencyDisplay().value : ''}</span>
                   <span>Hours</span>
                 </div>
                 <div className="dosage-item">
-                  <span className="dosage-line">{getFrequency() === 'At bedtime' ? '✓' : ''}</span>
+                  <span className="dosage-line">{getFrequencyDisplay().type === 'At bedtime' ? '✓' : ''}</span>
                   <span className="ml-2">At bedtime</span>
                 </div>
                 <div className="dosage-item">
-                  <span className="dosage-line">{getFrequency() === 'Times a day' ? extractFrequencyNumber() : ''}</span>
+                  <span className="dosage-line">{getFrequencyDisplay().type === 'Times a day' ? getFrequencyDisplay().value : ''}</span>
                   <span className="ml-2">Times a day</span>
                 </div>
                 <div className="dosage-item">
-                  <span className="dosage-line">{getFrequency() === 'As needed' ? '✓' : ''}</span>
+                  <span className="dosage-line">{getFrequencyDisplay().type === 'As needed' ? '✓' : ''}</span>
                   <span className="ml-2">As needed</span>
                 </div>
+              </div>
+            </div>
+
+            <div className="medication-section" style={{ marginTop: '0.15in' }}>
+              <div className="label-field">
+                <div className="label-field-label">TOTAL UNITS DISPENSED</div>
+                <div className="label-field-value">{getTotalUnits()} {getDosageForm()}</div>
               </div>
             </div>
 

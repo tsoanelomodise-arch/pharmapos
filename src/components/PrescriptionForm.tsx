@@ -51,6 +51,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
     product_id: string;
     name: string;
     dosage?: string;
+    dosage_form?: string;
     frequency?: string;
     duration?: string;
     unit_price: number;
@@ -393,22 +394,23 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                                 <CommandItem
                                   key={product.id}
                                   value={product.id}
-                                  onSelect={() => {
-                                    const newMed = {
-                                      id: product.id,
-                                      product_id: product.id,
-                                      name: product.name,
-                                      dosage: "",
-                                      frequency: "",
-                                      duration: "",
-                                      unit_price: product.unit_price,
-                                      quantity: 1
-                                    };
-                                    setSelectedMedications([...selectedMedications, newMed]);
-                                    field.onChange(JSON.stringify([...selectedMedications, newMed]));
-                                    setMedicationOpen(false);
-                                    setMedicationSearch("");
-                                  }}
+                                   onSelect={() => {
+                                     const newMed = {
+                                       id: product.id,
+                                       product_id: product.id,
+                                       name: product.name,
+                                       dosage: "",
+                                       dosage_form: "tablets",
+                                       frequency: "3_times_daily",
+                                       duration: "",
+                                       unit_price: product.unit_price,
+                                       quantity: 1
+                                     };
+                                     setSelectedMedications([...selectedMedications, newMed]);
+                                     field.onChange(JSON.stringify([...selectedMedications, newMed]));
+                                     setMedicationOpen(false);
+                                     setMedicationSearch("");
+                                   }}
                                 >
                                   <div className="flex flex-col w-full">
                                     <div className="flex items-center justify-between">
@@ -434,60 +436,97 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                       <div className="space-y-2 mt-2">
                         {selectedMedications.map((med, index) => (
                           <div key={index} className="flex items-center gap-2 p-2 border rounded-md bg-muted/50">
-                            <div className="flex-1">
-                              <div className="flex items-center justify-between mb-1">
-                                <span className="font-medium text-sm">{med.name}</span>
-                                <span className="text-xs text-muted-foreground">R{med.unit_price.toFixed(2)}</span>
-                              </div>
-                              <div className="grid grid-cols-4 gap-2 mt-1">
-                                <Input
-                                  placeholder="Dosage"
-                                  value={med.dosage || ""}
-                                  onChange={(e) => {
-                                    const updated = [...selectedMedications];
-                                    updated[index].dosage = e.target.value;
-                                    setSelectedMedications(updated);
-                                    field.onChange(JSON.stringify(updated));
-                                  }}
-                                  className="text-xs h-8"
-                                />
-                                <Input
-                                  placeholder="Frequency"
-                                  value={med.frequency || ""}
-                                  onChange={(e) => {
-                                    const updated = [...selectedMedications];
-                                    updated[index].frequency = e.target.value;
-                                    setSelectedMedications(updated);
-                                    field.onChange(JSON.stringify(updated));
-                                  }}
-                                  className="text-xs h-8"
-                                />
-                                <Input
-                                  placeholder="Duration"
-                                  value={med.duration || ""}
-                                  onChange={(e) => {
-                                    const updated = [...selectedMedications];
-                                    updated[index].duration = e.target.value;
-                                    setSelectedMedications(updated);
-                                    field.onChange(JSON.stringify(updated));
-                                  }}
-                                  className="text-xs h-8"
-                                />
-                                <Input
-                                  type="number"
-                                  placeholder="Qty"
-                                  value={med.quantity || 1}
-                                  onChange={(e) => {
-                                    const updated = [...selectedMedications];
-                                    updated[index].quantity = parseInt(e.target.value) || 1;
-                                    setSelectedMedications(updated);
-                                    field.onChange(JSON.stringify(updated));
-                                  }}
-                                  className="text-xs h-8"
-                                  min="1"
-                                />
-                              </div>
-                            </div>
+                              <div className="flex-1">
+                               <div className="flex items-center justify-between mb-1">
+                                 <span className="font-medium text-sm">{med.name}</span>
+                                 <span className="text-xs text-muted-foreground">R{med.unit_price.toFixed(2)}</span>
+                               </div>
+                               <div className="grid grid-cols-2 gap-2 mt-1">
+                                 <div className="col-span-2 grid grid-cols-2 gap-2">
+                                   <Input
+                                     type="number"
+                                     placeholder="Dosage Amount"
+                                     value={med.dosage || ""}
+                                     onChange={(e) => {
+                                       const updated = [...selectedMedications];
+                                       updated[index].dosage = e.target.value;
+                                       setSelectedMedications(updated);
+                                       field.onChange(JSON.stringify(updated));
+                                     }}
+                                     className="text-xs h-8"
+                                     min="0.5"
+                                     step="0.5"
+                                   />
+                                   <Select
+                                     value={med.dosage_form || "tablets"}
+                                     onValueChange={(value) => {
+                                       const updated = [...selectedMedications];
+                                       updated[index].dosage_form = value;
+                                       setSelectedMedications(updated);
+                                       field.onChange(JSON.stringify(updated));
+                                     }}
+                                   >
+                                     <SelectTrigger className="text-xs h-8">
+                                       <SelectValue />
+                                     </SelectTrigger>
+                                     <SelectContent>
+                                       <SelectItem value="tablets">Tablets</SelectItem>
+                                       <SelectItem value="capsules">Capsules</SelectItem>
+                                       <SelectItem value="teaspoons">Teaspoons</SelectItem>
+                                       <SelectItem value="ml">mL</SelectItem>
+                                     </SelectContent>
+                                   </Select>
+                                 </div>
+                                 <Select
+                                   value={med.frequency || "3_times_daily"}
+                                   onValueChange={(value) => {
+                                     const updated = [...selectedMedications];
+                                     updated[index].frequency = value;
+                                     setSelectedMedications(updated);
+                                     field.onChange(JSON.stringify(updated));
+                                   }}
+                                 >
+                                   <SelectTrigger className="text-xs h-8">
+                                     <SelectValue />
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                     <SelectItem value="once_daily">Once daily</SelectItem>
+                                     <SelectItem value="twice_daily">Twice daily</SelectItem>
+                                     <SelectItem value="3_times_daily">3 times a day</SelectItem>
+                                     <SelectItem value="4_times_daily">4 times a day</SelectItem>
+                                     <SelectItem value="every_4_hours">Every 4 hours</SelectItem>
+                                     <SelectItem value="every_6_hours">Every 6 hours</SelectItem>
+                                     <SelectItem value="every_8_hours">Every 8 hours</SelectItem>
+                                     <SelectItem value="at_bedtime">At bedtime</SelectItem>
+                                     <SelectItem value="as_needed">As needed</SelectItem>
+                                   </SelectContent>
+                                 </Select>
+                                 <Input
+                                   placeholder="Duration (e.g., 7 days)"
+                                   value={med.duration || ""}
+                                   onChange={(e) => {
+                                     const updated = [...selectedMedications];
+                                     updated[index].duration = e.target.value;
+                                     setSelectedMedications(updated);
+                                     field.onChange(JSON.stringify(updated));
+                                   }}
+                                   className="text-xs h-8"
+                                 />
+                                 <Input
+                                   type="number"
+                                   placeholder="Total Units"
+                                   value={med.quantity || 1}
+                                   onChange={(e) => {
+                                     const updated = [...selectedMedications];
+                                     updated[index].quantity = parseInt(e.target.value) || 1;
+                                     setSelectedMedications(updated);
+                                     field.onChange(JSON.stringify(updated));
+                                   }}
+                                   className="text-xs h-8"
+                                   min="1"
+                                 />
+                               </div>
+                             </div>
                             <Button
                               type="button"
                               variant="ghost"
