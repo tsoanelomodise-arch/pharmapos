@@ -62,7 +62,7 @@ export function useProductSearch(searchTerm: string) {
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or(`name.ilike.%${searchTerm}%,barcode.ilike.%${searchTerm}%,generic_name.ilike.%${searchTerm}%`)
+        .or(`name.ilike.${searchTerm}%,barcode.ilike.${searchTerm}%,generic_name.ilike.${searchTerm}%`)
         .gt('stock_quantity', 0)
         .order('name')
         .limit(10);

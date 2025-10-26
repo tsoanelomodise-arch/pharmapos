@@ -94,6 +94,9 @@ const Dispensing = () => {
                         <p className="text-sm text-muted-foreground">
                           Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
                         </p>
+                        <p className="text-sm text-muted-foreground">
+                          Date: {new Date(prescription.prescription_date).toLocaleDateString()}
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
