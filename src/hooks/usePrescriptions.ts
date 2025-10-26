@@ -51,7 +51,7 @@ export function usePendingPrescriptions() {
           )
         `)
         .eq('status', 'pending')
-        .order('created_at');
+        .order('prescription_date', { ascending: false });
       
       if (error) throw error;
       return data;
