@@ -51,7 +51,7 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Medicine Label</title>
+          <title>Medicine Labels</title>
           <style>
             @media print {
               @page {
@@ -61,10 +61,12 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
               body {
                 margin: 0;
                 padding: 0;
-                overflow: hidden;
               }
               .label-container {
                 page-break-inside: avoid;
+                page-break-after: always;
+              }
+              .label-container:last-child {
                 page-break-after: avoid;
               }
             }
@@ -77,20 +79,18 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
               font-family: Arial, sans-serif;
               margin: 0;
               padding: 0;
-              width: 4in;
-              height: 3in;
-              overflow: hidden;
             }
             
             .label-container {
-              width: 100%;
-              height: 100%;
+              width: 4in;
+              height: 3in;
               border: 2px solid #000;
               border-radius: 8px;
               padding: 0.25in;
               display: flex;
               flex-direction: column;
               justify-content: space-between;
+              margin-bottom: 0.2in;
             }
             
             .label-header {
@@ -187,14 +187,12 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
     : typeof prescription.medications === 'string'
     ? [{ name: prescription.medications, dosage: '', frequency: '' }]
     : [prescription.medications];
-
-  const firstMedication = medications[0];
   
   // Extract dosage form and frequency from medication data
-  const getDosageAmount = () => firstMedication?.dosage || '';
+  const getDosageAmount = (medication: any) => medication?.dosage || '';
   
-  const getDosageForm = () => {
-    const form = firstMedication?.dosage_form?.toLowerCase() || '';
+  const getDosageForm = (medication: any) => {
+    const form = medication?.dosage_form?.toLowerCase() || '';
     if (form === 'tablets') return 'Tablets';
     if (form === 'capsules') return 'Capsules';
     if (form === 'teaspoons') return 'Teaspoons';
@@ -202,8 +200,8 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
     return 'Tablets';
   };
 
-  const getFrequencyDisplay = () => {
-    const freq = firstMedication?.frequency || '';
+  const getFrequencyDisplay = (medication: any) => {
+    const freq = medication?.frequency || '';
     const frequencyMap: Record<string, { type: string; value: string }> = {
       'once_daily': { type: 'Times a day', value: '1' },
       'twice_daily': { type: 'Times a day', value: '2' },
@@ -218,7 +216,7 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
     return frequencyMap[freq] || { type: 'Times a day', value: '3' };
   };
 
-  const getTotalUnits = () => firstMedication?.quantity || '';
+  const getTotalUnits = (medication: any) => medication?.quantity || '';
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -228,99 +226,101 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
           Print Label
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Medicine Label</DialogTitle>
+          <DialogTitle>Medicine Labels ({medications.length} {medications.length === 1 ? 'label' : 'labels'})</DialogTitle>
         </DialogHeader>
 
-        <div id="medicine-label-content">
-          <div className="label-container border-2 border-foreground rounded-xl p-8">
-            <div className="label-header">
+        <div id="medicine-label-content" className="space-y-4">
+          {medications.map((medication, index) => (
+            <div key={index} className="label-container border-2 border-foreground rounded-xl p-8">
+              <div className="label-header">
+                <div>
+                  <div className="label-field">
+                    <div className="label-field-label">PATIENT</div>
+                    <div className="label-field-value">{prescription.customers?.name || 'N/A'}</div>
+                  </div>
+                </div>
+                <div>
+                  <div className="label-field">
+                    <div className="label-field-label">DATE</div>
+                    <div className="label-field-value">
+                      {new Date(prescription.prescription_date).toLocaleDateString()}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="medication-section">
+                <div className="label-field">
+                  <div className="label-field-label">MEDICATION</div>
+                  <div className="label-field-value">{medication?.name || 'N/A'}</div>
+                </div>
+              </div>
+
+              <div className="dosage-grid">
+                <div className="space-y-2">
+                  <div className="dosage-item">
+                    <span className="dosage-line">{getDosageAmount(medication)}</span>
+                    <span className="ml-2">{getDosageForm(medication)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  {getFrequencyDisplay(medication).type === 'Hours' && (
+                    <div className="dosage-item">
+                      <span>Every</span>
+                      <span className="dosage-line mx-2">{getFrequencyDisplay(medication).value}</span>
+                      <span>Hours</span>
+                    </div>
+                  )}
+                  {getFrequencyDisplay(medication).type === 'At bedtime' && (
+                    <div className="dosage-item">
+                      <span className="dosage-line">✓</span>
+                      <span className="ml-2">At bedtime</span>
+                    </div>
+                  )}
+                  {getFrequencyDisplay(medication).type === 'Times a day' && (
+                    <div className="dosage-item">
+                      <span className="dosage-line">{getFrequencyDisplay(medication).value}</span>
+                      <span className="ml-2">Times a day</span>
+                    </div>
+                  )}
+                  {getFrequencyDisplay(medication).type === 'As needed' && (
+                    <div className="dosage-item">
+                      <span className="dosage-line">✓</span>
+                      <span className="ml-2">As needed</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div>
-                <div className="label-field">
-                  <div className="label-field-label">PATIENT</div>
-                  <div className="label-field-value">{prescription.customers?.name || 'N/A'}</div>
-                </div>
-              </div>
-              <div>
-                <div className="label-field">
-                  <div className="label-field-label">DATE</div>
-                  <div className="label-field-value">
-                    {new Date(prescription.prescription_date).toLocaleDateString()}
+                <div className="medication-section" style={{ marginBottom: '0.08in' }}>
+                  <div className="label-field">
+                    <div className="label-field-label">TOTAL DISPENSED</div>
+                    <div className="label-field-value">{getTotalUnits(medication)} {getDosageForm(medication)}</div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="medication-section">
-              <div className="label-field">
-                <div className="label-field-label">MEDICATION</div>
-                <div className="label-field-value">{firstMedication?.name || 'N/A'}</div>
-              </div>
-            </div>
-
-            <div className="dosage-grid">
-              <div className="space-y-2">
-                <div className="dosage-item">
-                  <span className="dosage-line">{getDosageAmount()}</span>
-                  <span className="ml-2">{getDosageForm()}</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                {getFrequencyDisplay().type === 'Hours' && (
-                  <div className="dosage-item">
-                    <span>Every</span>
-                    <span className="dosage-line mx-2">{getFrequencyDisplay().value}</span>
-                    <span>Hours</span>
-                  </div>
-                )}
-                {getFrequencyDisplay().type === 'At bedtime' && (
-                  <div className="dosage-item">
-                    <span className="dosage-line">✓</span>
-                    <span className="ml-2">At bedtime</span>
-                  </div>
-                )}
-                {getFrequencyDisplay().type === 'Times a day' && (
-                  <div className="dosage-item">
-                    <span className="dosage-line">{getFrequencyDisplay().value}</span>
-                    <span className="ml-2">Times a day</span>
-                  </div>
-                )}
-                {getFrequencyDisplay().type === 'As needed' && (
-                  <div className="dosage-item">
-                    <span className="dosage-line">✓</span>
-                    <span className="ml-2">As needed</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div>
-              <div className="medication-section" style={{ marginBottom: '0.08in' }}>
-                <div className="label-field">
-                  <div className="label-field-label">TOTAL DISPENSED</div>
-                  <div className="label-field-value">{getTotalUnits()} {getDosageForm()}</div>
-                </div>
-              </div>
-
-              <div className="doctor-section">
-                <div className="doctor-field">
-                  <span className="font-bold">Dr.</span>
-                  <span className="doctor-line">{prescription.doctor_name}</span>
-                </div>
-              </div>
-
-              {prescription.status === 'dispensed' && (
-                <div className="doctor-section" style={{ marginTop: '0.06in' }}>
+                <div className="doctor-section">
                   <div className="doctor-field">
-                    <span className="font-bold">Dispensed:</span>
-                    <span className="doctor-line">{dispensedBy}</span>
+                    <span className="font-bold">Dr.</span>
+                    <span className="doctor-line">{prescription.doctor_name}</span>
                   </div>
                 </div>
-              )}
+
+                {prescription.status === 'dispensed' && (
+                  <div className="doctor-section" style={{ marginTop: '0.06in' }}>
+                    <div className="doctor-field">
+                      <span className="font-bold">Dispensed:</span>
+                      <span className="doctor-line">{dispensedBy}</span>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          ))}
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
