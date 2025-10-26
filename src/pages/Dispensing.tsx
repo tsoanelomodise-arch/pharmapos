@@ -85,24 +85,22 @@ const Dispensing = () => {
             <CardContent>
               <div className="space-y-4">
                 {pendingPrescriptions.map((prescription: any) => (
-                  <div key={prescription.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <User className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <h3 className="font-medium">{prescription.customers?.name || 'Unknown Patient'}</h3>
-                        <p className="text-sm text-muted-foreground">Phone: {prescription.customers?.phone || 'N/A'}</p>
-                        <p className="text-sm text-muted-foreground">
-                          Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Date: {new Date(prescription.prescription_date).toLocaleDateString()}
-                        </p>
-                      </div>
+                  <div key={prescription.id} className="grid grid-cols-[auto_1fr_150px_120px_auto] gap-4 items-center p-4 border rounded-lg">
+                    <User className="h-8 w-8 text-muted-foreground" />
+                    <div>
+                      <h3 className="font-medium">{prescription.customers?.name || 'Unknown Patient'}</h3>
+                      <p className="text-sm text-muted-foreground">Phone: {prescription.customers?.phone || 'N/A'}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
+                      </p>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'}>
-                        {prescription.status}
-                      </Badge>
+                    <div className="text-sm">
+                      {new Date(prescription.prescription_date).toLocaleDateString()}
+                    </div>
+                    <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'} className="w-fit">
+                      {prescription.status}
+                    </Badge>
+                    <div className="flex items-center gap-2">
                       <MedicineLabelDialog prescription={prescription} />
                       <Button 
                         size="sm" 
