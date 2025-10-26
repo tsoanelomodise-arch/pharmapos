@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Plus, User, FileText, AlertTriangle, CheckCircle, Edit2 } from "lucide-react";
+import { Search, FileText, AlertTriangle, CheckCircle, User } from "lucide-react";
 import { usePendingPrescriptions, usePrescriptions, useRecentPatients } from "@/hooks/usePrescriptions";
 import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useNavigate } from "react-router-dom";
