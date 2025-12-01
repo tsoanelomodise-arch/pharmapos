@@ -157,7 +157,7 @@ const Dispensing = () => {
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="font-medium">Recent Patients</h3>
-                    <Button variant="outline" size="sm">View All</Button>
+                    <Button variant="outline" size="sm" onClick={() => navigate('/management')}>View All</Button>
                   </div>
                   <div className="space-y-3">
                     {patientResults.length > 0 ? (
