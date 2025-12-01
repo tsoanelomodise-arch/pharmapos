@@ -97,8 +97,13 @@ export default function Management() {
               You need admin privileges to access this page.
             </CardDescription>
           </CardHeader>
-      </Card>
+        </Card>
+      </div>
+    );
+  }
 
+  return (
+    <div className="container mx-auto p-6">
       {/* Manual Password Change Dialog */}
       <AlertDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <AlertDialogContent>
@@ -147,12 +152,7 @@ export default function Management() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
-  );
-}
 
-  return (
-    <div className="container mx-auto p-6">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Management</h1>
         <p className="text-muted-foreground">
