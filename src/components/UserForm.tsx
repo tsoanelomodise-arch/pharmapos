@@ -149,7 +149,7 @@ export function UserForm() {
                     <SelectContent>
                       <SelectItem value="pharmacist">Pharmacist</SelectItem>
                       <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
+                      <SelectItem value="manager">Cashier</SelectItem>
                       <SelectItem value="owner">Owner</SelectItem>
                     </SelectContent>
                   </Select>

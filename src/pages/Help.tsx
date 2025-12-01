@@ -56,7 +56,7 @@ export default function Help() {
             </div>
 
             <div className="border rounded-lg p-4">
-              <Badge variant="secondary" className="mb-2">Manager</Badge>
+              <Badge variant="secondary" className="mb-2">Cashier</Badge>
               <p className="text-sm text-muted-foreground mb-2">Full operational access including financial data</p>
               <ul className="text-sm space-y-1">
                 <li>✓ All Admin Access</li>
@@ -71,7 +71,7 @@ export default function Help() {
               <Badge className="mb-2">Owner</Badge>
               <p className="text-sm text-muted-foreground mb-2">Complete system access including user management</p>
               <ul className="text-sm space-y-1">
-                <li>✓ All Manager Access</li>
+                <li>✓ All Cashier Access</li>
                 <li>✓ Manage Users</li>
                 <li>✓ Assign Roles</li>
                 <li>✓ Full System Control</li>
@@ -302,7 +302,7 @@ export default function Help() {
                     <li><strong>Sales Reports:</strong> Daily, weekly, monthly sales summaries</li>
                     <li><strong>Prescription Reports:</strong> Track prescriptions dispensed</li>
                     <li><strong>Stock Reports:</strong> Inventory levels and movements</li>
-                    <li><strong>Financial Reports:</strong> Revenue, expenses, profit analysis (Manager/Owner only)</li>
+                    <li><strong>Financial Reports:</strong> Revenue, expenses, profit analysis (Cashier/Owner only)</li>
                     <li><strong>Customer Reports:</strong> Patient visit history and spending</li>
                   </ul>
                   <h4 className="font-semibold mt-4">Generating reports:</h4>
@@ -323,7 +323,7 @@ export default function Help() {
                 <div className="flex items-center gap-2">
                   <Settings className="h-5 w-5" />
                   <span>Management Module</span>
-                  <Badge variant="secondary" className="ml-2">Admin/Manager/Owner</Badge>
+                  <Badge variant="secondary" className="ml-2">Admin/Cashier/Owner</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -350,7 +350,7 @@ export default function Help() {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
                     <li>Add new user: Click "Add User" and enter email, password, full name, and role</li>
-                    <li>Roles are assigned during user creation (Pharmacist, Admin, Manager, Owner)</li>
+                    <li>Roles are assigned during user creation (Pharmacist, Admin, Cashier, Owner)</li>
                     <li>Change user roles after creation: Click "Edit Role" on any user</li>
                     <li>Delete users when needed (cannot be undone)</li>
                     <li>Search users by email, name, or role</li>
@@ -359,7 +359,7 @@ export default function Help() {
                   <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg mt-4">
                     <p className="text-sm font-semibold">⚠️ Important Access Notes:</p>
                     <ul className="text-sm space-y-1 mt-2">
-                      <li>• Patients and Doctors tabs: Admin, Manager, and Owner</li>
+                      <li>• Patients and Doctors tabs: Admin, Cashier, and Owner</li>
                       <li>• Users tab: Admin and Owner only</li>
                       <li>• Both Admins and Owners can create and manage user accounts</li>
                       <li>• User roles are assigned during account creation</li>

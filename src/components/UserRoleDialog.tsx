@@ -28,7 +28,7 @@ interface UserRoleDialogProps {
 const roles = [
   { value: "pharmacist", label: "Pharmacist" },
   { value: "admin", label: "Admin" },
-  { value: "manager", label: "Manager" },
+  { value: "manager", label: "Cashier" },
   { value: "owner", label: "Owner" },
 ];
 
@@ -84,7 +84,7 @@ export function UserRoleDialog({ user }: UserRoleDialogProps) {
               <ul className="list-disc list-inside space-y-1">
                 <li><strong>Pharmacist:</strong> Basic access to dispensing and POS</li>
                 <li><strong>Admin:</strong> Full access to management features</li>
-                <li><strong>Manager:</strong> Admin access plus financial data</li>
+                <li><strong>Cashier:</strong> Admin access plus financial data</li>
                 <li><strong>Owner:</strong> Full system access including user management</li>
               </ul>
             </div>
