@@ -63,7 +63,7 @@ export function useProductSearch(searchTerm: string) {
   return useQuery({
     queryKey: ['products-search', searchTerm],
     queryFn: async () => {
-      if (searchTerm.length < 2) return [];
+      if (searchTerm.length < 1) return [];
       
       // Validate input format before querying
       if (!/^[a-zA-Z0-9\s\-]+$/.test(searchTerm)) {
@@ -82,7 +82,7 @@ export function useProductSearch(searchTerm: string) {
       if (error) throw error;
       return data as Product[];
     },
-    enabled: searchTerm.length >= 2
+    enabled: searchTerm.length >= 1
   });
 }
 
