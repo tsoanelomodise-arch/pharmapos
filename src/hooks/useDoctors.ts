@@ -32,19 +32,19 @@ export function useDoctorSearch(searchTerm: string) {
   return useQuery({
     queryKey: ['doctors-search', searchTerm],
     queryFn: async () => {
-      if (searchTerm.length < 2) return [];
+      if (searchTerm.length < 1) return [];
       
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .or(`name.ilike.%${searchTerm}%,license_number.ilike.%${searchTerm}%,specialization.ilike.%${searchTerm}%`)
+        .or(`name.ilike.${searchTerm}%,license_number.ilike.${searchTerm}%,specialization.ilike.${searchTerm}%`)
         .order('name')
         .limit(10);
       
       if (error) throw error;
       return data as Doctor[];
     },
-    enabled: searchTerm.length >= 2
+    enabled: searchTerm.length >= 1
   });
 }
 

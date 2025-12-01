@@ -66,13 +66,13 @@ export function useCustomerSearch(searchTerm: string) {
       const { data, error } = await supabase
         .from('customers_secure')
         .select('*')
-        .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
+        .or(`name.ilike.${sanitized}%,phone.ilike.${sanitized}%,email.ilike.${sanitized}%`)
         .order('name');
       
       if (error) throw error;
       return data as Customer[];
     },
-    enabled: searchTerm.length > 2
+    enabled: searchTerm.length >= 1
   });
 }
 
