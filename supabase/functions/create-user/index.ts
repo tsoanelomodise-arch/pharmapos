@@ -15,6 +15,12 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
+
+    console.log("Starting create-user function");
+    console.log("SUPABASE_URL:", supabaseUrl ? "set" : "not set");
+    console.log("SUPABASE_SERVICE_ROLE_KEY:", supabaseServiceRoleKey ? "set" : "not set");
+    console.log("SUPABASE_ANON_KEY:", supabaseAnonKey ? "set" : "not set");
 
     // Create a Supabase client with the service role key
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -24,40 +30,57 @@ serve(async (req) => {
       },
     });
 
-    // Create a client with the user's auth token to check permissions
+    // Get the authorization header
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    
     if (!authHeader) {
+      console.log("No authorization header");
       return new Response(
         JSON.stringify({ error: "No authorization header" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const supabaseClient = createClient(supabaseUrl, Deno.env.get("SUPABASE_ANON_KEY")!, {
-      global: { headers: { Authorization: authHeader } },
-    });
-
-    // Get the current user
-    const { data: { user: currentUser }, error: userError } = await supabaseClient.auth.getUser();
-    if (userError || !currentUser) {
+    // Extract the JWT token
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Verify the user using the admin client
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    console.log("Get user result:", userError ? `Error: ${userError.message}` : "Success");
+    
+    if (userError || !userData.user) {
+      console.log("User verification failed:", userError?.message);
       return new Response(
-        JSON.stringify({ error: "Unauthorized" }),
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Check if the current user has admin or owner role
-    const { data: hasAdminRole } = await supabaseClient.rpc("has_role", {
-      _user_id: currentUser.id,
-      _role: "admin",
-    });
+    const currentUser = userData.user;
+    console.log("Current user ID:", currentUser.id);
 
-    const { data: hasOwnerRole } = await supabaseClient.rpc("has_role", {
-      _user_id: currentUser.id,
-      _role: "owner",
-    });
+    // Check if the current user has admin or owner role
+    const { data: hasAdminRole, error: adminRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", currentUser.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    const { data: hasOwnerRole, error: ownerRoleError } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", currentUser.id)
+      .eq("role", "owner")
+      .maybeSingle();
+
+    console.log("Admin role check:", hasAdminRole ? "has admin" : "no admin");
+    console.log("Owner role check:", hasOwnerRole ? "has owner" : "no owner");
 
     if (!hasAdminRole && !hasOwnerRole) {
+      console.log("User does not have admin or owner role");
       return new Response(
         JSON.stringify({ error: "Only admins and owners can create users" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -66,6 +89,7 @@ serve(async (req) => {
 
     // Parse the request body
     const { email, password, full_name, role } = await req.json();
+    console.log("Creating user with email:", email, "role:", role);
 
     if (!email || !password || !full_name || !role) {
       return new Response(
@@ -93,11 +117,14 @@ serve(async (req) => {
     });
 
     if (createError) {
+      console.log("Error creating user:", createError.message);
       return new Response(
         JSON.stringify({ error: createError.message }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    console.log("User created successfully:", newUser.user.id);
 
     // Wait for the trigger to complete
     await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -111,6 +138,8 @@ serve(async (req) => {
 
       if (roleError) {
         console.error("Error updating role:", roleError);
+      } else {
+        console.log("Role updated to:", role);
       }
     }
 
@@ -119,7 +148,7 @@ serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Error in create-user function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
