@@ -15,7 +15,8 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
-import { useUsers, useDeleteUser, useResetUserPassword } from "@/hooks/useUsers";
+import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword } from "@/hooks/useUsers";
+import { toast } from "sonner";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
 import { UserForm } from "@/components/UserForm";
@@ -50,6 +51,10 @@ export default function Management() {
   const deleteDoctor = useDeleteDoctor();
   const deleteUser = useDeleteUser();
   const resetUserPassword = useResetUserPassword();
+  const setUserPassword = useSetUserPassword();
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null);
+  const [newPassword, setNewPassword] = useState("");
 
   /**
    * SECURITY MODEL:
@@ -92,10 +97,59 @@ export default function Management() {
               You need admin privileges to access this page.
             </CardDescription>
           </CardHeader>
-        </Card>
-      </div>
-    );
-  }
+      </Card>
+
+      {/* Manual Password Change Dialog */}
+      <AlertDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Set New Password</AlertDialogTitle>
+            <AlertDialogDescription>
+              Enter a new password for this user. They will be able to log in immediately with this password.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Input
+              type="password"
+              placeholder="New password (min. 6 characters)"
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setNewPassword("");
+              setSelectedUserForPassword(null);
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (selectedUserForPassword && newPassword.length >= 6) {
+                  setUserPassword.mutate(
+                    { userId: selectedUserForPassword, newPassword },
+                    {
+                      onSuccess: () => {
+                        setPasswordDialogOpen(false);
+                        setNewPassword("");
+                        setSelectedUserForPassword(null);
+                      },
+                    }
+                  );
+                } else {
+                  toast.error("Password must be at least 6 characters");
+                }
+              }}
+              disabled={!newPassword || newPassword.length < 6}
+            >
+              Set Password
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
 
   return (
     <div className="container mx-auto p-6">
@@ -396,10 +450,22 @@ export default function Management() {
                           <TableCell>{format(new Date(user.created_at), 'PP')}</TableCell>
                           <TableCell className="text-right space-x-2">
                             <UserRoleDialog user={user} />
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              title="Set Password"
+                              onClick={() => {
+                                setSelectedUserForPassword(user.id);
+                                setPasswordDialogOpen(true);
+                                setNewPassword("");
+                              }}
+                            >
+                              <KeyRound className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="sm" title="Reset Password">
-                                  <KeyRound className="h-4 w-4" />
+                                <Button variant="ghost" size="sm" title="Reset Password via Email">
+                                  <KeyRound className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                               </AlertDialogTrigger>
                               <AlertDialogContent>

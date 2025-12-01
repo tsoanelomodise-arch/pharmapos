@@ -156,6 +156,27 @@ export function useResetUserPassword() {
   });
 }
 
+export function useSetUserPassword() {
+  return useMutation({
+    mutationFn: async ({ userId, newPassword }: { userId: string; newPassword: string }) => {
+      const { data, error } = await supabase.functions.invoke('reset-user-password', {
+        body: { userId, newPassword },
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: () => {
+      toast.success('Password updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update password');
+    },
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
