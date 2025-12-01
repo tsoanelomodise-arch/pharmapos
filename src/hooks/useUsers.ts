@@ -138,6 +138,24 @@ export function useCreateUser() {
   });
 }
 
+export function useResetUserPassword() {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success('Password reset email sent successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to send password reset email');
+    },
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
