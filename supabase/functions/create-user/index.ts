@@ -30,6 +30,34 @@ serve(async (req) => {
       );
     }
 
+    // Extract and decode the JWT to get user ID
+    // The JWT is already verified by Supabase edge function infrastructure
+    const token = authHeader.replace("Bearer ", "");
+    
+    // Decode JWT payload (middle part)
+    const parts = token.split(".");
+    if (parts.length !== 3) {
+      console.log("Invalid JWT format");
+      return new Response(
+        JSON.stringify({ error: "Invalid token format" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Decode the payload (base64url)
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const currentUserId = payload.sub;
+    
+    if (!currentUserId) {
+      console.log("No user ID in token");
+      return new Response(
+        JSON.stringify({ error: "Invalid token - no user ID" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log("Current user ID from JWT:", currentUserId);
+
     // Create a Supabase client with the service role key for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
@@ -38,35 +66,11 @@ serve(async (req) => {
       },
     });
 
-    // Create a client with the user's JWT to verify them
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const supabaseUser = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-    });
-
-    // Verify the user's token
-    const { data: userData, error: userError } = await supabaseUser.auth.getUser();
-    
-    console.log("Get user result:", userError ? `Error: ${userError.message}` : "Success");
-    
-    if (userError || !userData.user) {
-      console.log("User verification failed:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const currentUser = userData.user;
-    console.log("Current user ID:", currentUser.id);
-
     // Check if the current user has admin or owner role using admin client
     const { data: userRoleData, error: roleCheckError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
-      .eq("user_id", currentUser.id)
+      .eq("user_id", currentUserId)
       .single();
 
     console.log("Role check result:", userRoleData, roleCheckError?.message);
