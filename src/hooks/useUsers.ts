@@ -99,34 +99,20 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      // Create the user account without email confirmation requirement
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: userData.email,
-        password: userData.password,
-        options: {
-          data: {
-            full_name: userData.full_name,
-          },
+      // Use edge function to create user with admin API
+      const { data, error } = await supabase.functions.invoke('create-user', {
+        body: {
+          email: userData.email,
+          password: userData.password,
+          full_name: userData.full_name,
+          role: userData.role,
         },
       });
 
-      if (authError) throw authError;
-      if (!authData.user) throw new Error('Failed to create user');
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Wait a moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Update the role if it's not the default pharmacist role
-      if (userData.role !== 'pharmacist') {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .update({ role: userData.role })
-          .eq('user_id', authData.user.id);
-
-        if (roleError) throw roleError;
-      }
-
-      return authData.user;
+      return data.user;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
