@@ -144,3 +144,63 @@ export function useUpdateStockMutation() {
     }
   });
 }
+
+export function useDisposeProductMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ productId, quantity, reason }: {
+      productId: string;
+      quantity: number;
+      reason: string;
+    }) => {
+      // Update product stock to 0 or reduce by quantity
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', productId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const newQuantity = Math.max(0, product.stock_quantity - quantity);
+      
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ stock_quantity: newQuantity })
+        .eq('id', productId);
+      
+      if (updateError) throw updateError;
+      
+      // Record stock movement as adjustment with disposal reason
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          product_id: productId,
+          movement_type: 'adjustment',
+          quantity: -quantity,
+          notes: `Disposal: ${reason}`
+        });
+      
+      if (movementError) throw movementError;
+      
+      return { productId, newQuantity, disposedQuantity: quantity };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({ 
+        title: 'Product disposed successfully',
+        description: `${data.disposedQuantity} units marked for disposal`
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error disposing product', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}

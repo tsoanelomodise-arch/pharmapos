@@ -4,18 +4,30 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Edit2 } from "lucide-react";
-import { useProducts, useLowStockProducts } from "@/hooks/useProducts";
+import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Edit2, Trash2 } from "lucide-react";
+import { useProducts, useLowStockProducts, useDisposeProductMutation } from "@/hooks/useProducts";
 import { ProductForm } from "@/components/ProductForm";
 import { StockReportDialog } from "@/components/StockReportDialog";
 import { useState } from "react";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
   const { data: products = [], isLoading } = useProducts();
   const { data: lowStockProducts = [] } = useLowStockProducts();
   const canAccessFinancialData = useCanAccessFinancialData();
+  const disposeProductMutation = useDisposeProductMutation();
   
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -26,13 +38,51 @@ const Stock = () => {
   const totalValue = canAccessFinancialData 
     ? products.reduce((sum, product) => sum + (product.cost_price * product.stock_quantity), 0)
     : 0;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+  
+  const ninetyDaysFromNow = new Date();
+  ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
+
+  // Expired products (expiry_date < today)
+  const expiredProducts = products.filter(product => {
+    if (!product.expiry_date) return false;
+    const expiryDate = new Date(product.expiry_date);
+    return expiryDate < today && product.stock_quantity > 0;
+  });
+
+  // Expiring within 30 days (today <= expiry_date <= 30 days from now)
   const expiringProducts = products.filter(product => {
     if (!product.expiry_date) return false;
     const expiryDate = new Date(product.expiry_date);
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
-    return expiryDate <= thirtyDaysFromNow;
+    return expiryDate >= today && expiryDate <= thirtyDaysFromNow && product.stock_quantity > 0;
   });
+
+  // Expiring within 90 days (30 days < expiry_date <= 90 days)
+  const expiringIn90Days = products.filter(product => {
+    if (!product.expiry_date) return false;
+    const expiryDate = new Date(product.expiry_date);
+    return expiryDate > thirtyDaysFromNow && expiryDate <= ninetyDaysFromNow && product.stock_quantity > 0;
+  });
+
+  const handleDispose = (product: { id: string; name: string; stock_quantity: number }) => {
+    setDisposalProduct({ id: product.id, name: product.name, quantity: product.stock_quantity });
+  };
+
+  const confirmDisposal = () => {
+    if (disposalProduct) {
+      disposeProductMutation.mutate({
+        productId: disposalProduct.id,
+        quantity: disposalProduct.quantity,
+        reason: 'Expired product'
+      });
+      setDisposalProduct(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -391,60 +441,109 @@ const Stock = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <Card>
+                  <Card className="bg-destructive/5 border-destructive/20">
                     <CardContent className="pt-4">
                       <div className="text-center">
                         <p className="text-sm text-muted-foreground">Expired</p>
-                        <p className="text-2xl font-bold text-red-600">5</p>
+                        <p className="text-2xl font-bold text-destructive">{expiredProducts.length}</p>
                         <p className="text-xs">Items require disposal</p>
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="bg-yellow-500/5 border-yellow-500/20">
                     <CardContent className="pt-4">
                       <div className="text-center">
                         <p className="text-sm text-muted-foreground">Expiring in 30 days</p>
-                        <p className="text-2xl font-bold text-yellow-600">45</p>
+                        <p className="text-2xl font-bold text-yellow-600">{expiringProducts.length}</p>
                         <p className="text-xs">Requires attention</p>
                       </div>
                     </CardContent>
                   </Card>
-                  <Card>
+                  <Card className="bg-green-500/5 border-green-500/20">
                     <CardContent className="pt-4">
                       <div className="text-center">
                         <p className="text-sm text-muted-foreground">Expiring in 90 days</p>
-                        <p className="text-2xl font-bold text-green-600">128</p>
+                        <p className="text-2xl font-bold text-green-600">{expiringIn90Days.length}</p>
                         <p className="text-xs">Monitor closely</p>
                       </div>
                     </CardContent>
                   </Card>
                 </div>
 
-                <div className="space-y-3">
-                  <h4 className="font-medium">Immediate Action Required</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <div>
-                        <p className="font-medium">Cough Syrup 200ml</p>
-                        <p className="text-sm text-muted-foreground">Batch: CS2024001</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-red-600">Expired: 15 Jan 2024</p>
-                        <Button size="sm" variant="destructive">Mark for Disposal</Button>
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                      <div>
-                        <p className="font-medium">Antacid Tablets</p>
-                        <p className="text-sm text-muted-foreground">Batch: AT2024005</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold text-yellow-600">Expires: 15 Feb 2024</p>
-                        <Button size="sm" variant="outline">Discount Sale</Button>
-                      </div>
+                {/* Expired Products - Immediate Action */}
+                {expiredProducts.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <AlertTriangle className="h-4 w-4 text-destructive" />
+                      Expired - Immediate Action Required
+                    </h4>
+                    <div className="space-y-2">
+                      {expiredProducts.map(product => (
+                        <div key={product.id} className="flex items-center justify-between p-3 bg-destructive/5 border border-destructive/20 rounded-lg">
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {product.batch_number ? `Batch: ${product.batch_number}` : 'No batch number'} • Stock: {product.stock_quantity} units
+                            </p>
+                          </div>
+                          <div className="text-right flex flex-col items-end gap-1">
+                            <p className="font-bold text-destructive">
+                              Expired: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString('en-ZA') : 'N/A'}
+                            </p>
+                            <Button 
+                              size="sm" 
+                              variant="destructive"
+                              onClick={() => handleDispose(product)}
+                              disabled={disposeProductMutation.isPending}
+                            >
+                              <Trash2 className="h-3 w-3 mr-1" />
+                              Mark for Disposal
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Expiring Soon - 30 days */}
+                {expiringProducts.length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      <TrendingDown className="h-4 w-4 text-yellow-600" />
+                      Expiring Within 30 Days
+                    </h4>
+                    <div className="space-y-2">
+                      {expiringProducts.map(product => (
+                        <div key={product.id} className="flex items-center justify-between p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg">
+                          <div>
+                            <p className="font-medium">{product.name}</p>
+                            <p className="text-sm text-muted-foreground">
+                              {product.batch_number ? `Batch: ${product.batch_number}` : 'No batch number'} • Stock: {product.stock_quantity} units
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-yellow-600">
+                              Expires: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString('en-ZA') : 'N/A'}
+                            </p>
+                            <Badge variant="outline" className="text-yellow-600 border-yellow-500/30">
+                              Expiring Soon
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Empty state */}
+                {expiredProducts.length === 0 && expiringProducts.length === 0 && (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Package className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                    <p className="text-lg font-medium">No Expiry Alerts</p>
+                    <p className="text-sm text-muted-foreground">All products have valid expiry dates</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -594,6 +693,29 @@ const Stock = () => {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Disposal Confirmation Dialog */}
+      <AlertDialog open={!!disposalProduct} onOpenChange={() => setDisposalProduct(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Product Disposal</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to mark <strong>{disposalProduct?.name}</strong> for disposal? 
+              This will remove <strong>{disposalProduct?.quantity} units</strong> from stock. 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={confirmDisposal}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Confirm Disposal
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
