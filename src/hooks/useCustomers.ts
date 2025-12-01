@@ -47,14 +47,26 @@ export function useCustomersWithDebt() {
   });
 }
 
+// Helper function to sanitize search terms and prevent SQL injection
+const sanitizeSearchTerm = (term: string): string => {
+  // Escape special ILIKE characters (%, _, \) and limit length
+  return term.replace(/[%_\\]/g, '\\$&').trim().slice(0, 100);
+};
+
 export function useCustomerSearch(searchTerm: string) {
   return useQuery({
     queryKey: ['customers-search', searchTerm],
     queryFn: async () => {
+      // Validate input format before querying
+      if (!/^[a-zA-Z0-9\s@.\-+()]+$/.test(searchTerm)) {
+        return [] as Customer[];
+      }
+      
+      const sanitized = sanitizeSearchTerm(searchTerm);
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .or(`name.ilike.%${searchTerm}%,phone.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`)
+        .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
         .order('name');
       
       if (error) throw error;

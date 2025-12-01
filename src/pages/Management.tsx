@@ -50,6 +50,13 @@ export default function Management() {
   const deleteDoctor = useDeleteDoctor();
   const deleteUser = useDeleteUser();
 
+  /**
+   * SECURITY MODEL:
+   * - These client-side role checks control UI visibility ONLY (UX optimization)
+   * - Actual authorization is enforced by database RLS policies
+   * - NEVER rely on these checks for security decisions
+   * - All database mutations are validated server-side via RLS
+   */
   const isAdmin = role && ['admin', 'manager', 'owner'].includes(role);
   const isOwner = role === 'owner';
   const canManageUsers = role && ['admin', 'owner'].includes(role);

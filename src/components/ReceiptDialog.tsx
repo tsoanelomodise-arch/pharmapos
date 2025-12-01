@@ -69,6 +69,15 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     if (printContent) {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
+        /**
+         * SECURITY NOTE: Using innerHTML here is currently safe because:
+         * 1. All data comes from the database (trusted source)
+         * 2. React automatically escapes JSX content
+         * 
+         * WARNING: If any user-controlled content is ever added to the receipt
+         * component without proper sanitization, this could create XSS vulnerabilities.
+         * Consider using DOMPurify or cloneNode() for future changes.
+         */
         printWindow.document.write(`
           <html>
             <head>
