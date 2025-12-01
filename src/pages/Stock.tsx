@@ -4,9 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Edit2, Trash2 } from "lucide-react";
+import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Trash2, Mail, Phone, MapPin, User } from "lucide-react";
 import { useProducts, useLowStockProducts, useDisposeProductMutation } from "@/hooks/useProducts";
+import { useSuppliers, useDeleteSupplierMutation } from "@/hooks/useSuppliers";
 import { ProductForm } from "@/components/ProductForm";
+import { SupplierForm } from "@/components/SupplierForm";
 import { StockReportDialog } from "@/components/StockReportDialog";
 import { useState } from "react";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
@@ -25,10 +27,13 @@ const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("inventory");
   const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
+  const [supplierToDelete, setSupplierToDelete] = useState<{ id: string; name: string } | null>(null);
   const { data: products = [], isLoading } = useProducts();
   const { data: lowStockProducts = [] } = useLowStockProducts();
+  const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const canAccessFinancialData = useCanAccessFinancialData();
   const disposeProductMutation = useDisposeProductMutation();
+  const deleteSupplierMutation = useDeleteSupplierMutation();
   
   const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -565,93 +570,90 @@ const Stock = () => {
         <TabsContent value="suppliers" className="space-y-6">
           <Card>
             <CardHeader>
-              <CardTitle>Supplier Management</CardTitle>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <CardTitle>Supplier Management</CardTitle>
+                <SupplierForm />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Truck className="h-8 w-8 text-primary" />
-                        <div>
-                          <h4 className="font-medium">Pharma Distributors Ltd</h4>
-                          <p className="text-sm text-muted-foreground">Primary Supplier</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Last Order:</span>
-                          <span>3 days ago</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Products:</span>
-                          <span>1,247</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Payment Terms:</span>
-                          <span>30 days</span>
-                        </div>
-                      </div>
-                      <Button size="sm" className="w-full mt-3">View Catalog</Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Truck className="h-8 w-8 text-primary" />
-                        <div>
-                          <h4 className="font-medium">Medical Supplies Co</h4>
-                          <p className="text-sm text-muted-foreground">Equipment Supplier</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Last Order:</span>
-                          <span>1 week ago</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Products:</span>
-                          <span>325</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Payment Terms:</span>
-                          <span>60 days</span>
-                        </div>
-                      </div>
-                      <Button size="sm" className="w-full mt-3">View Catalog</Button>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardContent className="pt-4">
-                      <div className="flex items-center gap-3 mb-3">
-                        <Truck className="h-8 w-8 text-primary" />
-                        <div>
-                          <h4 className="font-medium">Wellness Products SA</h4>
-                          <p className="text-sm text-muted-foreground">Supplements</p>
-                        </div>
-                      </div>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span>Last Order:</span>
-                          <span>2 weeks ago</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Products:</span>
-                          <span>186</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span>Payment Terms:</span>
-                          <span>45 days</span>
-                        </div>
-                      </div>
-                      <Button size="sm" className="w-full mt-3">View Catalog</Button>
-                    </CardContent>
-                  </Card>
+              {suppliersLoading ? (
+                <div className="text-center py-8 text-muted-foreground">
+                  Loading suppliers...
                 </div>
-              </div>
+              ) : suppliers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Truck className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-lg font-medium">No Suppliers</p>
+                  <p className="text-sm text-muted-foreground mb-4">Add your first supplier to get started</p>
+                  <SupplierForm />
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {suppliers.map((supplier) => {
+                    const supplierProducts = products.filter(p => p.supplier_id === supplier.id);
+                    return (
+                      <Card key={supplier.id} className="hover:border-primary/30 transition-colors">
+                        <CardContent className="pt-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex items-center gap-3">
+                              <div className="p-2 bg-primary/10 rounded-lg">
+                                <Truck className="h-6 w-6 text-primary" />
+                              </div>
+                              <div>
+                                <h4 className="font-medium">{supplier.name}</h4>
+                                {supplier.contact_person && (
+                                  <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                    <User className="h-3 w-3" />
+                                    {supplier.contact_person}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                            <div className="flex gap-1">
+                              <SupplierForm supplier={supplier} />
+                              <Button 
+                                variant="ghost" 
+                                size="icon"
+                                onClick={() => setSupplierToDelete({ id: supplier.id, name: supplier.name })}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-2 text-sm">
+                            {supplier.phone && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Phone className="h-3.5 w-3.5" />
+                                <span>{supplier.phone}</span>
+                              </div>
+                            )}
+                            {supplier.email && (
+                              <div className="flex items-center gap-2 text-muted-foreground">
+                                <Mail className="h-3.5 w-3.5" />
+                                <span className="truncate">{supplier.email}</span>
+                              </div>
+                            )}
+                            {supplier.address && (
+                              <div className="flex items-start gap-2 text-muted-foreground">
+                                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                                <span className="line-clamp-2">{supplier.address}</span>
+                              </div>
+                            )}
+                          </div>
+                          
+                          <div className="mt-4 pt-3 border-t">
+                            <div className="flex justify-between items-center">
+                              <span className="text-sm text-muted-foreground">Products:</span>
+                              <Badge variant="secondary">{supplierProducts.length}</Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -725,6 +727,33 @@ const Stock = () => {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Confirm Disposal
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Supplier Confirmation Dialog */}
+      <AlertDialog open={!!supplierToDelete} onOpenChange={() => setSupplierToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Supplier</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete <strong>{supplierToDelete?.name}</strong>? 
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => {
+                if (supplierToDelete) {
+                  deleteSupplierMutation.mutate(supplierToDelete.id);
+                  setSupplierToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Supplier
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
