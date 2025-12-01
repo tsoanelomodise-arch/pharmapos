@@ -22,34 +22,13 @@ export function useUsers() {
   return useQuery({
     queryKey: ['users'],
     queryFn: async () => {
-      // Fetch profiles with email
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('id, full_name, email, created_at');
-      
-      if (profilesError) throw profilesError;
+      // Use edge function to fetch users from auth.users (source of truth)
+      const { data, error } = await supabase.functions.invoke('list-users');
 
-      // Fetch user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('user_id, role');
-      
-      if (rolesError) throw rolesError;
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
 
-      // Combine the data
-      const usersWithRoles: UserWithRole[] = profiles.map(profile => {
-        const userRole = roles?.find(r => r.user_id === profile.id);
-        
-        return {
-          id: profile.id,
-          email: profile.email || 'N/A',
-          full_name: profile.full_name,
-          role: (userRole?.role as UserRole) || null,
-          created_at: profile.created_at,
-        };
-      });
-
-      return usersWithRoles;
+      return data.users as UserWithRole[];
     },
   });
 }
