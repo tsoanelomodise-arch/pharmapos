@@ -27,6 +27,11 @@ export function useDoctors() {
     }
   });
 }
+// Helper function to sanitize search terms and prevent SQL injection
+const sanitizeSearchTerm = (term: string): string => {
+  // Escape special ILIKE characters (%, _, \) and limit length
+  return term.replace(/[%_\\]/g, '\\$&').trim().slice(0, 100);
+};
 
 export function useDoctorSearch(searchTerm: string) {
   return useQuery({
@@ -34,10 +39,16 @@ export function useDoctorSearch(searchTerm: string) {
     queryFn: async () => {
       if (searchTerm.length < 1) return [];
       
+      // Validate input format before querying
+      if (!/^[a-zA-Z0-9\s\-]+$/.test(searchTerm)) {
+        return [] as Doctor[];
+      }
+      
+      const sanitized = sanitizeSearchTerm(searchTerm);
       const { data, error } = await supabase
         .from('doctors')
         .select('*')
-        .or(`name.ilike.${searchTerm}%,license_number.ilike.${searchTerm}%,specialization.ilike.${searchTerm}%`)
+        .or(`name.ilike.${sanitized}%,license_number.ilike.${sanitized}%,specialization.ilike.${sanitized}%`)
         .order('name')
         .limit(10);
       
