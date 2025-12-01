@@ -4,9 +4,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingDown, AlertTriangle, Plus, Search, FileText, Truck, Edit2 } from "lucide-react";
+import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Edit2 } from "lucide-react";
 import { useProducts, useLowStockProducts } from "@/hooks/useProducts";
 import { ProductForm } from "@/components/ProductForm";
+import { StockReportDialog } from "@/components/StockReportDialog";
 import { useState } from "react";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
@@ -48,10 +49,7 @@ const Stock = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">Stock Control</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <FileText className="mr-2 h-4 w-4" />
-            Stock Report
-          </Button>
+          <StockReportDialog />
           <ProductForm />
         </div>
       </div>
