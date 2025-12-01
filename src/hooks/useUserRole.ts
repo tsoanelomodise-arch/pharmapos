@@ -30,6 +30,6 @@ export function useUserRole() {
 export function useCanAccessFinancialData() {
   const { data: role } = useUserRole();
   
-  // Only managers, admins, and owners can access cost pricing and supplier data
+  // Only cashiers (manager role), admins, and owners can access cost pricing and supplier data
   return role && (['manager', 'admin', 'owner'] as UserRole[]).includes(role);
 }

@@ -441,7 +441,7 @@ export default function Management() {
                                 user.role === 'admin' || user.role === 'manager' ? 'secondary' :
                                 'outline'
                               }>
-                                {user.role}
+                                {user.role === 'manager' ? 'Cashier' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}
                               </Badge>
                             ) : (
                               <span className="text-muted-foreground">No role</span>
