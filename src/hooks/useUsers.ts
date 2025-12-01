@@ -99,12 +99,11 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (userData: CreateUserData) => {
-      // Create the user account
+      // Create the user account without email confirmation requirement
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: userData.email,
         password: userData.password,
         options: {
-          emailRedirectTo: `${window.location.origin}/`,
           data: {
             full_name: userData.full_name,
           },
@@ -131,7 +130,7 @@ export function useCreateUser() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('User created successfully');
+      toast.success('User created successfully. They can now sign in immediately.');
     },
     onError: (error: any) => {
       toast.error(error.message || 'Failed to create user');
