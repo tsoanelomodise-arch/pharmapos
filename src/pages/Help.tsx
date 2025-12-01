@@ -1,25 +1,62 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings } from "lucide-react";
+import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor } from "lucide-react";
 
 export default function Help() {
   return (
-    <div className="container mx-auto p-6 max-w-6xl">
-      <div className="mb-8">
+    <div className="container mx-auto p-4 md:p-6 max-w-6xl">
+      <div className="mb-6 md:mb-8">
         <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="h-8 w-8 text-primary" />
-          <h1 className="text-4xl font-bold">Help & User Manual</h1>
+          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+          <h1 className="text-2xl md:text-4xl font-bold">Help & User Manual</h1>
         </div>
-        <p className="text-muted-foreground text-lg">
-          Complete guide to using the Pharmacy Management System
+        <p className="text-muted-foreground text-sm md:text-lg">
+          Complete guide to using PharmaPos - Pharmacy Management System
         </p>
       </div>
 
+      {/* Quick Start */}
+      <Card className="mb-6 md:mb-8">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <Monitor className="h-5 w-5" />
+            Quick Start Guide
+          </CardTitle>
+          <CardDescription>
+            Get started with PharmaPos in minutes
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary mb-2">1</div>
+              <p className="text-sm font-medium">Login</p>
+              <p className="text-xs text-muted-foreground">Use your credentials provided by the administrator</p>
+            </div>
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary mb-2">2</div>
+              <p className="text-sm font-medium">Dashboard</p>
+              <p className="text-xs text-muted-foreground">Review today's metrics and alerts</p>
+            </div>
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary mb-2">3</div>
+              <p className="text-sm font-medium">Navigate</p>
+              <p className="text-xs text-muted-foreground">Use the sidebar to access modules</p>
+            </div>
+            <div className="border rounded-lg p-4 text-center">
+              <div className="text-2xl font-bold text-primary mb-2">4</div>
+              <p className="text-sm font-medium">Work</p>
+              <p className="text-xs text-muted-foreground">Dispense, sell, or manage as needed</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* User Roles Section */}
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="mb-6 md:mb-8">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
             <ShieldCheck className="h-5 w-5" />
             User Roles & Permissions
           </CardTitle>
@@ -28,18 +65,17 @@ export default function Help() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="border rounded-lg p-4">
               <Badge className="mb-2">Pharmacist</Badge>
               <p className="text-sm text-muted-foreground mb-2">Basic access level for day-to-day operations</p>
               <ul className="text-sm space-y-1">
-                <li>✓ View Dashboard</li>
-                <li>✓ Dispense Prescriptions</li>
-                <li>✓ Process Sales (POS)</li>
-                <li>✓ View Debtors</li>
-                <li>✓ View Stock</li>
-                <li>✓ Generate Reports</li>
-                <li>✗ Management Access</li>
+                <li>✓ Access to assigned modules only</li>
+                <li>✓ Dispense prescriptions</li>
+                <li>✓ Process sales (POS)</li>
+                <li>✓ View stock information</li>
+                <li>✗ View cost pricing/supplier data</li>
+                <li>✗ Management access</li>
               </ul>
             </div>
 
@@ -47,44 +83,91 @@ export default function Help() {
               <Badge variant="secondary" className="mb-2">Admin</Badge>
               <p className="text-sm text-muted-foreground mb-2">Extended access for administrative tasks</p>
               <ul className="text-sm space-y-1">
-                <li>✓ All Pharmacist Access</li>
-                <li>✓ Manage Patients</li>
-                <li>✓ Manage Doctors</li>
-                <li>✓ Manage Users</li>
-                <li>✗ View Cost Pricing</li>
+                <li>✓ All module access (if assigned)</li>
+                <li>✓ Manage patients & doctors</li>
+                <li>✓ Create & manage user accounts</li>
+                <li>✓ Assign user roles</li>
+                <li>✗ View cost pricing/supplier data</li>
+                <li>✗ Set module permissions</li>
               </ul>
             </div>
 
             <div className="border rounded-lg p-4">
               <Badge variant="secondary" className="mb-2">Cashier</Badge>
-              <p className="text-sm text-muted-foreground mb-2">Full operational access including financial data</p>
+              <p className="text-sm text-muted-foreground mb-2">Financial data access for cashier operations</p>
               <ul className="text-sm space-y-1">
-                <li>✓ All Admin Access</li>
-                <li>✓ View Cost Pricing</li>
-                <li>✓ View Supplier Data</li>
-                <li>✓ Financial Reports</li>
-                <li>✗ Manage Users</li>
+                <li>✓ Access to assigned modules</li>
+                <li>✓ View cost pricing</li>
+                <li>✓ View supplier data</li>
+                <li>✓ Financial reports access</li>
+                <li>✗ User management</li>
+                <li>✗ Set module permissions</li>
               </ul>
             </div>
 
             <div className="border rounded-lg p-4">
-              <Badge className="mb-2">Owner</Badge>
-              <p className="text-sm text-muted-foreground mb-2">Complete system access including user management</p>
+              <Badge className="mb-2 bg-amber-500">Owner</Badge>
+              <p className="text-sm text-muted-foreground mb-2">Complete system control including permissions</p>
               <ul className="text-sm space-y-1">
-                <li>✓ All Cashier Access</li>
-                <li>✓ Manage Users</li>
-                <li>✓ Assign Roles</li>
-                <li>✓ Full System Control</li>
+                <li>✓ Full system access</li>
+                <li>✓ Create & manage all users</li>
+                <li>✓ Set module permissions</li>
+                <li>✓ View all financial data</li>
+                <li>✓ Delete user accounts</li>
+                <li>✓ Full system configuration</li>
               </ul>
             </div>
           </div>
         </CardContent>
       </Card>
 
+      {/* Module Permissions */}
+      <Card className="mb-6 md:mb-8">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <Lock className="h-5 w-5" />
+            Module Permissions System
+          </CardTitle>
+          <CardDescription>
+            How access to different system modules is controlled
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <h4 className="font-semibold mb-2">How It Works:</h4>
+            <p className="text-sm text-muted-foreground mb-3">
+              Each user is assigned specific modules they can access. This is controlled by the Owner through the Module Permissions section in Admin. Users will only see navigation items and can only access pages for modules they have been granted permission to.
+            </p>
+            <h4 className="font-semibold mb-2">Available Modules:</h4>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2">
+              <Badge variant="outline" className="justify-center">Dashboard</Badge>
+              <Badge variant="outline" className="justify-center">Dispensing</Badge>
+              <Badge variant="outline" className="justify-center">POS & Sales</Badge>
+              <Badge variant="outline" className="justify-center">Debtors</Badge>
+              <Badge variant="outline" className="justify-center">Stock Control</Badge>
+              <Badge variant="outline" className="justify-center">Reports</Badge>
+              <Badge variant="outline" className="justify-center">Admin</Badge>
+              <Badge variant="outline" className="justify-center">Patients</Badge>
+              <Badge variant="outline" className="justify-center">Doctors</Badge>
+              <Badge variant="outline" className="justify-center">Help</Badge>
+            </div>
+          </div>
+          <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg">
+            <p className="text-sm font-semibold">⚠️ Important:</p>
+            <ul className="text-sm space-y-1 mt-2">
+              <li>• Only Owners can modify module permissions</li>
+              <li>• Users cannot access modules they don't have permission for</li>
+              <li>• Direct URL access to restricted modules will redirect users</li>
+              <li>• Owners automatically have access to all modules</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Step-by-Step Guide */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+      <Card className="mb-6 md:mb-8">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
             <Users className="h-5 w-5" />
             Step-by-Step Guide
           </CardTitle>
@@ -96,11 +179,11 @@ export default function Help() {
           <Accordion type="single" collapsible className="w-full">
             {/* Dashboard */}
             <AccordionItem value="dashboard">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <LayoutDashboard className="h-5 w-5" />
+                  <LayoutDashboard className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Dashboard Overview</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -121,23 +204,17 @@ export default function Help() {
                     <li>Click on any metric card for detailed information</li>
                     <li>Click the logo to return to dashboard from any page</li>
                   </ol>
-                  <h4 className="font-semibold mt-4">Performance:</h4>
-                  <ul className="space-y-1 text-sm">
-                    <li>• Dashboard loads faster with optimized data fetching</li>
-                    <li>• Data is cached for 2 minutes to improve speed</li>
-                    <li>• All metrics load simultaneously for better performance</li>
-                  </ul>
                 </div>
               </AccordionContent>
             </AccordionItem>
 
             {/* Dispensing */}
             <AccordionItem value="dispensing">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <Pill className="h-5 w-5" />
+                  <Pill className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Dispensing Prescriptions</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -145,33 +222,26 @@ export default function Help() {
                   <h4 className="font-semibold">How to dispense a prescription:</h4>
                   <ol className="list-decimal list-inside space-y-2 text-sm">
                     <li><strong>Create New Prescription:</strong> Click "New Prescription" button</li>
-                    <li><strong>Select Patient:</strong> Search by typing patient name, phone, or email - the search works instantly as you type</li>
-                    <li><strong>Enter Doctor Information:</strong> Search by typing doctor name, license number, or specialization</li>
-                    <li><strong>Add Medications:</strong> Search and add prescribed medications with dosage instructions</li>
-                    <li><strong>Review Details:</strong> Verify all information is correct</li>
+                    <li><strong>Select Patient:</strong> Search by typing patient name, phone, or email</li>
+                    <li><strong>Enter Doctor Information:</strong> Search by doctor name, license number, or specialization</li>
+                    <li><strong>Add Medications:</strong> Search and add prescribed medications with:
+                      <ul className="ml-6 mt-1 space-y-1">
+                        <li>- Dosage form (tablets, capsules, syrup, etc.)</li>
+                        <li>- Frequency (once daily, twice daily, etc.)</li>
+                        <li>- Duration (3 days, 7 days, 30 days, etc.)</li>
+                        <li>- Quantity to dispense</li>
+                      </ul>
+                    </li>
                     <li><strong>Save Prescription:</strong> Click "Save" to create the prescription</li>
-                    <li><strong>Dispense:</strong> Click "Dispense" to process the medication and proceed to payment</li>
+                    <li><strong>Dispense:</strong> Click "Dispense" to process and proceed to payment</li>
+                    <li><strong>Print Labels:</strong> Print medicine labels for each medication</li>
                   </ol>
-                  <h4 className="font-semibold mt-4">Search Tips:</h4>
+                  <h4 className="font-semibold mt-4">Prescription Queue:</h4>
                   <ul className="space-y-1 text-sm">
-                    <li>• Patient search: Type any part of name, phone number, or email</li>
-                    <li>• Doctor search: Type name, license number, or specialization</li>
-                    <li>• Search filters results instantly - no need to press Enter</li>
-                    <li>• Clear search field to see all available options</li>
-                  </ul>
-                  <h4 className="font-semibold mt-4">Managing existing prescriptions:</h4>
-                  <ul className="space-y-1 text-sm">
-                    <li>• View pending prescriptions in the list</li>
-                    <li>• Search by patient name, doctor, or prescription date</li>
-                    <li>• Click on a prescription to view full details</li>
-                    <li>• Dispense pending prescriptions when ready</li>
-                    <li>• When dispensing, medications automatically populate the POS cart with quantities</li>
-                  </ul>
-                  <h4 className="font-semibold mt-4">Recent Improvements:</h4>
-                  <ul className="space-y-1 text-sm">
-                    <li>• Improved search: Type instantly filters results for patients and doctors</li>
-                    <li>• Better modal scrolling: All save buttons are now visible even on smaller screens</li>
-                    <li>• Quantity tracking: Medications now include quantities when added to prescriptions</li>
+                    <li>• Prescriptions are sorted by date (latest first)</li>
+                    <li>• Filter by status: Pending, Dispensed, or All</li>
+                    <li>• Search by patient name or doctor</li>
+                    <li>• Stock quantities are automatically decremented when dispensed</li>
                   </ul>
                 </div>
               </AccordionContent>
@@ -179,11 +249,11 @@ export default function Help() {
 
             {/* POS */}
             <AccordionItem value="pos">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <ShoppingCart className="h-5 w-5" />
+                  <ShoppingCart className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Point of Sale (POS)</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -207,10 +277,9 @@ export default function Help() {
                   </ul>
                   <h4 className="font-semibold mt-4">Prescription Integration:</h4>
                   <ul className="space-y-1 text-sm">
-                    <li>• When dispensing prescriptions, medications automatically populate the cart</li>
-                    <li>• Product details, prices, and quantities are pre-filled from the prescription</li>
-                    <li>• Review and adjust quantities if needed before completing the sale</li>
-                    <li>• System validates stock availability and shows clear error messages</li>
+                    <li>• When dispensing prescriptions, medications auto-populate the cart</li>
+                    <li>• Product details, prices, and quantities are pre-filled</li>
+                    <li>• Review and adjust quantities before completing the sale</li>
                   </ul>
                 </div>
               </AccordionContent>
@@ -218,11 +287,11 @@ export default function Help() {
 
             {/* Debtors */}
             <AccordionItem value="debtors">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5" />
+                  <CreditCard className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Debtors Management</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -248,11 +317,11 @@ export default function Help() {
 
             {/* Stock */}
             <AccordionItem value="stock">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
+                  <Package className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Stock Management</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -273,7 +342,7 @@ export default function Help() {
                     </li>
                     <li><strong>Update Stock:</strong> Edit existing products to update quantities</li>
                     <li><strong>Monitor Alerts:</strong> Check low stock and expiry warnings</li>
-                    <li><strong>Search/Filter:</strong> Find products by name, barcode, or category</li>
+                    <li><strong>Stock Report:</strong> Generate comprehensive inventory reports</li>
                   </ol>
                   <h4 className="font-semibold mt-4">Best practices:</h4>
                   <ul className="space-y-1 text-sm">
@@ -288,11 +357,11 @@ export default function Help() {
 
             {/* Reports */}
             <AccordionItem value="reports">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
+                  <FileText className="h-4 w-4 md:h-5 md:w-5" />
                   <span>Reports</span>
-                  <Badge variant="outline" className="ml-2">All Users</Badge>
+                  <Badge variant="outline" className="ml-2 hidden sm:inline-flex">All Users</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
@@ -311,7 +380,7 @@ export default function Help() {
                     <li>Choose date range (daily, weekly, monthly, or custom)</li>
                     <li>Apply filters if needed (by product, customer, etc.)</li>
                     <li>Click "Generate Report"</li>
-                    <li>View on screen or export to PDF/Excel</li>
+                    <li>View on screen or print</li>
                   </ol>
                 </div>
               </AccordionContent>
@@ -319,16 +388,16 @@ export default function Help() {
 
             {/* Management */}
             <AccordionItem value="management">
-              <AccordionTrigger className="text-lg">
+              <AccordionTrigger className="text-base md:text-lg">
                 <div className="flex items-center gap-2">
-                  <Settings className="h-5 w-5" />
-                  <span>Management Module</span>
-                  <Badge variant="secondary" className="ml-2">Admin/Cashier/Owner</Badge>
+                  <Settings className="h-4 w-4 md:h-5 md:w-5" />
+                  <span>Admin Module</span>
+                  <Badge variant="secondary" className="ml-2 hidden sm:inline-flex">Admin/Owner</Badge>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="space-y-4">
                 <div className="space-y-3">
-                  <h4 className="font-semibold">Patients Tab (Admin+):</h4>
+                  <h4 className="font-semibold">Patients Tab:</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all registered patients</li>
                     <li>Add new patient: Click "Add Patient" and enter details</li>
@@ -337,12 +406,11 @@ export default function Help() {
                     <li>Set credit limits and monitor balances</li>
                   </ol>
 
-                  <h4 className="font-semibold mt-4">Doctors Tab (Admin+):</h4>
+                  <h4 className="font-semibold mt-4">Doctors Tab:</h4>
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all registered doctors</li>
                     <li>Add new doctor: Click "Add Doctor" and enter details including license number</li>
                     <li>Edit doctor information: Click edit icon</li>
-                    <li>Delete doctor records if needed</li>
                     <li>Search by name, license, or specialization</li>
                   </ol>
 
@@ -350,19 +418,28 @@ export default function Help() {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
                     <li>Add new user: Click "Add User" and enter email, password, full name, and role</li>
-                    <li>Roles are assigned during user creation (Pharmacist, Admin, Cashier, Owner)</li>
-                    <li>Change user roles after creation: Click "Edit Role" on any user</li>
+                    <li>Roles: Pharmacist, Admin, Cashier, Owner</li>
+                    <li>Update user account: Change username, email, or password</li>
+                    <li>Change user roles: Click "Edit Role" on any user</li>
                     <li>Delete users when needed (cannot be undone)</li>
-                    <li>Search users by email, name, or role</li>
+                  </ol>
+
+                  <h4 className="font-semibold mt-4">Module Permissions Tab (Owner Only):</h4>
+                  <ol className="list-decimal list-inside space-y-1 text-sm">
+                    <li>View all users and their current module access</li>
+                    <li>Click "Edit Permissions" on any user</li>
+                    <li>Check/uncheck modules to grant/revoke access</li>
+                    <li>Click "Save" to apply changes immediately</li>
+                    <li>Users will only see and access permitted modules</li>
                   </ol>
 
                   <div className="bg-amber-50 dark:bg-amber-950 p-3 rounded-lg mt-4">
                     <p className="text-sm font-semibold">⚠️ Important Access Notes:</p>
                     <ul className="text-sm space-y-1 mt-2">
-                      <li>• Patients and Doctors tabs: Admin, Cashier, and Owner</li>
+                      <li>• Patients/Doctors tabs require permission assignment</li>
                       <li>• Users tab: Admin and Owner only</li>
-                      <li>• Both Admins and Owners can create and manage user accounts</li>
-                      <li>• User roles are assigned during account creation</li>
+                      <li>• Module Permissions tab: Owner only</li>
+                      <li>• Users cannot access modules without permission</li>
                     </ul>
                   </div>
                 </div>
@@ -372,10 +449,47 @@ export default function Help() {
         </CardContent>
       </Card>
 
+      {/* Mobile & Responsive */}
+      <Card className="mb-6 md:mb-8">
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <Smartphone className="h-5 w-5" />
+            Mobile & Tablet Support
+          </CardTitle>
+          <CardDescription>
+            PharmaPos works on all devices
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="border rounded-lg p-4">
+              <h4 className="font-semibold mb-2">Mobile Features:</h4>
+              <ul className="text-sm space-y-1">
+                <li>✓ Responsive sidebar navigation</li>
+                <li>✓ Touch-friendly buttons and controls</li>
+                <li>✓ Scrollable tables and tabs</li>
+                <li>✓ Card-based layouts on smaller screens</li>
+                <li>✓ Optimized for portrait and landscape</li>
+              </ul>
+            </div>
+            <div className="border rounded-lg p-4">
+              <h4 className="font-semibold mb-2">Tips for Mobile Use:</h4>
+              <ul className="text-sm space-y-1">
+                <li>• Use the sidebar toggle to maximize screen space</li>
+                <li>• Swipe horizontally to scroll tables</li>
+                <li>• Use search filters to find items quickly</li>
+                <li>• Tap and hold for additional options</li>
+                <li>• Rotate device for better table views</li>
+              </ul>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Getting Help */}
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Need Additional Help?</CardTitle>
+      <Card>
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="text-lg md:text-xl">Need Additional Help?</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2 text-sm">
           <p>If you encounter any issues or need further assistance:</p>
@@ -383,7 +497,14 @@ export default function Help() {
             <li>• Contact your system administrator</li>
             <li>• Check for system updates regularly</li>
             <li>• Keep your browser up to date for best performance</li>
+            <li>• Clear browser cache if experiencing display issues</li>
           </ul>
+          <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+            <p className="text-xs text-muted-foreground">
+              PharmaPos - Pharmacy Management System<br />
+              Powered by: The Wonderland Studio
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
