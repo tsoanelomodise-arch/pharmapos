@@ -25,6 +25,7 @@ import {
 
 const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("inventory");
   const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
   const [supplierToDelete, setSupplierToDelete] = useState<{ id: string; name: string } | null>(null);
@@ -33,6 +34,17 @@ const Stock = () => {
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const canAccessFinancialData = useCanAccessFinancialData();
   const disposeProductMutation = useDisposeProductMutation();
+  
+  const filteredSuppliers = suppliers.filter(supplier => {
+    const search = supplierSearchTerm.toLowerCase().trim();
+    if (!search) return true;
+    return (
+      supplier.name.toLowerCase().includes(search) ||
+      (supplier.contact_person && supplier.contact_person.toLowerCase().includes(search)) ||
+      (supplier.email && supplier.email.toLowerCase().includes(search)) ||
+      (supplier.phone && supplier.phone.includes(search))
+    );
+  });
   const deleteSupplierMutation = useDeleteSupplierMutation();
   
   const filteredProducts = products.filter(product =>
@@ -571,11 +583,26 @@ const Stock = () => {
           <Card>
             <CardHeader>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                <CardTitle>Supplier Management</CardTitle>
+                <CardTitle>Supplier Management ({suppliers.length})</CardTitle>
                 <SupplierForm />
               </div>
             </CardHeader>
             <CardContent>
+              {/* Search */}
+              {suppliers.length > 0 && (
+                <div className="mb-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Search suppliers by name, contact, email, or phone..."
+                      className="pl-10"
+                      value={supplierSearchTerm}
+                      onChange={(e) => setSupplierSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+              )}
+              
               {suppliersLoading ? (
                 <div className="text-center py-8 text-muted-foreground">
                   Loading suppliers...
@@ -587,9 +614,15 @@ const Stock = () => {
                   <p className="text-sm text-muted-foreground mb-4">Add your first supplier to get started</p>
                   <SupplierForm />
                 </div>
+              ) : filteredSuppliers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Search className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-lg font-medium">No Results</p>
+                  <p className="text-sm text-muted-foreground">No suppliers match your search</p>
+                </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {suppliers.map((supplier) => {
+                  {filteredSuppliers.map((supplier) => {
                     const supplierProducts = products.filter(p => p.supplier_id === supplier.id);
                     return (
                       <Card key={supplier.id} className="hover:border-primary/30 transition-colors">
