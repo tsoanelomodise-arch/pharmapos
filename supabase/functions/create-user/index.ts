@@ -15,7 +15,6 @@ serve(async (req) => {
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     console.log("Starting create-user function");
 
@@ -31,31 +30,9 @@ serve(async (req) => {
       );
     }
 
-    // Create a client with the user's JWT to verify their identity
-    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: { Authorization: authHeader },
-      },
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
-
-    // Get the current user using the user client
-    const { data: { user: currentUser }, error: userError } = await supabaseUserClient.auth.getUser();
-    
-    console.log("Get user result:", userError ? `Error: ${userError.message}` : "Success");
-    
-    if (userError || !currentUser) {
-      console.log("User verification failed:", userError?.message);
-      return new Response(
-        JSON.stringify({ error: "Unauthorized - Invalid token" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("Current user ID:", currentUser.id);
+    // Extract the JWT token from Bearer header
+    const token = authHeader.replace("Bearer ", "");
+    console.log("Token extracted, length:", token.length);
 
     // Create a Supabase client with the service role key for admin operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
@@ -64,6 +41,22 @@ serve(async (req) => {
         persistSession: false,
       },
     });
+
+    // Verify the user's token by passing it directly to getUser
+    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    
+    console.log("Get user result:", userError ? `Error: ${userError.message}` : "Success");
+    
+    if (userError || !userData.user) {
+      console.log("User verification failed:", userError?.message);
+      return new Response(
+        JSON.stringify({ error: "Unauthorized - Invalid token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const currentUser = userData.user;
+    console.log("Current user ID:", currentUser.id);
 
     // Check if the current user has admin or owner role using admin client
     const { data: userRoleData, error: roleCheckError } = await supabaseAdmin
