@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
-import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword } from "@/hooks/useUsers";
+import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword, useUpdateUserProfile } from "@/hooks/useUsers";
 import { toast } from "sonner";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
@@ -52,9 +52,11 @@ export default function Management() {
   const deleteUser = useDeleteUser();
   const resetUserPassword = useResetUserPassword();
   const setUserPassword = useSetUserPassword();
+  const updateUserProfile = useUpdateUserProfile();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [selectedUserForPassword, setSelectedUserForPassword] = useState<string | null>(null);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<{ id: string; fullName: string } | null>(null);
   const [newPassword, setNewPassword] = useState("");
+  const [newUsername, setNewUsername] = useState("");
 
   /**
    * SECURITY MODEL:
@@ -108,46 +110,83 @@ export default function Management() {
       <AlertDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Set New Password</AlertDialogTitle>
+            <AlertDialogTitle>Update User Account</AlertDialogTitle>
             <AlertDialogDescription>
-              Enter a new password for this user. They will be able to log in immediately with this password.
+              Update username and/or set a new password for this user.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="py-4">
-            <Input
-              type="password"
-              placeholder="New password (min. 6 characters)"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-            />
+          <div className="py-4 space-y-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Username</label>
+              <Input
+                type="text"
+                placeholder="Enter username"
+                value={newUsername}
+                onChange={(e) => setNewUsername(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">New Password (optional)</label>
+              <Input
+                type="password"
+                placeholder="Leave blank to keep current password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">Min. 6 characters if changing</p>
+            </div>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => {
               setNewPassword("");
+              setNewUsername("");
               setSelectedUserForPassword(null);
             }}>
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => {
-                if (selectedUserForPassword && newPassword.length >= 6) {
-                  setUserPassword.mutate(
-                    { userId: selectedUserForPassword, newPassword },
-                    {
-                      onSuccess: () => {
-                        setPasswordDialogOpen(false);
-                        setNewPassword("");
-                        setSelectedUserForPassword(null);
-                      },
-                    }
-                  );
-                } else {
+              onClick={async () => {
+                if (!selectedUserForPassword) return;
+                
+                const hasUsernameChange = newUsername.trim() && newUsername.trim() !== selectedUserForPassword.fullName;
+                const hasPasswordChange = newPassword.length >= 6;
+                
+                if (!hasUsernameChange && !hasPasswordChange) {
+                  toast.error("Please enter a new username or password");
+                  return;
+                }
+                
+                if (newPassword && newPassword.length < 6) {
                   toast.error("Password must be at least 6 characters");
+                  return;
+                }
+
+                try {
+                  if (hasUsernameChange) {
+                    await updateUserProfile.mutateAsync({ 
+                      userId: selectedUserForPassword.id, 
+                      fullName: newUsername.trim() 
+                    });
+                  }
+                  
+                  if (hasPasswordChange) {
+                    await setUserPassword.mutateAsync({ 
+                      userId: selectedUserForPassword.id, 
+                      newPassword 
+                    });
+                  }
+                  
+                  setPasswordDialogOpen(false);
+                  setNewPassword("");
+                  setNewUsername("");
+                  setSelectedUserForPassword(null);
+                } catch (error) {
+                  // Error already handled by mutation
                 }
               }}
-              disabled={!newPassword || newPassword.length < 6}
+              disabled={updateUserProfile.isPending || setUserPassword.isPending}
             >
-              Set Password
+              {(updateUserProfile.isPending || setUserPassword.isPending) ? 'Saving...' : 'Save Changes'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -453,9 +492,10 @@ export default function Management() {
                             <Button 
                               variant="ghost" 
                               size="sm" 
-                              title="Set Password"
+                              title="Edit User"
                               onClick={() => {
-                                setSelectedUserForPassword(user.id);
+                                setSelectedUserForPassword({ id: user.id, fullName: user.full_name || '' });
+                                setNewUsername(user.full_name || '');
                                 setPasswordDialogOpen(true);
                                 setNewPassword("");
                               }}

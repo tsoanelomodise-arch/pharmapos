@@ -142,6 +142,28 @@ export function useSetUserPassword() {
   });
 }
 
+export function useUpdateUserProfile() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, fullName }: { userId: string; fullName: string }) => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: fullName, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Username updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update username');
+    },
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
