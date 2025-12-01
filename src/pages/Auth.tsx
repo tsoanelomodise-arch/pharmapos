@@ -52,14 +52,14 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/20 to-accent/10 p-4 safe-area-inset">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">
-            <img src={logo} alt="PharmaPOS" className="h-16 w-auto" />
+            <img src={logo} alt="PharmaPOS" className="h-14 md:h-16 w-auto" />
           </div>
-          <CardTitle className="text-2xl">Sign In to PharmaPOS</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-xl md:text-2xl">Sign In to PharmaPOS</CardTitle>
+          <CardDescription className="text-sm">
             Enter your credentials to access the system
           </CardDescription>
         </CardHeader>

@@ -228,19 +228,21 @@ const POS = () => {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Point of Sale</h1>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Point of Sale</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline"
             onClick={() => setShowLastReceipt(true)}
             disabled={!lastSaleId}
+            size="sm"
+            className="text-xs sm:text-sm"
           >
-            <Receipt className="mr-2 h-4 w-4" />
-            Last Receipt
+            <Receipt className="mr-1 sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Last </span>Receipt
           </Button>
-          <Button onClick={startNewSale}>New Sale</Button>
+          <Button onClick={startNewSale} size="sm" className="text-xs sm:text-sm">New Sale</Button>
         </div>
       </div>
 

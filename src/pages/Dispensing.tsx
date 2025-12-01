@@ -39,17 +39,17 @@ const Dispensing = () => {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Pharmacy Dispensing</h1>
-          <PrescriptionForm />
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Pharmacy Dispensing</h1>
+        <PrescriptionForm />
       </div>
 
-      <Tabs defaultValue="prescriptions" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="prescriptions">Prescriptions</TabsTrigger>
-          <TabsTrigger value="patients">Patients</TabsTrigger>
-          <TabsTrigger value="interactions">Drug Interactions</TabsTrigger>
+      <Tabs defaultValue="prescriptions" className="space-y-4 md:space-y-6">
+        <TabsList className="w-full sm:w-auto flex overflow-x-auto">
+          <TabsTrigger value="prescriptions" className="flex-1 sm:flex-initial text-xs sm:text-sm">Prescriptions</TabsTrigger>
+          <TabsTrigger value="patients" className="flex-1 sm:flex-initial text-xs sm:text-sm">Patients</TabsTrigger>
+          <TabsTrigger value="interactions" className="flex-1 sm:flex-initial text-xs sm:text-sm">Interactions</TabsTrigger>
         </TabsList>
 
         <TabsContent value="prescriptions" className="space-y-6">
@@ -85,31 +85,36 @@ const Dispensing = () => {
             <CardContent>
               <div className="space-y-4">
                 {pendingPrescriptions.map((prescription: any) => (
-                  <div key={prescription.id} className="grid grid-cols-[auto_1fr_150px_120px_auto] gap-4 items-center p-4 border rounded-lg">
-                    <User className="h-8 w-8 text-muted-foreground" />
-                    <div>
-                      <h3 className="font-medium">{prescription.customers?.name || 'Unknown Patient'}</h3>
-                      <p className="text-sm text-muted-foreground">Phone: {prescription.customers?.phone || 'N/A'}</p>
-                      <p className="text-sm text-muted-foreground">
-                        Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
-                      </p>
+                  <div key={prescription.id} className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-3 md:p-4 border rounded-lg">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <User className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium truncate">{prescription.customers?.name || 'Unknown Patient'}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">Phone: {prescription.customers?.phone || 'N/A'}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">
+                          Dr. {prescription.doctor_name} - Rx #{prescription.id.slice(-8)}
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-sm">
-                      {new Date(prescription.prescription_date).toLocaleDateString()}
-                    </div>
-                    <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'} className="w-fit">
-                      {prescription.status}
-                    </Badge>
-                    <div className="flex items-center gap-2">
-                      <MedicineLabelDialog prescription={prescription} />
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => handleProcessPrescription(prescription)}
-                      >
-                        Process
-                      </Button>
-                      <PrescriptionForm prescription={prescription} />
+                    <div className="flex items-center justify-between md:justify-end gap-2 md:gap-4 flex-wrap">
+                      <div className="text-xs md:text-sm text-muted-foreground">
+                        {new Date(prescription.prescription_date).toLocaleDateString()}
+                      </div>
+                      <Badge variant={prescription.status === 'pending' ? 'secondary' : 'default'} className="text-xs">
+                        {prescription.status}
+                      </Badge>
+                      <div className="flex items-center gap-1 md:gap-2">
+                        <MedicineLabelDialog prescription={prescription} />
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => handleProcessPrescription(prescription)}
+                          className="text-xs md:text-sm"
+                        >
+                          Process
+                        </Button>
+                        <PrescriptionForm prescription={prescription} />
+                      </div>
                     </div>
                   </div>
                 ))}

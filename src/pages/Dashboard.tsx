@@ -34,19 +34,19 @@ const Dashboard = memo(() => {
   }
 
   return (
-    <div className="space-y-8 p-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 md:space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Dashboard</h1>
-          <p className="text-muted-foreground mt-1">Welcome back! Here's what's happening today.</p>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Dashboard</h1>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">Welcome back! Here's what's happening today.</p>
         </div>
-        <div className="flex gap-3">
-          <Badge variant="secondary" className="px-4 py-2 text-sm">
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {new Date().toLocaleDateString('en-ZA', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+        <div className="flex gap-2 sm:gap-3 flex-wrap">
+          <Badge variant="secondary" className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm">
+            <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+            {new Date().toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' })}
           </Badge>
-          <Button onClick={() => navigate('/pos')} size="lg" className="shadow-lg">
-            <Plus className="mr-2 h-5 w-5" />
+          <Button onClick={() => navigate('/pos')} size="default" className="shadow-lg text-sm sm:text-base">
+            <Plus className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
             New Sale
           </Button>
         </div>

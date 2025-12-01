@@ -43,28 +43,28 @@ const Reports = () => {
     return matchesSearch;
   });
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Reports & Analytics</h1>
-        <Button onClick={() => handleExportReport('All Reports')}>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Reports & Analytics</h1>
+        <Button onClick={() => handleExportReport('All Reports')} size="sm" className="w-full sm:w-auto">
           <Download className="mr-2 h-4 w-4" />
-          Export All Reports
+          Export All
         </Button>
       </div>
 
-      <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
-          <TabsTrigger value="transactions">Transaction History</TabsTrigger>
-          <TabsTrigger value="sales">Sales Reports</TabsTrigger>
-          <TabsTrigger value="dispensing">Dispensing Reports</TabsTrigger>
-          <TabsTrigger value="stock">Stock Reports</TabsTrigger>
-          <TabsTrigger value="financial">Financial Reports</TabsTrigger>
+      <Tabs defaultValue="dashboard" className="space-y-4 md:space-y-6">
+        <TabsList className="w-full flex overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="dashboard" className="flex-1 md:flex-initial text-xs sm:text-sm">Dashboard</TabsTrigger>
+          <TabsTrigger value="transactions" className="flex-1 md:flex-initial text-xs sm:text-sm">Transactions</TabsTrigger>
+          <TabsTrigger value="sales" className="flex-1 md:flex-initial text-xs sm:text-sm">Sales</TabsTrigger>
+          <TabsTrigger value="dispensing" className="flex-1 md:flex-initial text-xs sm:text-sm">Dispensing</TabsTrigger>
+          <TabsTrigger value="stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Stock</TabsTrigger>
+          <TabsTrigger value="financial" className="flex-1 md:flex-initial text-xs sm:text-sm">Financial</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="dashboard" className="space-y-6">
+        <TabsContent value="dashboard" className="space-y-4 md:space-y-6">
           {/* Key Performance Indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>

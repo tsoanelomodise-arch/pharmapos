@@ -45,9 +45,9 @@ const Stock = () => {
     );
   }
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Stock Control</h1>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Stock Control</h1>
         <div className="flex gap-2">
           <StockReportDialog />
           <ProductForm />
@@ -55,7 +55,7 @@ const Stock = () => {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
@@ -103,13 +103,13 @@ const Stock = () => {
         )}
       </div>
 
-      <Tabs defaultValue="inventory" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="inventory">Inventory</TabsTrigger>
-          <TabsTrigger value="low-stock">Low Stock</TabsTrigger>
-          <TabsTrigger value="expiry">Expiry Tracking</TabsTrigger>
-          <TabsTrigger value="suppliers">Suppliers</TabsTrigger>
-          <TabsTrigger value="orders">Purchase Orders</TabsTrigger>
+      <Tabs defaultValue="inventory" className="space-y-4 md:space-y-6">
+        <TabsList className="w-full md:w-auto flex overflow-x-auto">
+          <TabsTrigger value="inventory" className="flex-1 md:flex-initial text-xs sm:text-sm">Inventory</TabsTrigger>
+          <TabsTrigger value="low-stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Low Stock</TabsTrigger>
+          <TabsTrigger value="expiry" className="flex-1 md:flex-initial text-xs sm:text-sm">Expiry</TabsTrigger>
+          <TabsTrigger value="suppliers" className="flex-1 md:flex-initial text-xs sm:text-sm">Suppliers</TabsTrigger>
+          <TabsTrigger value="orders" className="flex-1 md:flex-initial text-xs sm:text-sm">Orders</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-6">
@@ -140,11 +140,11 @@ const Stock = () => {
           {/* Inventory List */}
           <Card>
             <CardHeader>
-              <CardTitle>Inventory Items</CardTitle>
+              <CardTitle className="text-lg md:text-xl">Inventory Items</CardTitle>
             </CardHeader>
             <CardContent>
-              {/* Table Headers */}
-              <div className={`grid ${canAccessFinancialData ? 'grid-cols-8' : 'grid-cols-7'} gap-4 p-3 border-b font-medium text-sm text-muted-foreground`}>
+              {/* Table Headers - Hidden on mobile */}
+              <div className={`hidden md:grid ${canAccessFinancialData ? 'md:grid-cols-8' : 'md:grid-cols-7'} gap-4 p-3 border-b font-medium text-sm text-muted-foreground`}>
                 <div>Product</div>
                 <div>Category</div>
                 <div>Stock</div>
@@ -155,34 +155,46 @@ const Stock = () => {
                 <div>Actions</div>
               </div>
               
-              <div className="space-y-4 mt-4">
+              <div className="space-y-3 md:space-y-4 mt-4">
                 {filteredProducts.map((product) => (
-                  <div key={product.id} className={`grid ${canAccessFinancialData ? 'grid-cols-8' : 'grid-cols-7'} gap-4 p-3 border rounded-lg items-center`}>
-                    <div>
-                      <p className="font-medium">{product.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {product.barcode ? `Barcode: ${product.barcode}` : 'No barcode'}
-                      </p>
+                  <div key={product.id} className="flex flex-col md:grid md:grid-cols-7 lg:grid-cols-8 gap-2 md:gap-4 p-3 border rounded-lg">
+                    {/* Mobile: Card layout, Desktop: Grid row */}
+                    <div className="flex justify-between md:block">
+                      <div>
+                        <p className="font-medium text-sm md:text-base">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {product.barcode ? `Barcode: ${product.barcode}` : 'No barcode'}
+                        </p>
+                      </div>
+                      <div className="md:hidden">
+                        <ProductForm product={product} />
+                      </div>
                     </div>
-                    <div className="capitalize">{product.category}</div>
-                    <div className={`font-medium ${product.stock_quantity <= product.minimum_stock ? 'text-red-600' : ''}`}>
-                      {product.stock_quantity}
+                    <div className="hidden md:block capitalize">{product.category}</div>
+                    <div className="flex justify-between md:block text-sm">
+                      <span className="md:hidden text-muted-foreground">Stock:</span>
+                      <span className={`font-medium ${product.stock_quantity <= product.minimum_stock ? 'text-red-600' : ''}`}>
+                        {product.stock_quantity}
+                      </span>
                     </div>
-                    <div>{product.minimum_stock}</div>
-                    {canAccessFinancialData && <div>R{product.cost_price.toFixed(2)}</div>}
-                    <div>R{product.unit_price.toFixed(2)}</div>
-                    <div>
+                    <div className="hidden md:block">{product.minimum_stock}</div>
+                    {canAccessFinancialData && <div className="hidden lg:block">R{product.cost_price.toFixed(2)}</div>}
+                    <div className="flex justify-between md:block text-sm">
+                      <span className="md:hidden text-muted-foreground">Price:</span>
+                      <span>R{product.unit_price.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between items-center md:block">
                       <Badge variant={
                         product.stock_quantity === 0 ? "destructive" :
                         product.stock_quantity <= product.minimum_stock ? "destructive" : 
                         "secondary"
-                      }>
-                        {product.stock_quantity === 0 ? "Out of Stock" :
-                         product.stock_quantity <= product.minimum_stock ? "Low Stock" : 
+                      } className="text-xs">
+                        {product.stock_quantity === 0 ? "Out" :
+                         product.stock_quantity <= product.minimum_stock ? "Low" : 
                          "In Stock"}
                       </Badge>
                     </div>
-                    <div>
+                    <div className="hidden md:block">
                       <ProductForm product={product} />
                     </div>
                   </div>
