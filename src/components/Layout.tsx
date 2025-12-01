@@ -2,9 +2,11 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
+import { LogOut, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { memo } from "react";
+import { memo, useState } from "react";
+import { ProfileSettingsDialog } from "@/components/ProfileSettingsDialog";
+import { useProfile } from "@/hooks/useProfile";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -12,6 +14,8 @@ interface LayoutProps {
 
 export const Layout = memo(function Layout({ children }: LayoutProps) {
   const { user, signOut } = useAuth();
+  const { data: profile } = useProfile();
+  const [profileOpen, setProfileOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -20,6 +24,8 @@ export const Layout = memo(function Layout({ children }: LayoutProps) {
       description: 'You have been successfully signed out.',
     });
   };
+
+  const displayName = profile?.full_name || user?.email;
 
   return (
     <SidebarProvider>
@@ -32,9 +38,15 @@ export const Layout = memo(function Layout({ children }: LayoutProps) {
               <h1 className="ml-4 text-xl font-semibold">PharmaPOS</h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-muted-foreground">
-                {user?.email}
-              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setProfileOpen(true)}
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                {displayName}
+              </Button>
               <Button variant="outline" size="sm" onClick={handleSignOut}>
                 <LogOut className="h-4 w-4 mr-2" />
                 Sign Out
@@ -44,6 +56,7 @@ export const Layout = memo(function Layout({ children }: LayoutProps) {
           <div className="p-6">{children}</div>
         </main>
       </div>
+      <ProfileSettingsDialog open={profileOpen} onOpenChange={setProfileOpen} />
     </SidebarProvider>
   );
 });
