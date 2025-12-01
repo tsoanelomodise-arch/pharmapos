@@ -460,7 +460,7 @@ export default function Management() {
                                 setNewPassword("");
                               }}
                             >
-                              <KeyRound className="h-4 w-4" />
+                              <Shield className="h-4 w-4" />
                             </Button>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
