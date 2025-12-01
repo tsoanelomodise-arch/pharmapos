@@ -640,68 +640,75 @@ const Stock = () => {
                   <p className="text-sm text-muted-foreground">No suppliers match your search</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  {/* Table Headers - Hidden on mobile */}
+                  <div className="hidden md:grid md:grid-cols-6 gap-4 p-3 border-b font-medium text-sm text-muted-foreground">
+                    <div className="col-span-2">Supplier</div>
+                    <div>Phone</div>
+                    <div>Email</div>
+                    <div>Products</div>
+                    <div>Actions</div>
+                  </div>
+                  
                   {filteredSuppliers.map((supplier) => {
                     const supplierProducts = products.filter(p => p.supplier_id === supplier.id);
                     return (
-                      <Card key={supplier.id} className="hover:border-primary/30 transition-colors">
-                        <CardContent className="pt-4">
-                          <div className="flex items-start justify-between mb-3">
-                            <div className="flex items-center gap-3">
-                              <div className="p-2 bg-primary/10 rounded-lg">
-                                <Truck className="h-6 w-6 text-primary" />
-                              </div>
-                              <div>
-                                <h4 className="font-medium">{supplier.name}</h4>
-                                {supplier.contact_person && (
-                                  <p className="text-sm text-muted-foreground flex items-center gap-1">
-                                    <User className="h-3 w-3" />
-                                    {supplier.contact_person}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex gap-1">
-                              <SupplierForm supplier={supplier} />
-                              <Button 
-                                variant="ghost" 
-                                size="icon"
-                                onClick={() => setSupplierToDelete({ id: supplier.id, name: supplier.name })}
-                              >
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
+                      <div 
+                        key={supplier.id} 
+                        className="flex flex-col md:grid md:grid-cols-6 gap-2 md:gap-4 p-3 border rounded-lg hover:border-primary/30 transition-colors"
+                      >
+                        {/* Supplier Name & Contact */}
+                        <div className="col-span-2 flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-lg shrink-0">
+                            <Truck className="h-5 w-5 text-primary" />
                           </div>
-                          
-                          <div className="space-y-2 text-sm">
-                            {supplier.phone && (
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Phone className="h-3.5 w-3.5" />
-                                <span>{supplier.phone}</span>
-                              </div>
-                            )}
-                            {supplier.email && (
-                              <div className="flex items-center gap-2 text-muted-foreground">
-                                <Mail className="h-3.5 w-3.5" />
-                                <span className="truncate">{supplier.email}</span>
-                              </div>
-                            )}
-                            {supplier.address && (
-                              <div className="flex items-start gap-2 text-muted-foreground">
-                                <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-                                <span className="line-clamp-2">{supplier.address}</span>
-                              </div>
+                          <div className="min-w-0">
+                            <p className="font-medium truncate">{supplier.name}</p>
+                            {supplier.contact_person && (
+                              <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                <User className="h-3 w-3 shrink-0" />
+                                <span className="truncate">{supplier.contact_person}</span>
+                              </p>
                             )}
                           </div>
-                          
-                          <div className="mt-4 pt-3 border-t">
-                            <div className="flex justify-between items-center">
-                              <span className="text-sm text-muted-foreground">Products:</span>
-                              <Badge variant="secondary">{supplierProducts.length}</Badge>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
+                        </div>
+                        
+                        {/* Phone */}
+                        <div className="flex justify-between md:block text-sm">
+                          <span className="md:hidden text-muted-foreground">Phone:</span>
+                          <span className="flex items-center gap-1">
+                            <Phone className="h-3.5 w-3.5 text-muted-foreground md:hidden" />
+                            {supplier.phone || <span className="text-muted-foreground">—</span>}
+                          </span>
+                        </div>
+                        
+                        {/* Email */}
+                        <div className="flex justify-between md:block text-sm min-w-0">
+                          <span className="md:hidden text-muted-foreground">Email:</span>
+                          <span className="flex items-center gap-1 truncate">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground md:hidden shrink-0" />
+                            {supplier.email || <span className="text-muted-foreground">—</span>}
+                          </span>
+                        </div>
+                        
+                        {/* Products Count */}
+                        <div className="flex justify-between md:block text-sm">
+                          <span className="md:hidden text-muted-foreground">Products:</span>
+                          <Badge variant="secondary">{supplierProducts.length}</Badge>
+                        </div>
+                        
+                        {/* Actions */}
+                        <div className="flex gap-1 justify-end md:justify-start">
+                          <SupplierForm supplier={supplier} />
+                          <Button 
+                            variant="ghost" 
+                            size="icon"
+                            onClick={() => setSupplierToDelete({ id: supplier.id, name: supplier.name })}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </div>
                     );
                   })}
                 </div>
