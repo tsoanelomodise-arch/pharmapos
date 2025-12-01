@@ -2,9 +2,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { ModuleProtectedRoute } from "@/components/ModuleProtectedRoute";
+import { SmartRedirect } from "@/components/SmartRedirect";
 import { Layout } from "@/components/Layout";
 import { lazy, Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -56,15 +58,47 @@ const App = () => (
                   <Layout>
                     <Suspense fallback={<PageLoader />}>
                       <Routes>
-                        <Route path="/" element={<Navigate to="/dashboard" replace />} />
-                        <Route path="/dashboard" element={<Dashboard />} />
-                        <Route path="/dispensing" element={<Dispensing />} />
-                        <Route path="/pos" element={<POS />} />
-                        <Route path="/debtors" element={<Debtors />} />
-                        <Route path="/stock" element={<Stock />} />
-                        <Route path="/reports" element={<Reports />} />
-                        <Route path="/management" element={<Management />} />
-                        <Route path="/help" element={<Help />} />
+                        <Route path="/" element={<SmartRedirect />} />
+                        <Route path="/dashboard" element={
+                          <ModuleProtectedRoute module="dashboard">
+                            <Dashboard />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/dispensing" element={
+                          <ModuleProtectedRoute module="dispensing">
+                            <Dispensing />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/pos" element={
+                          <ModuleProtectedRoute module="pos">
+                            <POS />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/debtors" element={
+                          <ModuleProtectedRoute module="debtors">
+                            <Debtors />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/stock" element={
+                          <ModuleProtectedRoute module="stock">
+                            <Stock />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/reports" element={
+                          <ModuleProtectedRoute module="reports">
+                            <Reports />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/management" element={
+                          <ModuleProtectedRoute module="management">
+                            <Management />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/help" element={
+                          <ModuleProtectedRoute module="help">
+                            <Help />
+                          </ModuleProtectedRoute>
+                        } />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                       </Routes>
