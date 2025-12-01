@@ -18,17 +18,6 @@ serve(async (req) => {
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
 
     console.log("Starting create-user function");
-    console.log("SUPABASE_URL:", supabaseUrl ? "set" : "not set");
-    console.log("SUPABASE_SERVICE_ROLE_KEY:", supabaseServiceRoleKey ? "set" : "not set");
-    console.log("SUPABASE_ANON_KEY:", supabaseAnonKey ? "set" : "not set");
-
-    // Create a Supabase client with the service role key
-    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
-      auth: {
-        autoRefreshToken: false,
-        persistSession: false,
-      },
-    });
 
     // Get the authorization header
     const authHeader = req.headers.get("Authorization");
@@ -42,15 +31,23 @@ serve(async (req) => {
       );
     }
 
-    // Extract the JWT token
-    const token = authHeader.replace("Bearer ", "");
-    
-    // Verify the user using the admin client
-    const { data: userData, error: userError } = await supabaseAdmin.auth.getUser(token);
+    // Create a client with the user's JWT to verify their identity
+    const supabaseUserClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: {
+        headers: { Authorization: authHeader },
+      },
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Get the current user using the user client
+    const { data: { user: currentUser }, error: userError } = await supabaseUserClient.auth.getUser();
     
     console.log("Get user result:", userError ? `Error: ${userError.message}` : "Success");
     
-    if (userError || !userData.user) {
+    if (userError || !currentUser) {
       console.log("User verification failed:", userError?.message);
       return new Response(
         JSON.stringify({ error: "Unauthorized - Invalid token" }),
@@ -58,28 +55,31 @@ serve(async (req) => {
       );
     }
 
-    const currentUser = userData.user;
     console.log("Current user ID:", currentUser.id);
 
-    // Check if the current user has admin or owner role
-    const { data: hasAdminRole, error: adminRoleError } = await supabaseAdmin
+    // Create a Supabase client with the service role key for admin operations
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
+      auth: {
+        autoRefreshToken: false,
+        persistSession: false,
+      },
+    });
+
+    // Check if the current user has admin or owner role using admin client
+    const { data: userRoleData, error: roleCheckError } = await supabaseAdmin
       .from("user_roles")
       .select("role")
       .eq("user_id", currentUser.id)
-      .eq("role", "admin")
-      .maybeSingle();
+      .single();
 
-    const { data: hasOwnerRole, error: ownerRoleError } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", currentUser.id)
-      .eq("role", "owner")
-      .maybeSingle();
+    console.log("Role check result:", userRoleData, roleCheckError?.message);
 
-    console.log("Admin role check:", hasAdminRole ? "has admin" : "no admin");
-    console.log("Owner role check:", hasOwnerRole ? "has owner" : "no owner");
+    const userRole = userRoleData?.role;
+    const isAdminOrOwner = userRole === "admin" || userRole === "owner";
 
-    if (!hasAdminRole && !hasOwnerRole) {
+    console.log("User role:", userRole, "Is admin/owner:", isAdminOrOwner);
+
+    if (!isAdminOrOwner) {
       console.log("User does not have admin or owner role");
       return new Response(
         JSON.stringify({ error: "Only admins and owners can create users" }),
