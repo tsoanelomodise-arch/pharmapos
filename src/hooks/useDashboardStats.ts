@@ -44,7 +44,7 @@ export function useDashboardStats() {
         
         // Outstanding debtors
         supabase
-          .from('customers')
+          .from('customers_secure')
           .select('current_balance')
           .gt('current_balance', 0),
         

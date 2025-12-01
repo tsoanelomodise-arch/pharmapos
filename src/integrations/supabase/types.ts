@@ -14,6 +14,54 @@ export type Database = {
   }
   public: {
     Tables: {
+      customer_access_logs: {
+        Row: {
+          access_type: string
+          accessed_at: string
+          customer_id: string
+          id: string
+          ip_address: string | null
+          notes: string | null
+          user_id: string
+          user_role: Database["public"]["Enums"]["app_role"] | null
+        }
+        Insert: {
+          access_type: string
+          accessed_at?: string
+          customer_id: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          user_id: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Update: {
+          access_type?: string
+          accessed_at?: string
+          customer_id?: string
+          id?: string
+          ip_address?: string | null
+          notes?: string | null
+          user_id?: string
+          user_role?: Database["public"]["Enums"]["app_role"] | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_access_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customer_access_logs_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_secure"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           address: string | null
@@ -138,6 +186,13 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prescriptions_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -336,6 +391,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       stock_movements: {
@@ -456,7 +518,48 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      customers_secure: {
+        Row: {
+          address: string | null
+          created_at: string | null
+          credit_limit: number | null
+          current_balance: number | null
+          date_of_birth: string | null
+          email: string | null
+          id: string | null
+          insurance_info: Json | null
+          name: string | null
+          phone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          address?: string | null
+          created_at?: string | null
+          credit_limit?: never
+          current_balance?: never
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string | null
+          insurance_info?: never
+          name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string | null
+          created_at?: string | null
+          credit_limit?: never
+          current_balance?: never
+          date_of_birth?: string | null
+          email?: string | null
+          id?: string | null
+          insurance_info?: never
+          name?: string | null
+          phone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_user_modules: {
@@ -478,6 +581,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      log_customer_access: {
+        Args: { _access_type: string; _customer_id: string; _notes?: string }
+        Returns: undefined
       }
     }
     Enums: {

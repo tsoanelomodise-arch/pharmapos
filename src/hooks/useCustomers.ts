@@ -21,7 +21,7 @@ export function useCustomers() {
     queryKey: ['customers'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('customers_secure')
         .select('*')
         .order('name');
       
@@ -36,7 +36,7 @@ export function useCustomersWithDebt() {
     queryKey: ['customers-with-debt'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('customers_secure')
         .select('*')
         .gt('current_balance', 0)
         .order('current_balance', { ascending: false });
@@ -64,7 +64,7 @@ export function useCustomerSearch(searchTerm: string) {
       
       const sanitized = sanitizeSearchTerm(searchTerm);
       const { data, error } = await supabase
-        .from('customers')
+        .from('customers_secure')
         .select('*')
         .or(`name.ilike.%${sanitized}%,phone.ilike.%${sanitized}%,email.ilike.%${sanitized}%`)
         .order('name');

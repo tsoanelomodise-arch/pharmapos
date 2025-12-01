@@ -81,7 +81,7 @@ export function useRecentPatients() {
     queryKey: ['recent-patients'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('customers')
+        .from('customers_secure')
         .select(`
           *,
           prescriptions!inner(id, created_at)
