@@ -164,6 +164,30 @@ export function useUpdateUserProfile() {
   });
 }
 
+export function useUpdateUserEmail() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ userId, newEmail }: { userId: string; newEmail: string }) => {
+      const { data, error } = await supabase.functions.invoke('update-user-email', {
+        body: { userId, newEmail },
+      });
+      
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('Email updated successfully');
+    },
+    onError: (error: any) => {
+      toast.error(error.message || 'Failed to update email');
+    },
+  });
+}
+
 export function useDeleteUser() {
   const queryClient = useQueryClient();
 
