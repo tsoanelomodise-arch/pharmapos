@@ -41,14 +41,20 @@ export function useLowStockProducts() {
   return useQuery({
     queryKey: ['low-stock-products'],
     queryFn: async () => {
+      // Fetch all products and filter client-side since Supabase doesn't support column-to-column comparison
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .lt('stock_quantity', 'minimum_stock')
         .order('stock_quantity');
       
       if (error) throw error;
-      return data as Product[];
+      
+      // Filter products where stock_quantity <= minimum_stock
+      const lowStock = (data as Product[]).filter(
+        product => product.stock_quantity <= product.minimum_stock
+      );
+      
+      return lowStock;
     }
   });
 }
