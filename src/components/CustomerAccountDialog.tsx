@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +21,20 @@ interface CustomerAccountDialogProps {
 
 export function CustomerAccountDialog({ customer }: CustomerAccountDialogProps) {
   const [open, setOpen] = useState(false);
+
+  // Log customer access when dialog opens
+  useEffect(() => {
+    if (open) {
+      const logAccess = async () => {
+        await supabase.rpc('log_customer_access', {
+          _customer_id: customer.id,
+          _access_type: 'view',
+          _notes: 'Viewed account details dialog'
+        });
+      };
+      logAccess();
+    }
+  }, [open, customer.id]);
 
   const { data: transactions = [], isLoading } = useQuery({
     queryKey: ['customer-transactions', customer.id],
