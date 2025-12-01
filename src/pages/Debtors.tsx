@@ -58,17 +58,19 @@ const Debtors = () => {
     );
   }
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Debtors Management</h1>
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <h1 className="text-2xl md:text-3xl font-bold">Debtors Management</h1>
         <div className="flex gap-2">
           <Button 
             variant="outline"
+            size="sm"
             onClick={() => setShowGenerateDialog(true)}
             disabled={debtorCustomers.length === 0}
+            className="flex-1 sm:flex-initial text-xs sm:text-sm"
           >
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Statements
+            <FileText className="mr-1 sm:mr-2 h-4 w-4" />
+            <span className="hidden sm:inline">Generate </span>Statements
           </Button>
           <CustomerForm />
         </div>
@@ -110,7 +112,7 @@ const Debtors = () => {
       </AlertDialog>
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Outstanding</CardTitle>
@@ -156,12 +158,12 @@ const Debtors = () => {
         </Card>
       </div>
 
-      <Tabs defaultValue="accounts" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="accounts">Accounts</TabsTrigger>
-          <TabsTrigger value="aging">Aging Report</TabsTrigger>
-          <TabsTrigger value="statements">Statements</TabsTrigger>
-          <TabsTrigger value="payments">Payments</TabsTrigger>
+      <Tabs defaultValue="accounts" className="space-y-4 md:space-y-6">
+        <TabsList className="w-full flex overflow-x-auto scrollbar-hide">
+          <TabsTrigger value="accounts" className="flex-1 md:flex-initial text-xs sm:text-sm">Accounts</TabsTrigger>
+          <TabsTrigger value="aging" className="flex-1 md:flex-initial text-xs sm:text-sm">Aging</TabsTrigger>
+          <TabsTrigger value="statements" className="flex-1 md:flex-initial text-xs sm:text-sm">Statements</TabsTrigger>
+          <TabsTrigger value="payments" className="flex-1 md:flex-initial text-xs sm:text-sm">Payments</TabsTrigger>
         </TabsList>
 
         <TabsContent value="accounts" className="space-y-6">
@@ -195,25 +197,27 @@ const Debtors = () => {
             <CardContent>
               <div className="space-y-4">
                 {debtorCustomers.map((customer) => (
-                  <div key={customer.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <Users className="h-8 w-8 text-muted-foreground" />
-                      <div>
-                        <h3 className="font-medium">{customer.name}</h3>
-                        <p className="text-sm text-muted-foreground">{customer.phone || 'No phone'}</p>
-                        <p className="text-sm text-muted-foreground">{customer.email || 'No email'}</p>
+                  <div key={customer.id} className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4 p-3 md:p-4 border rounded-lg">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Users className="h-6 w-6 md:h-8 md:w-8 text-muted-foreground flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-medium truncate">{customer.name}</h3>
+                        <p className="text-xs md:text-sm text-muted-foreground">{customer.phone || 'No phone'}</p>
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">{customer.email || 'No email'}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-lg">R{customer.current_balance.toFixed(2)}</p>
-                      <Badge variant={customer.current_balance > 1000 ? "destructive" : "secondary"}>
-                        {customer.current_balance > 1000 ? "High Balance" : "Current"}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Credit Limit: R{customer.credit_limit.toFixed(2)}
+                    <div className="flex items-center justify-between md:flex-col md:items-end gap-2">
+                      <div className="text-right">
+                        <p className="font-bold text-base md:text-lg">R{customer.current_balance.toFixed(2)}</p>
+                        <Badge variant={customer.current_balance > 1000 ? "destructive" : "secondary"} className="text-xs">
+                          {customer.current_balance > 1000 ? "High" : "Current"}
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Limit: R{customer.credit_limit.toFixed(2)}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-1 ml-4">
+                    <div className="flex flex-row md:flex-col gap-1">
                       <CustomerAccountDialog customer={customer} />
                       <CustomerStatementDialog customer={customer} />
                       <CustomerForm customer={customer} />

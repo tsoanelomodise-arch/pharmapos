@@ -222,9 +222,9 @@ export default function Management() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold">Management</h1>
-        <p className="text-muted-foreground">
+      <div className="mb-4 md:mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold">Management</h1>
+        <p className="text-sm md:text-base text-muted-foreground">
           {canAccessPatients || canAccessDoctors 
             ? "Manage patients and doctors" 
             : "User and module management"}
@@ -232,29 +232,33 @@ export default function Management() {
       </div>
 
       <Tabs defaultValue={canAccessPatients ? "patients" : canManageUsers ? "users" : "patients"} className="w-full">
-        <TabsList className={`grid w-full ${isOwner ? 'grid-cols-4' : canManageUsers ? 'grid-cols-3' : 'grid-cols-2'}`}>
+        <TabsList className={`flex w-full overflow-x-auto ${isOwner ? 'md:grid md:grid-cols-4' : canManageUsers ? 'md:grid md:grid-cols-3' : 'md:grid md:grid-cols-2'}`}>
           {canAccessPatients && (
-            <TabsTrigger value="patients">
-              <UserPlus className="h-4 w-4 mr-2" />
-              Patients
+            <TabsTrigger value="patients" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <UserPlus className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Patients</span>
+              <span className="sm:hidden">Patients</span>
             </TabsTrigger>
           )}
           {canAccessDoctors && (
-            <TabsTrigger value="doctors">
-              <Stethoscope className="h-4 w-4 mr-2" />
-              Doctors
+            <TabsTrigger value="doctors" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <Stethoscope className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Doctors</span>
+              <span className="sm:hidden">Doctors</span>
             </TabsTrigger>
           )}
           {canManageUsers && (
-            <TabsTrigger value="users">
-              <Users className="h-4 w-4 mr-2" />
-              Users
+            <TabsTrigger value="users" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <Users className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Users</span>
+              <span className="sm:hidden">Users</span>
             </TabsTrigger>
           )}
           {isOwner && (
-            <TabsTrigger value="permissions">
-              <Shield className="h-4 w-4 mr-2" />
-              Module Permissions
+            <TabsTrigger value="permissions" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <Shield className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Module Permissions</span>
+              <span className="sm:hidden">Permissions</span>
             </TabsTrigger>
           )}
         </TabsList>
