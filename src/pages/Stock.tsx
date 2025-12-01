@@ -40,10 +40,15 @@ const Stock = () => {
   // Sync URL with tab changes
   useEffect(() => {
     const tabFromUrl = searchParams.get("tab");
-    if (tabFromUrl && tabFromUrl !== activeTab) {
-      setActiveTab(tabFromUrl);
+    if (tabFromUrl) {
+      if (tabFromUrl !== activeTab) {
+        setActiveTab(tabFromUrl);
+      }
+    } else if (activeTab !== "inventory") {
+      // No tab param means inventory
+      setActiveTab("inventory");
     }
-  }, [searchParams]);
+  }, [searchParams, activeTab]);
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
