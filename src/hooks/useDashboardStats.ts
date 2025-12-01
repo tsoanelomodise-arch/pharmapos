@@ -36,11 +36,13 @@ export function useDashboardStats() {
           .gte('created_at', `${today}T00:00:00`)
           .lt('created_at', `${today}T23:59:59`),
         
-        // Low stock items count
+        // Low stock items with details
         supabase
           .from('products')
-          .select('*', { count: 'exact', head: true })
-          .lt('stock_quantity', 'minimum_stock'),
+          .select('id, name, stock_quantity, minimum_stock')
+          .lt('stock_quantity', 'minimum_stock')
+          .order('stock_quantity', { ascending: true })
+          .limit(10),
         
         // Outstanding debtors
         supabase
@@ -72,7 +74,8 @@ export function useDashboardStats() {
       // Process results
       const prescriptionsCount = prescriptionsResult.count || 0;
       const salesToday = todaysSalesResult.data?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
-      const lowStockCount = lowStockResult.count || 0;
+      const lowStockProducts = lowStockResult.data || [];
+      const lowStockCount = lowStockProducts.length;
       const totalDebt = debtorsResult.data?.reduce((sum, customer) => sum + customer.current_balance, 0) || 0;
       const debtorsCount = debtorsResult.data?.length || 0;
       const expiringCount = expiringResult.count || 0;
@@ -131,6 +134,7 @@ export function useDashboardStats() {
         prescriptionsToday: prescriptionsCount,
         salesToday,
         lowStockItems: lowStockCount,
+        lowStockProducts,
         totalDebt,
         debtorsCount,
         expiringItems: expiringCount,

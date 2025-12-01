@@ -150,30 +150,87 @@ const Dashboard = memo(() => {
       {/* Quick Actions & Alerts */}
       {(hasAccess('stock') || hasAccess('reports')) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <Card className="overflow-hidden">
-            <CardHeader className="bg-gradient-to-r from-destructive/10 to-destructive/5 border-b">
-              <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                Alerts & Notifications
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3 pt-6">
-              {hasAccess('stock') && (
-                <div className="flex items-center justify-between p-4 bg-destructive/5 border border-destructive/20 rounded-xl hover:border-destructive/40 transition-colors">
-                  <div>
-                    <p className="text-sm font-semibold">{stats?.expiringItems || 0} items expire within 30 days</p>
-                    <p className="text-xs text-muted-foreground mt-1">Check stock control for details</p>
-                  </div>
-                  <Badge 
-                    variant="destructive" 
-                    className="cursor-pointer hover:bg-destructive/80 px-4 py-1.5 shadow-sm" 
+          {/* Low Stock Alerts */}
+          {hasAccess('stock') && (
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-orange-500/10 to-orange-500/5 border-b">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Package className="h-5 w-5 text-orange-600" />
+                    Low Stock Alerts
+                  </CardTitle>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
                     onClick={() => navigate('/stock')}
+                    className="text-xs"
                   >
-                    Urgent
-                  </Badge>
+                    View All
+                  </Button>
                 </div>
-              )}
-              {hasAccess('reports') && (
+              </CardHeader>
+              <CardContent className="pt-4">
+                {stats?.lowStockProducts && stats.lowStockProducts.length > 0 ? (
+                  <div className="space-y-2 max-h-[280px] overflow-y-auto">
+                    {stats.lowStockProducts.map((product) => (
+                      <div 
+                        key={product.id}
+                        className="flex items-center justify-between p-3 bg-orange-500/5 border border-orange-500/20 rounded-lg hover:border-orange-500/40 transition-colors cursor-pointer"
+                        onClick={() => navigate('/stock')}
+                      >
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium truncate">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Min: {product.minimum_stock} units
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge 
+                            variant={product.stock_quantity === 0 ? "destructive" : "secondary"}
+                            className={`whitespace-nowrap ${product.stock_quantity > 0 ? 'bg-orange-500/20 text-orange-700 border-orange-500/30' : ''}`}
+                          >
+                            {product.stock_quantity === 0 ? 'Out of Stock' : `${product.stock_quantity} left`}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-8 text-center">
+                    <Package className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">No low stock alerts</p>
+                    <p className="text-xs text-muted-foreground">All items are well stocked</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Other Alerts */}
+          {hasAccess('reports') && (
+            <Card className="overflow-hidden">
+              <CardHeader className="bg-gradient-to-r from-destructive/10 to-destructive/5 border-b">
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Alerts & Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-6">
+                {hasAccess('stock') && (
+                  <div className="flex items-center justify-between p-4 bg-destructive/5 border border-destructive/20 rounded-xl hover:border-destructive/40 transition-colors">
+                    <div>
+                      <p className="text-sm font-semibold">{stats?.expiringItems || 0} items expire within 30 days</p>
+                      <p className="text-xs text-muted-foreground mt-1">Check stock control for details</p>
+                    </div>
+                    <Badge 
+                      variant="destructive" 
+                      className="cursor-pointer hover:bg-destructive/80 px-4 py-1.5 shadow-sm" 
+                      onClick={() => navigate('/stock')}
+                    >
+                      Urgent
+                    </Badge>
+                  </div>
+                )}
                 <div 
                   className="flex items-center justify-between p-4 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors border border-transparent hover:border-border"
                   onClick={() => navigate('/reports')}
@@ -184,21 +241,21 @@ const Dashboard = memo(() => {
                   </div>
                   <Badge variant="accent" className="shadow-sm">Pending</Badge>
                 </div>
-              )}
-              {hasAccess('stock') && (
-                <div 
-                  className="flex items-center justify-between p-4 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors border border-transparent hover:border-border"
-                  onClick={() => navigate('/stock')}
-                >
-                  <div>
-                    <p className="text-sm font-semibold">Stock delivery expected today</p>
-                    <p className="text-xs text-muted-foreground mt-1">Supplier: Pharma Distributors</p>
+                {hasAccess('stock') && (
+                  <div 
+                    className="flex items-center justify-between p-4 bg-muted rounded-xl cursor-pointer hover:bg-muted/80 transition-colors border border-transparent hover:border-border"
+                    onClick={() => navigate('/stock')}
+                  >
+                    <div>
+                      <p className="text-sm font-semibold">Stock delivery expected today</p>
+                      <p className="text-xs text-muted-foreground mt-1">Supplier: Pharma Distributors</p>
+                    </div>
+                    <Badge variant="success" className="shadow-sm">Info</Badge>
                   </div>
-                  <Badge variant="success" className="shadow-sm">Info</Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           <Card className="overflow-hidden">
             <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
