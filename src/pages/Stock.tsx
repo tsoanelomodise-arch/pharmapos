@@ -10,7 +10,8 @@ import { useSuppliers, useDeleteSupplierMutation } from "@/hooks/useSuppliers";
 import { ProductForm } from "@/components/ProductForm";
 import { SupplierForm } from "@/components/SupplierForm";
 import { StockReportDialog } from "@/components/StockReportDialog";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 import {
   AlertDialog,
@@ -24,9 +25,10 @@ import {
 } from "@/components/ui/alert-dialog";
 
 const Stock = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState("");
   const [supplierSearchTerm, setSupplierSearchTerm] = useState("");
-  const [activeTab, setActiveTab] = useState("inventory");
+  const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "inventory");
   const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
   const [supplierToDelete, setSupplierToDelete] = useState<{ id: string; name: string } | null>(null);
   const { data: products = [], isLoading } = useProducts();
@@ -34,6 +36,23 @@ const Stock = () => {
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
   const canAccessFinancialData = useCanAccessFinancialData();
   const disposeProductMutation = useDisposeProductMutation();
+
+  // Sync URL with tab changes
+  useEffect(() => {
+    const tabFromUrl = searchParams.get("tab");
+    if (tabFromUrl && tabFromUrl !== activeTab) {
+      setActiveTab(tabFromUrl);
+    }
+  }, [searchParams]);
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    if (value === "inventory") {
+      setSearchParams({});
+    } else {
+      setSearchParams({ tab: value });
+    }
+  };
   
   const filteredSuppliers = suppliers.filter(supplier => {
     const search = supplierSearchTerm.toLowerCase().trim();
@@ -126,7 +145,7 @@ const Stock = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
         <Card 
           className="cursor-pointer hover:border-primary/40 transition-colors"
-          onClick={() => setActiveTab("inventory")}
+          onClick={() => handleTabChange("inventory")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
@@ -140,7 +159,7 @@ const Stock = () => {
 
         <Card 
           className="cursor-pointer hover:border-destructive/40 transition-colors"
-          onClick={() => setActiveTab("low-stock")}
+          onClick={() => handleTabChange("low-stock")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
@@ -154,7 +173,7 @@ const Stock = () => {
 
         <Card 
           className="cursor-pointer hover:border-yellow-500/40 transition-colors"
-          onClick={() => setActiveTab("expiry")}
+          onClick={() => handleTabChange("expiry")}
         >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
@@ -169,7 +188,7 @@ const Stock = () => {
         {canAccessFinancialData && (
           <Card 
             className="cursor-pointer hover:border-primary/40 transition-colors"
-            onClick={() => setActiveTab("inventory")}
+            onClick={() => handleTabChange("inventory")}
           >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
@@ -183,7 +202,7 @@ const Stock = () => {
         )}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
+      <Tabs value={activeTab} onValueChange={handleTabChange} className="space-y-4 md:space-y-6">
         <TabsList className="w-full md:w-auto flex overflow-x-auto">
           <TabsTrigger value="inventory" className="flex-1 md:flex-initial text-xs sm:text-sm">Inventory</TabsTrigger>
           <TabsTrigger value="low-stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Low Stock</TabsTrigger>
