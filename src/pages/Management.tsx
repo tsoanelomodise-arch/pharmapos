@@ -12,10 +12,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, UserPlus, Stethoscope, Users, Shield } from "lucide-react";
+import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
-import { useUsers, useDeleteUser } from "@/hooks/useUsers";
+import { useUsers, useDeleteUser, useResetUserPassword } from "@/hooks/useUsers";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
 import { UserForm } from "@/components/UserForm";
@@ -49,6 +49,7 @@ export default function Management() {
   const deleteCustomer = useDeleteCustomer();
   const deleteDoctor = useDeleteDoctor();
   const deleteUser = useDeleteUser();
+  const resetUserPassword = useResetUserPassword();
 
   /**
    * SECURITY MODEL:
@@ -395,6 +396,29 @@ export default function Management() {
                           <TableCell>{format(new Date(user.created_at), 'PP')}</TableCell>
                           <TableCell className="text-right space-x-2">
                             <UserRoleDialog user={user} />
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="sm" title="Reset Password">
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Reset User Password</AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    Send a password reset email to {user.email}? They will receive an email with instructions to reset their password.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => resetUserPassword.mutate(user.email)}
+                                  >
+                                    Send Reset Email
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
                             <AlertDialog>
                               <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="sm">
