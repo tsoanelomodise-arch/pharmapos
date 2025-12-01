@@ -53,16 +53,28 @@ export function useLowStockProducts() {
   });
 }
 
+// Helper function to sanitize search terms and prevent SQL injection
+const sanitizeSearchTerm = (term: string): string => {
+  // Escape special ILIKE characters (%, _, \) and limit length
+  return term.replace(/[%_\\]/g, '\\$&').trim().slice(0, 100);
+};
+
 export function useProductSearch(searchTerm: string) {
   return useQuery({
     queryKey: ['products-search', searchTerm],
     queryFn: async () => {
       if (searchTerm.length < 2) return [];
       
+      // Validate input format before querying
+      if (!/^[a-zA-Z0-9\s\-]+$/.test(searchTerm)) {
+        return [] as Product[];
+      }
+      
+      const sanitized = sanitizeSearchTerm(searchTerm);
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or(`name.ilike.${searchTerm}%,barcode.ilike.${searchTerm}%,generic_name.ilike.${searchTerm}%`)
+        .or(`name.ilike.${sanitized}%,barcode.ilike.${sanitized}%,generic_name.ilike.${sanitized}%`)
         .gt('stock_quantity', 0)
         .order('name')
         .limit(10);

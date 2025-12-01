@@ -45,6 +45,15 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
+    /**
+     * SECURITY NOTE: Using innerHTML here is currently safe because:
+     * 1. All data comes from the database (trusted source)
+     * 2. React automatically escapes JSX content
+     * 
+     * WARNING: If any user-controlled content is ever added to the label
+     * component without proper sanitization, this could create XSS vulnerabilities.
+     * Consider using DOMPurify or cloneNode() for future changes.
+     */
     const labelContent = document.getElementById('medicine-label-content')?.innerHTML;
     
     printWindow.document.write(`
