@@ -27,22 +27,31 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Verify the calling user
-    const { data: { user: callingUser }, error: authError } = await supabaseClient.auth.getUser(
-      authHeader.replace('Bearer ', '')
-    );
-
-    if (authError || !callingUser) {
-      console.error('Auth error:', authError);
+    // Decode JWT to get user ID (JWT is already verified by Supabase infrastructure)
+    const token = authHeader.replace('Bearer ', '');
+    const parts = token.split('.');
+    if (parts.length !== 3) {
       return new Response(
-        JSON.stringify({ error: 'Invalid token' }),
+        JSON.stringify({ error: 'Invalid token format' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+    
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+    const callingUserId = payload.sub;
+    
+    if (!callingUserId) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid token - no user ID' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('Delete user requested by:', callingUserId);
 
     // Check if caller has admin or owner role
     const { data: hasPermission } = await supabaseClient.rpc('has_role', {
-      _user_id: callingUser.id,
+      _user_id: callingUserId,
       _role: 'owner'
     });
 
@@ -64,14 +73,14 @@ Deno.serve(async (req) => {
     }
 
     // Prevent self-deletion
-    if (userId === callingUser.id) {
+    if (userId === callingUserId) {
       return new Response(
         JSON.stringify({ error: 'Cannot delete your own account' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log(`Deleting user ${userId} requested by ${callingUser.id}`);
+    console.log(`Deleting user ${userId} requested by ${callingUserId}`);
 
     // Step 1: Clear foreign key references in sales table
     const { error: salesError } = await supabaseClient
