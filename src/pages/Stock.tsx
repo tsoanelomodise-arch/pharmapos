@@ -23,6 +23,7 @@ import {
 
 const Stock = () => {
   const [searchTerm, setSearchTerm] = useState("");
+  const [activeTab, setActiveTab] = useState("inventory");
   const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
   const { data: products = [], isLoading } = useProducts();
   const { data: lowStockProducts = [] } = useLowStockProducts();
@@ -106,54 +107,66 @@ const Stock = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
-        <Card>
+        <Card 
+          className="cursor-pointer hover:border-primary/40 transition-colors"
+          onClick={() => setActiveTab("inventory")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Items</CardTitle>
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{products.length}</div>
+            <div className="text-2xl font-bold hover:text-primary transition-colors">{products.length}</div>
             <p className="text-xs text-muted-foreground">Active products</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:border-destructive/40 transition-colors"
+          onClick={() => setActiveTab("low-stock")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Low Stock Alerts</CardTitle>
             <AlertTriangle className="h-4 w-4 text-destructive" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{lowStockProducts.length}</div>
+            <div className="text-2xl font-bold hover:text-destructive transition-colors">{lowStockProducts.length}</div>
             <p className="text-xs text-destructive">Requires immediate attention</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="cursor-pointer hover:border-yellow-500/40 transition-colors"
+          onClick={() => setActiveTab("expiry")}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
             <TrendingDown className="h-4 w-4 text-yellow-600" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{expiringProducts.length}</div>
+            <div className="text-2xl font-bold hover:text-yellow-600 transition-colors">{expiringProducts.length}</div>
             <p className="text-xs text-yellow-600">Within 30 days</p>
           </CardContent>
         </Card>
 
         {canAccessFinancialData && (
-          <Card>
+          <Card 
+            className="cursor-pointer hover:border-primary/40 transition-colors"
+            onClick={() => setActiveTab("inventory")}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Stock Value</CardTitle>
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R{totalValue.toFixed(2)}</div>
+              <div className="text-2xl font-bold hover:text-primary transition-colors">R{totalValue.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">At cost price</p>
             </CardContent>
           </Card>
         )}
       </div>
 
-      <Tabs defaultValue="inventory" className="space-y-4 md:space-y-6">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4 md:space-y-6">
         <TabsList className="w-full md:w-auto flex overflow-x-auto">
           <TabsTrigger value="inventory" className="flex-1 md:flex-initial text-xs sm:text-sm">Inventory</TabsTrigger>
           <TabsTrigger value="low-stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Low Stock</TabsTrigger>
