@@ -67,6 +67,7 @@ export function AppSidebar() {
 
   const isStockActive = location.pathname === "/stock";
   const isSuppliersActive = location.pathname === "/stock" && location.search.includes("tab=suppliers");
+  const isInventoryActive = isStockActive && !isSuppliersActive;
 
   return (
     <Sidebar collapsible="icon">
@@ -95,31 +96,36 @@ export function AppSidebar() {
                   return (
                     <Collapsible key={item.title} defaultOpen={isStockActive} className="group/collapsible">
                       <SidebarMenuItem>
-                        <CollapsibleTrigger asChild>
-                          <SidebarMenuButton
-                            className={
-                              isStockActive && !isSuppliersActive
-                                ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                                : "hover:bg-sidebar-accent/50"
-                            }
-                          >
-                            <item.icon className="h-4 w-4" />
-                            {state !== "collapsed" && (
-                              <>
-                                <span className="flex-1">{item.title}</span>
-                                <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
-                              </>
-                            )}
+                        <div className="flex items-center w-full">
+                          <SidebarMenuButton asChild className="flex-1">
+                            <NavLink
+                              to={item.url}
+                              className={
+                                isStockActive
+                                  ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+                                  : "hover:bg-sidebar-accent/50"
+                              }
+                            >
+                              <item.icon className="h-4 w-4" />
+                              {state !== "collapsed" && <span>{item.title}</span>}
+                            </NavLink>
                           </SidebarMenuButton>
-                        </CollapsibleTrigger>
+                          {state !== "collapsed" && (
+                            <CollapsibleTrigger asChild>
+                              <button className="p-2 hover:bg-sidebar-accent/50 rounded-md">
+                                <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
+                              </button>
+                            </CollapsibleTrigger>
+                          )}
+                        </div>
                         <CollapsibleContent>
                           <SidebarMenuSub>
                             <SidebarMenuSubItem>
                               <SidebarMenuSubButton asChild>
                                 <NavLink
-                                  to={item.url}
+                                  to="/stock"
                                   className={
-                                    isStockActive && !isSuppliersActive
+                                    isInventoryActive
                                       ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
                                       : "hover:bg-sidebar-accent/50"
                                   }
