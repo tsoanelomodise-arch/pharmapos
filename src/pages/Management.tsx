@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
-import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword, useUpdateUserProfile } from "@/hooks/useUsers";
+import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword, useUpdateUserProfile, useUpdateUserEmail } from "@/hooks/useUsers";
 import { toast } from "sonner";
 import { CustomerForm } from "@/components/CustomerForm";
 import { DoctorForm } from "@/components/DoctorForm";
@@ -53,10 +53,12 @@ export default function Management() {
   const resetUserPassword = useResetUserPassword();
   const setUserPassword = useSetUserPassword();
   const updateUserProfile = useUpdateUserProfile();
+  const updateUserEmail = useUpdateUserEmail();
   const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
-  const [selectedUserForPassword, setSelectedUserForPassword] = useState<{ id: string; fullName: string } | null>(null);
+  const [selectedUserForPassword, setSelectedUserForPassword] = useState<{ id: string; fullName: string; email: string } | null>(null);
   const [newPassword, setNewPassword] = useState("");
   const [newUsername, setNewUsername] = useState("");
+  const [newEmail, setNewEmail] = useState("");
 
   /**
    * SECURITY MODEL:
@@ -112,7 +114,7 @@ export default function Management() {
           <AlertDialogHeader>
             <AlertDialogTitle>Update User Account</AlertDialogTitle>
             <AlertDialogDescription>
-              Update username and/or set a new password for this user.
+              Update user details. Leave password blank to keep current.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <div className="py-4 space-y-4">
@@ -123,6 +125,15 @@ export default function Management() {
                 placeholder="Enter username"
                 value={newUsername}
                 onChange={(e) => setNewUsername(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Email</label>
+              <Input
+                type="email"
+                placeholder="Enter email"
+                value={newEmail}
+                onChange={(e) => setNewEmail(e.target.value)}
               />
             </div>
             <div className="space-y-2">
@@ -140,6 +151,7 @@ export default function Management() {
             <AlertDialogCancel onClick={() => {
               setNewPassword("");
               setNewUsername("");
+              setNewEmail("");
               setSelectedUserForPassword(null);
             }}>
               Cancel
@@ -149,10 +161,11 @@ export default function Management() {
                 if (!selectedUserForPassword) return;
                 
                 const hasUsernameChange = newUsername.trim() && newUsername.trim() !== selectedUserForPassword.fullName;
+                const hasEmailChange = newEmail.trim() && newEmail.trim() !== selectedUserForPassword.email;
                 const hasPasswordChange = newPassword.length >= 6;
                 
-                if (!hasUsernameChange && !hasPasswordChange) {
-                  toast.error("Please enter a new username or password");
+                if (!hasUsernameChange && !hasEmailChange && !hasPasswordChange) {
+                  toast.error("Please enter a new value to update");
                   return;
                 }
                 
@@ -161,11 +174,27 @@ export default function Management() {
                   return;
                 }
 
+                // Validate email format
+                if (hasEmailChange) {
+                  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                  if (!emailRegex.test(newEmail.trim())) {
+                    toast.error("Please enter a valid email address");
+                    return;
+                  }
+                }
+
                 try {
                   if (hasUsernameChange) {
                     await updateUserProfile.mutateAsync({ 
                       userId: selectedUserForPassword.id, 
                       fullName: newUsername.trim() 
+                    });
+                  }
+
+                  if (hasEmailChange) {
+                    await updateUserEmail.mutateAsync({
+                      userId: selectedUserForPassword.id,
+                      newEmail: newEmail.trim()
                     });
                   }
                   
@@ -179,14 +208,15 @@ export default function Management() {
                   setPasswordDialogOpen(false);
                   setNewPassword("");
                   setNewUsername("");
+                  setNewEmail("");
                   setSelectedUserForPassword(null);
                 } catch (error) {
                   // Error already handled by mutation
                 }
               }}
-              disabled={updateUserProfile.isPending || setUserPassword.isPending}
+              disabled={updateUserProfile.isPending || setUserPassword.isPending || updateUserEmail.isPending}
             >
-              {(updateUserProfile.isPending || setUserPassword.isPending) ? 'Saving...' : 'Save Changes'}
+              {(updateUserProfile.isPending || setUserPassword.isPending || updateUserEmail.isPending) ? 'Saving...' : 'Save Changes'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -494,8 +524,9 @@ export default function Management() {
                               size="sm" 
                               title="Edit User"
                               onClick={() => {
-                                setSelectedUserForPassword({ id: user.id, fullName: user.full_name || '' });
+                                setSelectedUserForPassword({ id: user.id, fullName: user.full_name || '', email: user.email });
                                 setNewUsername(user.full_name || '');
+                                setNewEmail(user.email);
                                 setPasswordDialogOpen(true);
                                 setNewPassword("");
                               }}
