@@ -168,13 +168,15 @@ export function useDeleteUser() {
 
   return useMutation({
     mutationFn: async (userId: string) => {
-      // Delete from profiles (this will cascade due to foreign key to auth.users)
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
-      
+      // Use edge function to properly delete user and clear all references
+      const { data, error } = await supabase.functions.invoke('delete-user', {
+        body: { userId },
+      });
+
       if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
