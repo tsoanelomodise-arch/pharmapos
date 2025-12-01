@@ -212,58 +212,173 @@ const Stock = () => {
         </TabsContent>
 
         <TabsContent value="low-stock" className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-destructive/5 border-destructive/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Out of Stock</p>
+                    <p className="text-2xl font-bold text-destructive">{lowStockProducts.filter(p => p.stock_quantity === 0).length}</p>
+                  </div>
+                  <AlertTriangle className="h-8 w-8 text-destructive/50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-orange-500/5 border-orange-500/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Low Stock</p>
+                    <p className="text-2xl font-bold text-orange-600">{lowStockProducts.filter(p => p.stock_quantity > 0).length}</p>
+                  </div>
+                  <TrendingDown className="h-8 w-8 text-orange-500/50" />
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-yellow-500/5 border-yellow-500/20">
+              <CardContent className="pt-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Expiring Soon</p>
+                    <p className="text-2xl font-bold text-yellow-600">{expiringProducts.length}</p>
+                  </div>
+                  <TrendingDown className="h-8 w-8 text-yellow-500/50" />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Low Stock Items List */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive" />
+                  Low Stock Items ({lowStockProducts.length})
+                </CardTitle>
+                <div className="flex gap-2">
+                  <Button size="sm">Generate Purchase Orders</Button>
+                  <Button size="sm" variant="outline">Export List</Button>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {lowStockProducts.length > 0 ? (
+                <div className="space-y-3">
+                  {/* Table Headers - Hidden on mobile */}
+                  <div className="hidden md:grid md:grid-cols-6 gap-4 p-3 border-b font-medium text-sm text-muted-foreground">
+                    <div className="col-span-2">Product</div>
+                    <div>Current Stock</div>
+                    <div>Min Stock</div>
+                    <div>Shortage</div>
+                    <div>Status</div>
+                  </div>
+                  
+                  {lowStockProducts.map(product => (
+                    <div 
+                      key={product.id} 
+                      className={`flex flex-col md:grid md:grid-cols-6 gap-2 md:gap-4 p-3 border rounded-lg transition-colors ${
+                        product.stock_quantity === 0 
+                          ? 'bg-destructive/5 border-destructive/30 hover:border-destructive/50' 
+                          : 'bg-orange-500/5 border-orange-500/20 hover:border-orange-500/40'
+                      }`}
+                    >
+                      {/* Product Name */}
+                      <div className="col-span-2 flex justify-between md:block">
+                        <div>
+                          <p className="font-medium">{product.name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {product.generic_name || product.category}
+                          </p>
+                        </div>
+                        <div className="md:hidden">
+                          <Badge variant={product.stock_quantity === 0 ? "destructive" : "secondary"} className={product.stock_quantity > 0 ? 'bg-orange-500/20 text-orange-700 border-orange-500/30' : ''}>
+                            {product.stock_quantity === 0 ? 'Out of Stock' : 'Low Stock'}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      {/* Current Stock */}
+                      <div className="flex justify-between md:block text-sm">
+                        <span className="md:hidden text-muted-foreground">Current:</span>
+                        <span className={`font-bold ${product.stock_quantity === 0 ? 'text-destructive' : 'text-orange-600'}`}>
+                          {product.stock_quantity} units
+                        </span>
+                      </div>
+                      
+                      {/* Min Stock */}
+                      <div className="flex justify-between md:block text-sm">
+                        <span className="md:hidden text-muted-foreground">Minimum:</span>
+                        <span>{product.minimum_stock} units</span>
+                      </div>
+                      
+                      {/* Shortage */}
+                      <div className="flex justify-between md:block text-sm">
+                        <span className="md:hidden text-muted-foreground">Shortage:</span>
+                        <span className="text-destructive font-medium">
+                          -{product.minimum_stock - product.stock_quantity} units
+                        </span>
+                      </div>
+                      
+                      {/* Status Badge - Desktop only */}
+                      <div className="hidden md:flex items-center">
+                        <Badge variant={product.stock_quantity === 0 ? "destructive" : "secondary"} className={product.stock_quantity > 0 ? 'bg-orange-500/20 text-orange-700 border-orange-500/30' : ''}>
+                          {product.stock_quantity === 0 ? 'Out of Stock' : 'Low Stock'}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Package className="h-12 w-12 text-muted-foreground/50 mb-3" />
+                  <p className="text-lg font-medium">No Low Stock Items</p>
+                  <p className="text-sm text-muted-foreground">All products are well stocked</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Expiring Soon Section */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
-                <AlertTriangle className="h-5 w-5 text-destructive" />
-                Low Stock Alerts
+                <TrendingDown className="h-5 w-5 text-yellow-600" />
+                Expiring Soon ({expiringProducts.length})
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-red-800">Critical - Low/Out of Stock</h4>
-                    <Badge variant="destructive">{lowStockProducts.filter(p => p.stock_quantity === 0).length} out of stock</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {lowStockProducts.slice(0, 5).map(product => (
-                      <div key={product.id} className="flex justify-between text-sm">
-                        <span>{product.name}</span>
-                        <span className="font-medium">{product.stock_quantity} units (Min: {product.minimum_stock})</span>
+              {expiringProducts.length > 0 ? (
+                <div className="space-y-3">
+                  {expiringProducts.map(product => (
+                    <div 
+                      key={product.id} 
+                      className="flex items-center justify-between p-3 bg-yellow-500/5 border border-yellow-500/20 rounded-lg hover:border-yellow-500/40 transition-colors"
+                    >
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          Stock: {product.stock_quantity} units
+                        </p>
                       </div>
-                    ))}
-                    {lowStockProducts.length > 5 && (
-                      <p className="text-sm text-muted-foreground">... and {lowStockProducts.length - 5} more items</p>
-                    )}
-                  </div>
-                </div>
-
-                <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-yellow-800">Expiring Soon</h4>
-                    <Badge variant="outline">{expiringProducts.length} items</Badge>
-                  </div>
-                  <div className="space-y-2">
-                    {expiringProducts.slice(0, 3).map(product => (
-                      <div key={product.id} className="flex justify-between text-sm">
-                        <span>{product.name}</span>
-                        <span className="font-medium">
-                          Expires: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString() : 'N/A'}
-                        </span>
+                      <div className="text-right">
+                        <p className="text-sm font-medium text-yellow-600">
+                          Expires: {product.expiry_date ? new Date(product.expiry_date).toLocaleDateString('en-ZA') : 'N/A'}
+                        </p>
+                        <Badge variant="outline" className="text-yellow-600 border-yellow-500/30">
+                          Expiring Soon
+                        </Badge>
                       </div>
-                    ))}
-                    {expiringProducts.length > 3 && (
-                      <p className="text-sm text-muted-foreground">... and {expiringProducts.length - 3} more items</p>
-                    )}
-                  </div>
+                    </div>
+                  ))}
                 </div>
-
-                <div className="flex gap-2">
-                  <Button>Generate Purchase Orders</Button>
-                  <Button variant="outline">Export List</Button>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <Package className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">No products expiring within 30 days</p>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
