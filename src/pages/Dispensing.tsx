@@ -11,6 +11,7 @@ import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useNavigate } from "react-router-dom";
 import { PrescriptionForm } from "@/components/PrescriptionForm";
 import { CustomerForm } from "@/components/CustomerForm";
+import { QuickPatientForm } from "@/components/QuickPatientForm";
 import { MedicineLabelDialog } from "@/components/MedicineLabelDialog";
 
 const Dispensing = () => {
@@ -151,7 +152,10 @@ const Dispensing = () => {
                         />
                       </div>
                     </div>
-                    <CustomerForm />
+                    <div className="flex gap-2 mt-6">
+                      <QuickPatientForm />
+                      <CustomerForm />
+                    </div>
                   </div>
 
                 <div className="border rounded-lg p-4">
