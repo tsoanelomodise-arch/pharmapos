@@ -10,9 +10,11 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import { Trash2, Search } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { CustomerForm } from "@/components/CustomerForm";
+import { useUserModules } from "@/hooks/useModulePermissions";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,6 +31,14 @@ export default function Patients() {
   const [patientSearch, setPatientSearch] = useState("");
   const { data: customers, isLoading: loadingCustomers } = useCustomers();
   const deleteCustomer = useDeleteCustomer();
+  const { data: userModules } = useUserModules();
+  
+  const hasMedicalAidPermission = userModules?.includes('medical_aid');
+  
+  const hasMedicalAidConfigured = (insuranceInfo: any) => {
+    if (!insuranceInfo) return false;
+    return insuranceInfo.scheme_name || insuranceInfo.membership_number;
+  };
 
   const filteredPatients = customers?.filter(customer =>
     customer.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
@@ -92,7 +102,14 @@ export default function Patients() {
                 ) : (
                   filteredPatients?.map((customer) => (
                     <TableRow key={customer.id}>
-                      <TableCell className="font-medium">{customer.name}</TableCell>
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                          {customer.name}
+                          {hasMedicalAidPermission && hasMedicalAidConfigured(customer.insurance_info) && (
+                            <Badge variant="success" className="text-xs">Medical Aid</Badge>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>{customer.phone || "-"}</TableCell>
                       <TableCell>{customer.email || "-"}</TableCell>
                       <TableCell>R{customer.current_balance?.toFixed(2) || "0.00"}</TableCell>
