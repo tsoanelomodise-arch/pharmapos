@@ -7,8 +7,8 @@ import { generateHelpPdf } from "@/utils/generateHelpPdf";
 import { Link } from "react-router-dom";
 
 export default function Help() {
-  const handleDownloadPdf = async () => {
-    await generateHelpPdf();
+  const handleDownloadPdf = () => {
+    generateHelpPdf();
   };
 
   return (

@@ -1,46 +1,12 @@
 import jsPDF from 'jspdf';
-import helpDashboard from '@/assets/help-dashboard.jpg';
-import helpDispensing from '@/assets/help-dispensing.jpg';
-import helpPos from '@/assets/help-pos.jpg';
-import helpStock from '@/assets/help-stock.jpg';
-import helpManagement from '@/assets/help-management.jpg';
 
-const loadImage = (src: string): Promise<HTMLImageElement> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-};
-
-const imageToBase64 = async (src: string): Promise<string> => {
-  const img = await loadImage(src);
-  const canvas = document.createElement('canvas');
-  canvas.width = img.width;
-  canvas.height = img.height;
-  const ctx = canvas.getContext('2d');
-  ctx?.drawImage(img, 0, 0);
-  return canvas.toDataURL('image/jpeg', 0.8);
-};
-
-export const generateHelpPdf = async () => {
+export const generateHelpPdf = () => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 20;
   const contentWidth = pageWidth - margin * 2;
   let y = 20;
-
-  // Load images
-  const images = {
-    dashboard: await imageToBase64(helpDashboard),
-    dispensing: await imageToBase64(helpDispensing),
-    pos: await imageToBase64(helpPos),
-    stock: await imageToBase64(helpStock),
-    management: await imageToBase64(helpManagement),
-  };
 
   const addTitle = (text: string, fontSize: number = 18) => {
     doc.setFontSize(fontSize);
@@ -93,30 +59,6 @@ export const generateHelpPdf = async () => {
       doc.addPage();
       y = 20;
     }
-  };
-
-  const addImage = (imageData: string, caption: string) => {
-    const imgWidth = contentWidth;
-    const imgHeight = 70; // Fixed height for consistency
-    
-    checkPageBreak(imgHeight + 15);
-    
-    // Add border around image
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineWidth(0.5);
-    doc.rect(margin, y, imgWidth, imgHeight);
-    
-    // Add image
-    doc.addImage(imageData, 'JPEG', margin + 1, y + 1, imgWidth - 2, imgHeight - 2);
-    y += imgHeight + 3;
-    
-    // Add caption
-    doc.setFontSize(8);
-    doc.setFont('helvetica', 'italic');
-    doc.setTextColor(100, 100, 100);
-    doc.text(caption, margin, y);
-    doc.setTextColor(0, 0, 0);
-    y += 8;
   };
 
   // Title Page
@@ -257,8 +199,6 @@ export const generateHelpPdf = async () => {
   doc.addPage();
   y = 20;
   addTitle('4. Dashboard Overview');
-  addImage(images.dashboard, 'Figure 1: Dashboard showing daily metrics, alerts, and recent activity');
-  addSpacer(5);
   addSubtitle('What you\'ll see:', 12);
   addListItem('Total Sales: Today\'s revenue and sales count');
   addListItem('Prescriptions: Number of prescriptions dispensed today');
@@ -277,8 +217,6 @@ export const generateHelpPdf = async () => {
   doc.addPage();
   y = 20;
   addTitle('5. Dispensing Prescriptions');
-  addImage(images.dispensing, 'Figure 2: Dispensing module showing prescription queue and details');
-  addSpacer(5);
   addSubtitle('How to dispense a prescription:', 12);
   addListItem('Create New Prescription: Click "New Prescription" button', '1.');
   addListItem('Select Patient: Search by typing patient name, phone, or email', '2.');
@@ -298,8 +236,6 @@ export const generateHelpPdf = async () => {
   doc.addPage();
   y = 20;
   addTitle('6. Point of Sale (POS)');
-  addImage(images.pos, 'Figure 3: Point of Sale interface with product search and cart');
-  addSpacer(5);
   addSubtitle('How to process a sale:', 12);
   addListItem('Search Products: Use the search bar to find items', '1.');
   addListItem('Scan Barcode: Or scan product barcodes directly', '2.');
@@ -341,8 +277,6 @@ export const generateHelpPdf = async () => {
   doc.addPage();
   y = 20;
   addTitle('8. Stock Management');
-  addImage(images.stock, 'Figure 4: Stock Control showing inventory, suppliers, and alerts');
-  addSpacer(5);
   addSubtitle('Managing inventory:', 12);
   addListItem('View Stock: See all products in inventory', '1.');
   addListItem('Add Product: Click "Add Product" and fill in details including product name, generic name, barcode, category, pricing, stock levels, expiry date, and supplier', '2.');
@@ -378,9 +312,6 @@ export const generateHelpPdf = async () => {
   doc.addPage();
   y = 20;
   addTitle('10. Admin Module');
-  addImage(images.management, 'Figure 5: Admin module showing user management and settings');
-  addSpacer(5);
-  
   addSubtitle('Patients Tab:', 12);
   addListItem('View all registered patients', '1.');
   addListItem('Add new patient: Click "Add Patient" and enter details', '2.');
