@@ -1,4 +1,4 @@
-import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown } from "lucide-react";
+import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import pharmaposLogo from "@/assets/pharmapos-logo.png";
 
@@ -7,7 +7,6 @@ import {
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -19,12 +18,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useUserModules, AppModule } from "@/hooks/useModulePermissions";
-import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
 interface SubItem {
   title: string;
   url: string;
   icon: any;
+  module?: AppModule;
 }
 
 interface NavigationItem {
@@ -47,6 +46,7 @@ const navigationItems: NavigationItem[] = [
     module: "stock",
     subItems: [
       { title: "Suppliers", url: "/stock?tab=suppliers", icon: Truck },
+      { title: "Orders", url: "/orders", icon: ClipboardList, module: "orders" },
     ]
   },
   { title: "Reports", url: "/reports", icon: Receipt, module: "reports" },
@@ -57,7 +57,6 @@ const navigationItems: NavigationItem[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const { data: userModules = [] } = useUserModules();
-  const canAccessFinancialData = useCanAccessFinancialData();
   const location = useLocation();
 
   // Filter navigation items based on user's module permissions
@@ -66,8 +65,10 @@ export function AppSidebar() {
   );
 
   const isStockActive = location.pathname === "/stock";
+  const isOrdersActive = location.pathname === "/orders";
   const isSuppliersActive = location.pathname === "/stock" && location.search.includes("tab=suppliers");
   const isInventoryActive = isStockActive && !isSuppliersActive;
+  const isStockSectionActive = isStockActive || isOrdersActive;
 
   return (
     <Sidebar collapsible="icon">
@@ -91,17 +92,25 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {accessibleItems.map((item) => {
-                // Special handling for items with sub-items
-                if (item.subItems && item.subItems.length > 0 && canAccessFinancialData) {
+                // Special handling for items with sub-items (Stock Control)
+                if (item.subItems && item.subItems.length > 0) {
+                  // Filter sub-items based on module permissions
+                  const accessibleSubItems = item.subItems.filter(subItem => 
+                    !subItem.module || userModules.includes(subItem.module)
+                  );
+                  
+                  // Only show expandable menu if there are accessible sub-items
+                  const hasAccessibleSubItems = accessibleSubItems.length > 0;
+                  
                   return (
-                    <Collapsible key={item.title} defaultOpen={isStockActive} className="group/collapsible">
+                    <Collapsible key={item.title} defaultOpen={isStockSectionActive} className="group/collapsible">
                       <SidebarMenuItem>
                         <div className="flex items-center w-full">
                           <SidebarMenuButton asChild className="flex-1">
                             <NavLink
                               to={item.url}
                               className={
-                                isStockActive
+                                isStockSectionActive
                                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                                   : "hover:bg-sidebar-accent/50"
                               }
@@ -110,7 +119,7 @@ export function AppSidebar() {
                               {state !== "collapsed" && <span>{item.title}</span>}
                             </NavLink>
                           </SidebarMenuButton>
-                          {state !== "collapsed" && (
+                          {state !== "collapsed" && hasAccessibleSubItems && (
                             <CollapsibleTrigger asChild>
                               <button className="p-2 hover:bg-sidebar-accent/50 rounded-md">
                                 <ChevronDown className="h-4 w-4 transition-transform group-data-[state=open]/collapsible:rotate-180" />
@@ -118,42 +127,51 @@ export function AppSidebar() {
                             </CollapsibleTrigger>
                           )}
                         </div>
-                        <CollapsibleContent>
-                          <SidebarMenuSub>
-                            <SidebarMenuSubItem>
-                              <SidebarMenuSubButton asChild>
-                                <NavLink
-                                  to="/stock"
-                                  className={
-                                    isInventoryActive
-                                      ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
-                                      : "hover:bg-sidebar-accent/50"
-                                  }
-                                >
-                                  <Package className="h-4 w-4" />
-                                  {state !== "collapsed" && <span>Inventory</span>}
-                                </NavLink>
-                              </SidebarMenuSubButton>
-                            </SidebarMenuSubItem>
-                            {item.subItems.map((subItem) => (
-                              <SidebarMenuSubItem key={subItem.title}>
+                        {hasAccessibleSubItems && (
+                          <CollapsibleContent>
+                            <SidebarMenuSub>
+                              <SidebarMenuSubItem>
                                 <SidebarMenuSubButton asChild>
                                   <NavLink
-                                    to={subItem.url}
+                                    to="/stock"
                                     className={
-                                      isSuppliersActive
+                                      isInventoryActive
                                         ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
                                         : "hover:bg-sidebar-accent/50"
                                     }
                                   >
-                                    <subItem.icon className="h-4 w-4" />
-                                    {state !== "collapsed" && <span>{subItem.title}</span>}
+                                    <Package className="h-4 w-4" />
+                                    {state !== "collapsed" && <span>Inventory</span>}
                                   </NavLink>
                                 </SidebarMenuSubButton>
                               </SidebarMenuSubItem>
-                            ))}
-                          </SidebarMenuSub>
-                        </CollapsibleContent>
+                              {accessibleSubItems.map((subItem) => {
+                                const isSubActive = subItem.url === "/orders" 
+                                  ? isOrdersActive 
+                                  : subItem.url.includes("tab=suppliers") 
+                                    ? isSuppliersActive 
+                                    : false;
+                                return (
+                                  <SidebarMenuSubItem key={subItem.title}>
+                                    <SidebarMenuSubButton asChild>
+                                      <NavLink
+                                        to={subItem.url}
+                                        className={
+                                          isSubActive
+                                            ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
+                                            : "hover:bg-sidebar-accent/50"
+                                        }
+                                      >
+                                        <subItem.icon className="h-4 w-4" />
+                                        {state !== "collapsed" && <span>{subItem.title}</span>}
+                                      </NavLink>
+                                    </SidebarMenuSubButton>
+                                  </SidebarMenuSubItem>
+                                );
+                              })}
+                            </SidebarMenuSub>
+                          </CollapsibleContent>
+                        )}
                       </SidebarMenuItem>
                     </Collapsible>
                   );
