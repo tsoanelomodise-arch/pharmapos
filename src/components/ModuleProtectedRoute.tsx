@@ -30,13 +30,13 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       dispensing: '/dispensing',
       pos: '/pos',
       debtors: '/debtors',
+      patients: '/patients',
+      doctors: '/doctors',
       stock: '/stock',
       orders: '/orders',
       reports: '/reports',
       management: '/management',
       help: '/help',
-      patients: '/management',
-      doctors: '/management',
     };
 
     const firstAccessible = userModules?.find(m => moduleRouteMap[m]);

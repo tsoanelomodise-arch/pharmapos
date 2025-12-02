@@ -16,6 +16,8 @@ const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dispensing = lazy(() => import("./pages/Dispensing"));
 const POS = lazy(() => import("./pages/POS"));
 const Debtors = lazy(() => import("./pages/Debtors"));
+const Patients = lazy(() => import("./pages/Patients"));
+const Doctors = lazy(() => import("./pages/Doctors"));
 const Stock = lazy(() => import("./pages/Stock"));
 const Orders = lazy(() => import("./pages/Orders"));
 const Reports = lazy(() => import("./pages/Reports"));
@@ -79,6 +81,16 @@ const App = () => (
                         <Route path="/debtors" element={
                           <ModuleProtectedRoute module="debtors">
                             <Debtors />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/patients" element={
+                          <ModuleProtectedRoute module="patients">
+                            <Patients />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/doctors" element={
+                          <ModuleProtectedRoute module="doctors">
+                            <Doctors />
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/stock" element={

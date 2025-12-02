@@ -7,13 +7,13 @@ const moduleRouteMap: Record<AppModule, string> = {
   dispensing: '/dispensing',
   pos: '/pos',
   debtors: '/debtors',
+  patients: '/patients',
+  doctors: '/doctors',
   stock: '/stock',
   orders: '/orders',
   reports: '/reports',
   management: '/management',
   help: '/help',
-  patients: '/management',
-  doctors: '/management',
 };
 
 // Order of preference for default redirect
@@ -21,6 +21,8 @@ const preferredOrder: AppModule[] = [
   'dashboard',
   'dispensing',
   'pos',
+  'patients',
+  'doctors',
   'stock',
   'orders',
   'debtors',
