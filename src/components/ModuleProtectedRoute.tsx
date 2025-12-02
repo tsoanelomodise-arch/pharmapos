@@ -36,6 +36,7 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       orders: '/orders',
       reports: '/reports',
       management: '/management',
+      medical_aid: '/patients', // Medical aid is a data permission, not a route
       help: '/help',
     };
 

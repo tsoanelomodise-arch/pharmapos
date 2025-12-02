@@ -13,6 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { Plus, Edit2, ChevronDown, ChevronRight, HeartPulse } from "lucide-react";
+import { useUserModules } from "@/hooks/useModulePermissions";
 import type { Customer } from "@/hooks/useCustomers";
 
 // Common South African Medical Aid Schemes
@@ -70,6 +71,10 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
   const [open, setOpen] = useState(false);
   const [medicalAidOpen, setMedicalAidOpen] = useState(false);
   const queryClient = useQueryClient();
+  const { data: userModules } = useUserModules();
+  
+  // Check if user has medical_aid permission
+  const canViewMedicalAid = userModules?.includes('medical_aid');
 
   // Parse existing insurance_info if available
   const existingMedicalAid = customer?.insurance_info as {
@@ -325,38 +330,39 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
               />
             </div>
 
-            {/* Medical Aid Section */}
-            <Collapsible open={medicalAidOpen} onOpenChange={setMedicalAidOpen}>
-              <CollapsibleTrigger asChild>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <HeartPulse className="h-4 w-4 text-primary" />
-                    <span>Medical Aid Details</span>
-                  </div>
-                  {medicalAidOpen ? (
-                    <ChevronDown className="h-4 w-4" />
-                  ) : (
-                    <ChevronRight className="h-4 w-4" />
-                  )}
-                </Button>
-              </CollapsibleTrigger>
-              <CollapsibleContent className="space-y-4 pt-4">
-                <FormField
-                  control={form.control}
-                  name="medical_aid.scheme_name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Medical Aid Scheme</FormLabel>
-                      <Select
-                        value={field.value || ""}
-                        onValueChange={handleSchemeChange}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
+            {/* Medical Aid Section - Only visible to users with medical_aid permission */}
+            {canViewMedicalAid && (
+              <Collapsible open={medicalAidOpen} onOpenChange={setMedicalAidOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full justify-between"
+                  >
+                    <div className="flex items-center gap-2">
+                      <HeartPulse className="h-4 w-4 text-primary" />
+                      <span>Medical Aid Details</span>
+                    </div>
+                    {medicalAidOpen ? (
+                      <ChevronDown className="h-4 w-4" />
+                    ) : (
+                      <ChevronRight className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="space-y-4 pt-4">
+                  <FormField
+                    control={form.control}
+                    name="medical_aid.scheme_name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Medical Aid Scheme</FormLabel>
+                        <Select
+                          value={field.value || ""}
+                          onValueChange={handleSchemeChange}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
                             <SelectValue placeholder="Select a scheme" />
                           </SelectTrigger>
                         </FormControl>
@@ -468,6 +474,7 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
                 )}
               </CollapsibleContent>
             </Collapsible>
+            )}
 
             <div className="flex justify-end gap-2 pt-4">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>

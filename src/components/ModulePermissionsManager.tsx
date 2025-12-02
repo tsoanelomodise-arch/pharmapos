@@ -17,6 +17,7 @@ const ALL_MODULES: { value: AppModule; label: string; description: string }[] = 
   { value: 'management', label: 'Management', description: 'Manage users and settings' },
   { value: 'patients', label: 'Patient Management', description: 'View and manage patient records' },
   { value: 'doctors', label: 'Doctor Management', description: 'View and manage doctor records' },
+  { value: 'medical_aid', label: 'Medical Aid', description: 'View and manage patient medical aid details' },
   { value: 'help', label: 'Help', description: 'Access help documentation' },
 ];
 
