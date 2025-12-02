@@ -79,29 +79,38 @@ export const generateHelpPdf = () => {
   });
   doc.text(`Generated: ${today}`, pageWidth / 2, 120, { align: 'center' });
 
+  // Define section anchors for internal links
+  const sections = [
+    { id: 'quick-start', title: '1. Quick Start Guide', page: 3 },
+    { id: 'user-roles', title: '2. User Roles & Permissions', page: 3 },
+    { id: 'module-permissions', title: '3. Module Permissions System', page: 4 },
+    { id: 'dashboard', title: '4. Dashboard Overview', page: 5 },
+    { id: 'dispensing', title: '5. Dispensing Prescriptions', page: 5 },
+    { id: 'pos', title: '6. Point of Sale (POS)', page: 6 },
+    { id: 'debtors', title: '7. Debtors Management', page: 6 },
+    { id: 'stock', title: '8. Stock Management', page: 7 },
+    { id: 'reports', title: '9. Reports', page: 7 },
+    { id: 'admin', title: '10. Admin Module', page: 8 },
+    { id: 'mobile', title: '11. Mobile & Tablet Support', page: 9 },
+    { id: 'getting-help', title: '12. Getting Help', page: 9 },
+  ];
+
   // Table of Contents
   doc.addPage();
   y = 20;
   addTitle('Table of Contents', 16);
   addSpacer(5);
-  const tocItems = [
-    '1. Quick Start Guide',
-    '2. User Roles & Permissions',
-    '3. Module Permissions System',
-    '4. Dashboard Overview',
-    '5. Dispensing Prescriptions',
-    '6. Point of Sale (POS)',
-    '7. Debtors Management',
-    '8. Stock Management',
-    '9. Reports',
-    '10. Admin Module',
-    '11. Mobile & Tablet Support',
-    '12. Getting Help',
-  ];
-  tocItems.forEach(item => {
-    addText(item, 11);
-    addSpacer(2);
+  
+  const tocStartY = y;
+  sections.forEach((section, index) => {
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(0, 51, 153); // Blue color for links
+    const linkY = tocStartY + index * 8;
+    doc.textWithLink(section.title, margin, linkY, { pageNumber: section.page });
+    doc.setTextColor(0, 0, 0); // Reset to black
   });
+  y = tocStartY + sections.length * 8 + 10;
 
   // Quick Start Guide
   doc.addPage();
