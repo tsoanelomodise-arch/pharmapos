@@ -6,8 +6,8 @@ import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, Cred
 import { generateHelpPdf } from "@/utils/generateHelpPdf";
 
 export default function Help() {
-  const handleDownloadPdf = () => {
-    generateHelpPdf();
+  const handleDownloadPdf = async () => {
+    await generateHelpPdf();
   };
 
   return (
