@@ -1,15 +1,27 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor, Download } from "lucide-react";
+import { generateHelpPdf } from "@/utils/generateHelpPdf";
 
 export default function Help() {
+  const handleDownloadPdf = () => {
+    generateHelpPdf();
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-6xl">
       <div className="mb-6 md:mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-primary" />
-          <h1 className="text-2xl md:text-4xl font-bold">Help & User Manual</h1>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+          <div className="flex items-center gap-3">
+            <BookOpen className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+            <h1 className="text-2xl md:text-4xl font-bold">Help & User Manual</h1>
+          </div>
+          <Button onClick={handleDownloadPdf} variant="outline" className="gap-2 w-full sm:w-auto">
+            <Download className="h-4 w-4" />
+            Download PDF Manual
+          </Button>
         </div>
         <p className="text-muted-foreground text-sm md:text-lg">
           Complete guide to using PharmaPos - Pharmacy Management System
