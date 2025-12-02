@@ -1,4 +1,4 @@
-import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList } from "lucide-react";
+import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList, UserPlus, Stethoscope } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import pharmaposLogo from "@/assets/pharmapos-logo.png";
 
@@ -40,6 +40,16 @@ const navigationItems: NavigationItem[] = [
   { title: "POS & Sales", url: "/pos", icon: ShoppingCart, module: "pos" },
   { title: "Debtors", url: "/debtors", icon: Users, module: "debtors" },
   { 
+    title: "Customers", 
+    url: "/patients", 
+    icon: Users, 
+    module: "patients",
+    subItems: [
+      { title: "Patients", url: "/patients", icon: UserPlus, module: "patients" },
+      { title: "Doctors", url: "/doctors", icon: Stethoscope, module: "doctors" },
+    ]
+  },
+  { 
     title: "Stock Control", 
     url: "/stock", 
     icon: Package, 
@@ -69,6 +79,10 @@ export function AppSidebar() {
   const isSuppliersActive = location.pathname === "/stock" && location.search.includes("tab=suppliers");
   const isInventoryActive = isStockActive && !isSuppliersActive;
   const isStockSectionActive = isStockActive || isOrdersActive;
+  
+  const isPatientsActive = location.pathname === "/patients";
+  const isDoctorsActive = location.pathname === "/doctors";
+  const isCustomersSectionActive = isPatientsActive || isDoctorsActive;
 
   return (
     <Sidebar collapsible="icon">
@@ -92,7 +106,7 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {accessibleItems.map((item) => {
-                // Special handling for items with sub-items (Stock Control)
+                // Special handling for items with sub-items
                 if (item.subItems && item.subItems.length > 0) {
                   // Filter sub-items based on module permissions
                   const accessibleSubItems = item.subItems.filter(subItem => 
@@ -102,15 +116,22 @@ export function AppSidebar() {
                   // Only show expandable menu if there are accessible sub-items
                   const hasAccessibleSubItems = accessibleSubItems.length > 0;
                   
+                  // Determine if this section is active
+                  const isSectionActive = item.title === "Stock Control" 
+                    ? isStockSectionActive 
+                    : item.title === "Customers" 
+                      ? isCustomersSectionActive 
+                      : false;
+                  
                   return (
-                    <Collapsible key={item.title} defaultOpen={isStockSectionActive} className="group/collapsible">
+                    <Collapsible key={item.title} defaultOpen={isSectionActive} className="group/collapsible">
                       <SidebarMenuItem>
                         <div className="flex items-center w-full">
                           <SidebarMenuButton asChild className="flex-1">
                             <NavLink
                               to={item.url}
                               className={
-                                isStockSectionActive
+                                isSectionActive
                                   ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
                                   : "hover:bg-sidebar-accent/50"
                               }
@@ -130,27 +151,37 @@ export function AppSidebar() {
                         {hasAccessibleSubItems && (
                           <CollapsibleContent>
                             <SidebarMenuSub>
-                              <SidebarMenuSubItem>
-                                <SidebarMenuSubButton asChild>
-                                  <NavLink
-                                    to="/stock"
-                                    className={
-                                      isInventoryActive
-                                        ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
-                                        : "hover:bg-sidebar-accent/50"
-                                    }
-                                  >
-                                    <Package className="h-4 w-4" />
-                                    {state !== "collapsed" && <span>Inventory</span>}
-                                  </NavLink>
-                                </SidebarMenuSubButton>
-                              </SidebarMenuSubItem>
+                              {/* Special handling for Stock Control - show Inventory first */}
+                              {item.title === "Stock Control" && (
+                                <SidebarMenuSubItem>
+                                  <SidebarMenuSubButton asChild>
+                                    <NavLink
+                                      to="/stock"
+                                      className={
+                                        isInventoryActive
+                                          ? "bg-sidebar-accent/50 text-sidebar-accent-foreground font-medium"
+                                          : "hover:bg-sidebar-accent/50"
+                                      }
+                                    >
+                                      <Package className="h-4 w-4" />
+                                      {state !== "collapsed" && <span>Inventory</span>}
+                                    </NavLink>
+                                  </SidebarMenuSubButton>
+                                </SidebarMenuSubItem>
+                              )}
                               {accessibleSubItems.map((subItem) => {
-                                const isSubActive = subItem.url === "/orders" 
-                                  ? isOrdersActive 
-                                  : subItem.url.includes("tab=suppliers") 
-                                    ? isSuppliersActive 
-                                    : false;
+                                // Determine active state for each sub-item
+                                let isSubActive = false;
+                                if (subItem.url === "/orders") {
+                                  isSubActive = isOrdersActive;
+                                } else if (subItem.url.includes("tab=suppliers")) {
+                                  isSubActive = isSuppliersActive;
+                                } else if (subItem.url === "/patients") {
+                                  isSubActive = isPatientsActive;
+                                } else if (subItem.url === "/doctors") {
+                                  isSubActive = isDoctorsActive;
+                                }
+                                
                                 return (
                                   <SidebarMenuSubItem key={subItem.title}>
                                     <SidebarMenuSubButton asChild>
