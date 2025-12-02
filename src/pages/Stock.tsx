@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Trash2, Mail, Phone, MapPin, User } from "lucide-react";
+import { Package, TrendingDown, AlertTriangle, Plus, Search, Truck, Trash2, Mail, Phone, MapPin, User, MessageCircle } from "lucide-react";
 import { useProducts, useLowStockProducts, useDisposeProductMutation } from "@/hooks/useProducts";
 import { useSuppliers, useDeleteSupplierMutation } from "@/hooks/useSuppliers";
 import { ProductForm } from "@/components/ProductForm";
@@ -723,6 +723,107 @@ const Stock = () => {
         </TabsContent>
 
         <TabsContent value="orders" className="space-y-6">
+          {/* WhatsApp Stock Alerts Section */}
+          <Card className="border-[#25D366]/30 bg-[#25D366]/5">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <MessageCircle className="h-5 w-5 text-[#25D366]" />
+                WhatsApp Stock Alerts
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Low Stock Alert */}
+                <div className="p-4 border rounded-lg bg-background">
+                  <div className="flex items-center gap-2 mb-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive" />
+                    <h4 className="font-medium">Low Stock Alert</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {lowStockProducts.length} items need restocking
+                  </p>
+                  <Button 
+                    className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
+                    onClick={() => {
+                      const items = lowStockProducts.slice(0, 15).map(p => 
+                        `• ${p.name}: ${p.stock_quantity}/${p.minimum_stock} (need ${p.minimum_stock - p.stock_quantity})`
+                      ).join('\n');
+                      const message = `*📦 LOW STOCK ALERT*\n━━━━━━━━━━━━━━━━━━\nDate: ${new Date().toLocaleDateString()}\n\n*Items Requiring Restock:*\n${items}${lowStockProducts.length > 15 ? `\n\n...and ${lowStockProducts.length - 15} more items` : ''}\n\n━━━━━━━━━━━━━━━━━━\nPlease process this order urgently.`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                    }}
+                    disabled={lowStockProducts.length === 0}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Send Low Stock Alert
+                  </Button>
+                </div>
+
+                {/* Expiring Stock Alert */}
+                <div className="p-4 border rounded-lg bg-background">
+                  <div className="flex items-center gap-2 mb-2">
+                    <TrendingDown className="h-4 w-4 text-yellow-600" />
+                    <h4 className="font-medium">Expiring Stock Alert</h4>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    {expiringProducts.length} items expiring within 30 days
+                  </p>
+                  <Button 
+                    className="w-full bg-[#25D366] hover:bg-[#128C7E] text-white"
+                    onClick={() => {
+                      const items = expiringProducts.slice(0, 15).map(p => 
+                        `• ${p.name}: ${p.stock_quantity} units (expires ${new Date(p.expiry_date!).toLocaleDateString()})`
+                      ).join('\n');
+                      const message = `*⚠️ EXPIRING STOCK ALERT*\n━━━━━━━━━━━━━━━━━━\nDate: ${new Date().toLocaleDateString()}\n\n*Items Expiring Soon:*\n${items}${expiringProducts.length > 15 ? `\n\n...and ${expiringProducts.length - 15} more items` : ''}\n\n━━━━━━━━━━━━━━━━━━\nPlease review for returns or promotions.`;
+                      window.open(`https://wa.me/?text=${encodeURIComponent(message)}`, '_blank');
+                    }}
+                    disabled={expiringProducts.length === 0}
+                  >
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Send Expiring Alert
+                  </Button>
+                </div>
+              </div>
+
+              {/* Order to Specific Supplier */}
+              {suppliers.length > 0 && (
+                <div className="mt-4 p-4 border rounded-lg bg-background">
+                  <h4 className="font-medium mb-3">Quick Order to Supplier</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                    {suppliers.slice(0, 6).map(supplier => {
+                      const supplierProducts = lowStockProducts.filter(p => p.supplier_id === supplier.id);
+                      return (
+                        <Button
+                          key={supplier.id}
+                          variant="outline"
+                          className="justify-start h-auto py-2 px-3"
+                          onClick={() => {
+                            const items = supplierProducts.length > 0
+                              ? supplierProducts.map(p => `• ${p.name}: need ${p.minimum_stock - p.stock_quantity} units`).join('\n')
+                              : 'Please send your latest product catalog and pricing.';
+                            const message = `*📋 ORDER REQUEST*\n━━━━━━━━━━━━━━━━━━\nTo: ${supplier.name}\n${supplier.contact_person ? `Attn: ${supplier.contact_person}\n` : ''}Date: ${new Date().toLocaleDateString()}\n\n${supplierProducts.length > 0 ? '*Items Required:*\n' + items : items}\n\n━━━━━━━━━━━━━━━━━━\nPlease confirm availability and delivery timeline.\n\nThank you!`;
+                            const phone = supplier.phone?.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '') || '';
+                            window.open(`https://wa.me/${phone}?text=${encodeURIComponent(message)}`, '_blank');
+                          }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="h-4 w-4 text-[#25D366] shrink-0" />
+                            <div className="text-left truncate">
+                              <p className="font-medium truncate">{supplier.name}</p>
+                              {supplierProducts.length > 0 && (
+                                <p className="text-xs text-muted-foreground">{supplierProducts.length} low stock items</p>
+                              )}
+                            </div>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Purchase Orders */}
           <Card>
             <CardHeader>
               <CardTitle>Purchase Orders</CardTitle>

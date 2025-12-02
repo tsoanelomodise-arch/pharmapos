@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Receipt, Printer, Download, MessageCircle } from "lucide-react";
+import { Receipt, Printer, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -103,49 +103,6 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
 
   const handleDownload = () => {
     toast({ title: "Download started", description: "Receipt PDF is being generated..." });
-  };
-
-  const handleWhatsAppShare = () => {
-    if (!saleData) return;
-
-    // Format receipt message for WhatsApp
-    const items = saleData.sale_items?.map((item: any) => 
-      `• ${item.products?.name || 'Item'} (${item.quantity} × R${item.unit_price.toFixed(2)}) = R${item.total_price.toFixed(2)}`
-    ).join('\n') || '';
-
-    const message = `*🧾 PHARMAPOS RECEIPT*
-━━━━━━━━━━━━━━━━━━
-Transaction #${saleData.id.slice(-8)}
-Date: ${new Date(saleData.created_at).toLocaleString()}
-
-*Items:*
-${items}
-
-━━━━━━━━━━━━━━━━━━
-Subtotal: R${(saleData.total_amount - (saleData.tax_amount || 0) + (saleData.discount_amount || 0)).toFixed(2)}${saleData.discount_amount > 0 ? `\nDiscount: -R${saleData.discount_amount.toFixed(2)}` : ''}
-VAT (15%): R${(saleData.tax_amount || 0).toFixed(2)}
-*TOTAL: R${saleData.total_amount.toFixed(2)}*
-
-Payment: ${saleData.payment_method.toUpperCase()}
-Status: ${saleData.payment_status.toUpperCase()}
-
-━━━━━━━━━━━━━━━━━━
-Thank you for your purchase!
-Keep this receipt for your records.`;
-
-    const encodedMessage = encodeURIComponent(message);
-    
-    // If customer has a phone number, pre-fill it
-    let whatsappUrl = 'https://wa.me/';
-    if (saleData.customers?.phone) {
-      // Clean phone number (remove spaces, dashes, etc.)
-      const cleanPhone = saleData.customers.phone.replace(/[\s\-\(\)]/g, '').replace(/^\+/, '');
-      whatsappUrl += cleanPhone;
-    }
-    whatsappUrl += `?text=${encodedMessage}`;
-
-    window.open(whatsappUrl, '_blank');
-    toast({ title: "WhatsApp opened", description: "Share the receipt with your customer" });
   };
 
   if (isLoading) {
@@ -289,13 +246,6 @@ Keep this receipt for your records.`;
           <Button variant="outline" onClick={handleDownload} className="flex-1 min-w-[100px]">
             <Download className="mr-2 h-4 w-4" />
             Download
-          </Button>
-          <Button 
-            onClick={handleWhatsAppShare} 
-            className="flex-1 min-w-[100px] bg-[#25D366] hover:bg-[#128C7E] text-white"
-          >
-            <MessageCircle className="mr-2 h-4 w-4" />
-            WhatsApp
           </Button>
         </div>
       </DialogContent>
