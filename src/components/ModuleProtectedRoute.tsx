@@ -31,6 +31,7 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       pos: '/pos',
       debtors: '/debtors',
       stock: '/stock',
+      orders: '/orders',
       reports: '/reports',
       management: '/management',
       help: '/help',

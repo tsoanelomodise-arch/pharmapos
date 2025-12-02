@@ -9,6 +9,7 @@ export type AppModule =
   | 'pos'
   | 'debtors'
   | 'stock'
+  | 'orders'
   | 'reports'
   | 'management'
   | 'patients'

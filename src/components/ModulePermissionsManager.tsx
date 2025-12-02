@@ -12,6 +12,7 @@ const ALL_MODULES: { value: AppModule; label: string; description: string }[] = 
   { value: 'pos', label: 'Point of Sale', description: 'Process sales transactions' },
   { value: 'debtors', label: 'Debtors', description: 'Manage customer accounts' },
   { value: 'stock', label: 'Stock', description: 'Manage inventory' },
+  { value: 'orders', label: 'Orders', description: 'Manage purchase orders and supplier ordering' },
   { value: 'reports', label: 'Reports', description: 'View and generate reports' },
   { value: 'management', label: 'Management', description: 'Manage users and settings' },
   { value: 'patients', label: 'Patient Management', description: 'View and manage patient records' },
