@@ -1,0 +1,263 @@
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { BookOpen, History, Sparkles, Bug, Wrench, ArrowLeft } from "lucide-react";
+import { Link } from "react-router-dom";
+
+interface UpdateEntry {
+  version: string;
+  date: string;
+  type: 'feature' | 'improvement' | 'bugfix' | 'maintenance';
+  title: string;
+  description: string;
+  details?: string[];
+}
+
+const updates: UpdateEntry[] = [
+  {
+    version: "1.2.0",
+    date: "2024-12-02",
+    type: "feature",
+    title: "Downloadable PDF User Manual",
+    description: "Added the ability to download a comprehensive PDF version of the Help & User Manual.",
+    details: [
+      "Clickable table of contents for easy navigation",
+      "System screenshots included for visual reference",
+      "Complete step-by-step instructions for all modules"
+    ]
+  },
+  {
+    version: "1.1.5",
+    date: "2024-11-28",
+    type: "improvement",
+    title: "Enhanced Stock Report",
+    description: "Improved stock report functionality with additional filtering and export options.",
+    details: [
+      "Added expiring soon products section",
+      "Printable stock reports",
+      "Summary cards for quick overview"
+    ]
+  },
+  {
+    version: "1.1.4",
+    date: "2024-11-25",
+    type: "bugfix",
+    title: "Prescription Queue Sorting Fix",
+    description: "Fixed an issue where prescriptions were not sorting correctly by date.",
+    details: [
+      "Prescriptions now correctly display latest first",
+      "Improved filter performance"
+    ]
+  },
+  {
+    version: "1.1.3",
+    date: "2024-11-20",
+    type: "feature",
+    title: "Module Permissions System",
+    description: "Introduced granular module permissions allowing owners to control user access to specific system modules.",
+    details: [
+      "Owners can assign/revoke module access per user",
+      "Users only see permitted navigation items",
+      "Route protection prevents unauthorized access"
+    ]
+  },
+  {
+    version: "1.1.2",
+    date: "2024-11-15",
+    type: "improvement",
+    title: "User Profile Management",
+    description: "Enhanced user profile settings with ability to update username and password.",
+    details: [
+      "Self-service password changes",
+      "Profile picture support",
+      "Current password verification required"
+    ]
+  },
+  {
+    version: "1.1.1",
+    date: "2024-11-10",
+    type: "maintenance",
+    title: "Performance Optimizations",
+    description: "Various performance improvements across the application.",
+    details: [
+      "Lazy loading for all pages",
+      "Optimized database queries",
+      "Reduced bundle size"
+    ]
+  },
+  {
+    version: "1.1.0",
+    date: "2024-11-05",
+    type: "feature",
+    title: "Supplier Management",
+    description: "Added comprehensive supplier management functionality to Stock Control.",
+    details: [
+      "Add, edit, and delete suppliers",
+      "Track products per supplier",
+      "Contact information management"
+    ]
+  },
+  {
+    version: "1.0.5",
+    date: "2024-10-30",
+    type: "bugfix",
+    title: "Customer Balance Calculation Fix",
+    description: "Fixed issues with customer balance calculations in the Debtors module.",
+  },
+  {
+    version: "1.0.4",
+    date: "2024-10-25",
+    type: "improvement",
+    title: "Mobile Responsive Design",
+    description: "Improved mobile experience across all modules with responsive layouts.",
+    details: [
+      "Touch-friendly controls",
+      "Optimized table views for mobile",
+      "Collapsible sidebar on small screens"
+    ]
+  },
+  {
+    version: "1.0.0",
+    date: "2024-10-01",
+    type: "feature",
+    title: "Initial Release",
+    description: "First stable release of PharmaPos - Pharmacy Management System.",
+    details: [
+      "Dashboard with key metrics",
+      "Prescription dispensing workflow",
+      "Point of Sale system",
+      "Stock management",
+      "Customer/Debtors management",
+      "Reports and analytics",
+      "User role management"
+    ]
+  }
+];
+
+const getTypeBadge = (type: UpdateEntry['type']) => {
+  switch (type) {
+    case 'feature':
+      return <Badge className="bg-green-500 hover:bg-green-600"><Sparkles className="h-3 w-3 mr-1" /> New Feature</Badge>;
+    case 'improvement':
+      return <Badge className="bg-blue-500 hover:bg-blue-600"><Wrench className="h-3 w-3 mr-1" /> Improvement</Badge>;
+    case 'bugfix':
+      return <Badge className="bg-orange-500 hover:bg-orange-600"><Bug className="h-3 w-3 mr-1" /> Bug Fix</Badge>;
+    case 'maintenance':
+      return <Badge variant="secondary"><Wrench className="h-3 w-3 mr-1" /> Maintenance</Badge>;
+    default:
+      return <Badge variant="outline">Update</Badge>;
+  }
+};
+
+const filterUpdates = (type: string) => {
+  if (type === 'all') return updates;
+  return updates.filter(u => u.type === type);
+};
+
+export default function SystemUpdates() {
+  return (
+    <div className="container mx-auto p-4 md:p-6 max-w-6xl">
+      <div className="mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-2">
+          <div className="flex items-center gap-3">
+            <History className="h-6 w-6 md:h-8 md:w-8 text-primary" />
+            <h1 className="text-2xl md:text-4xl font-bold">System Updates</h1>
+          </div>
+          <Button asChild variant="outline" className="gap-2 w-full sm:w-auto">
+            <Link to="/help">
+              <BookOpen className="h-4 w-4" />
+              Back to Help
+            </Link>
+          </Button>
+        </div>
+        <p className="text-muted-foreground text-sm md:text-lg">
+          Track all updates, improvements, and changes to PharmaPos
+        </p>
+      </div>
+
+      {/* Current Version Card */}
+      <Card className="mb-6 md:mb-8 border-primary/50 bg-primary/5">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg md:text-xl">Current Version</CardTitle>
+            <Badge variant="outline" className="text-lg px-3 py-1">v{updates[0].version}</Badge>
+          </div>
+          <CardDescription>
+            Last updated: {new Date(updates[0].date).toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric' 
+            })}
+          </CardDescription>
+        </CardHeader>
+      </Card>
+
+      {/* Updates List */}
+      <Card>
+        <CardHeader className="pb-3 md:pb-6">
+          <CardTitle className="flex items-center gap-2 text-lg md:text-xl">
+            <History className="h-5 w-5" />
+            Update History
+          </CardTitle>
+          <CardDescription>
+            Complete changelog of all system updates
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Tabs defaultValue="all" className="w-full">
+            <TabsList className="grid w-full grid-cols-5 mb-6">
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="feature">Features</TabsTrigger>
+              <TabsTrigger value="improvement">Improvements</TabsTrigger>
+              <TabsTrigger value="bugfix">Bug Fixes</TabsTrigger>
+              <TabsTrigger value="maintenance">Maintenance</TabsTrigger>
+            </TabsList>
+
+            {['all', 'feature', 'improvement', 'bugfix', 'maintenance'].map((type) => (
+              <TabsContent key={type} value={type} className="space-y-4">
+                {filterUpdates(type).map((update, index) => (
+                  <div 
+                    key={`${update.version}-${index}`}
+                    className="border rounded-lg p-4 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2 mb-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge variant="outline" className="font-mono">v{update.version}</Badge>
+                        {getTypeBadge(update.type)}
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(update.date).toLocaleDateString('en-US', { 
+                          year: 'numeric', 
+                          month: 'short', 
+                          day: 'numeric' 
+                        })}
+                      </span>
+                    </div>
+                    <h4 className="font-semibold text-base mb-1">{update.title}</h4>
+                    <p className="text-sm text-muted-foreground mb-2">{update.description}</p>
+                    {update.details && (
+                      <ul className="text-sm space-y-1 text-muted-foreground">
+                        {update.details.map((detail, i) => (
+                          <li key={i} className="flex items-start gap-2">
+                            <span className="text-primary">•</span>
+                            <span>{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                ))}
+                {filterUpdates(type).length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    No updates found in this category.
+                  </div>
+                )}
+              </TabsContent>
+            ))}
+          </Tabs>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

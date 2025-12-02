@@ -20,6 +20,7 @@ const Stock = lazy(() => import("./pages/Stock"));
 const Reports = lazy(() => import("./pages/Reports"));
 const Management = lazy(() => import("./pages/Management"));
 const Help = lazy(() => import("./pages/Help"));
+const SystemUpdates = lazy(() => import("./pages/SystemUpdates"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -97,6 +98,11 @@ const App = () => (
                         <Route path="/help" element={
                           <ModuleProtectedRoute module="help">
                             <Help />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/help/updates" element={
+                          <ModuleProtectedRoute module="help">
+                            <SystemUpdates />
                           </ModuleProtectedRoute>
                         } />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
