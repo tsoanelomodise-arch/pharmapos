@@ -14,7 +14,8 @@ export type AppModule =
   | 'management'
   | 'patients'
   | 'doctors'
-  | 'help';
+  | 'help'
+  | 'medical_aid';
 
 export interface ModulePermission {
   id: string;
