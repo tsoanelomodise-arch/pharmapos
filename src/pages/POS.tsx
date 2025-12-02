@@ -11,6 +11,7 @@ import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { useCustomerSearch } from "@/hooks/useCustomers";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
+import { QuickPatientForm } from "@/components/QuickPatientForm";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -385,11 +386,23 @@ const POS = () => {
                 </div>
               ) : (
                 <>
-                  <Input
-                    placeholder="Search customer by name or phone..."
-                    value={customerSearchTerm}
-                    onChange={(e) => setCustomerSearchTerm(e.target.value)}
-                  />
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Search customer..."
+                      value={customerSearchTerm}
+                      onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                      className="flex-1"
+                    />
+                    <QuickPatientForm 
+                      onSuccess={(customer) => {
+                        setSelectedCustomer({
+                          id: customer.id,
+                          name: customer.name,
+                          phone: customer.phone || undefined
+                        });
+                      }}
+                    />
+                  </div>
                   {customerResults.length > 0 && (
                     <div className="border rounded-lg max-h-32 overflow-y-auto">
                       {customerResults.map((customer) => (
