@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, Search } from "lucide-react";
+import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, User, X } from "lucide-react";
 import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
+import { useCustomerSearch } from "@/hooks/useCustomers";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { useLocation } from "react-router-dom";
@@ -33,9 +33,12 @@ const POS = () => {
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
   const [activePrescription, setActivePrescription] = useState<any>(null);
+  const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
   
   const { data: searchResults = [] } = useProductSearch(searchTerm);
   const { data: recentSales = [] } = useRecentSales(5);
+  const { data: customerResults = [] } = useCustomerSearch(customerSearchTerm);
   const createSaleMutation = useCreateSaleMutation();
 
   // Pre-populate cart from prescription
@@ -151,6 +154,9 @@ const POS = () => {
     setSearchTerm("");
     setPaymentMethod('cash');
     setCashPaid("");
+    setSelectedCustomer(null);
+    setCustomerSearchTerm("");
+    setActivePrescription(null);
     toast({ title: "New sale started", description: "Cart cleared and ready for new transaction" });
   };
 
@@ -189,13 +195,15 @@ const POS = () => {
     createSaleMutation.mutate({
       items,
       paymentMethod,
-      customerId: activePrescription?.customer_id,
+      customerId: activePrescription?.customer_id || selectedCustomer?.id,
       prescriptionId: activePrescription?.id,
       cashPaid: paymentMethod === 'cash' ? cashAmount : undefined,
       changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
       notes: activePrescription 
         ? `Prescription dispensed - Dr. ${activePrescription.doctor_name}` 
-        : `POS Sale - ${paymentMethod} payment`
+        : selectedCustomer 
+          ? `POS Sale - ${selectedCustomer.name}` 
+          : `POS Sale - ${paymentMethod} payment`
     }, {
       onSuccess: async (sale) => {
         // Update prescription status if this was a prescription sale
@@ -217,7 +225,9 @@ const POS = () => {
         clearCart();
         setCashPaid("");
         setActivePrescription(null);
-        toast({ 
+        setSelectedCustomer(null);
+        setCustomerSearchTerm("");
+        toast({
           title: "Payment processed successfully!", 
           description: paymentMethod === 'cash' 
             ? `Change: R${changeAmount.toFixed(2)} - Receipt ready to print`
@@ -345,6 +355,69 @@ const POS = () => {
 
         {/* Payment & Checkout */}
         <div className="space-y-6">
+          {/* Customer Selection */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <User className="h-4 w-4" />
+                Customer (Optional)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {selectedCustomer ? (
+                <div className="flex items-center justify-between p-3 bg-accent rounded-lg">
+                  <div>
+                    <p className="font-medium">{selectedCustomer.name}</p>
+                    {selectedCustomer.phone && (
+                      <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                    )}
+                  </div>
+                  <Button 
+                    size="sm" 
+                    variant="ghost" 
+                    onClick={() => {
+                      setSelectedCustomer(null);
+                      setCustomerSearchTerm("");
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <>
+                  <Input
+                    placeholder="Search customer by name or phone..."
+                    value={customerSearchTerm}
+                    onChange={(e) => setCustomerSearchTerm(e.target.value)}
+                  />
+                  {customerResults.length > 0 && (
+                    <div className="border rounded-lg max-h-32 overflow-y-auto">
+                      {customerResults.map((customer) => (
+                        <div
+                          key={customer.id}
+                          className="p-2 hover:bg-accent cursor-pointer text-sm"
+                          onClick={() => {
+                            setSelectedCustomer({
+                              id: customer.id,
+                              name: customer.name,
+                              phone: customer.phone || undefined
+                            });
+                            setCustomerSearchTerm("");
+                          }}
+                        >
+                          <p className="font-medium">{customer.name}</p>
+                          {customer.phone && (
+                            <p className="text-muted-foreground text-xs">{customer.phone}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
