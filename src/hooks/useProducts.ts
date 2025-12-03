@@ -72,16 +72,13 @@ export function useProductSearch(searchTerm: string) {
     queryFn: async () => {
       if (searchTerm.length < 1) return [];
       
-      // Validate input format before querying
-      if (!/^[a-zA-Z0-9\s\-]+$/.test(searchTerm)) {
-        return [] as Product[];
-      }
-      
       const sanitized = sanitizeSearchTerm(searchTerm);
+      if (!sanitized) return [] as Product[];
+      
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .or(`name.ilike.${sanitized}%,barcode.ilike.${sanitized}%,generic_name.ilike.${sanitized}%`)
+        .or(`name.ilike.%${sanitized}%,barcode.ilike.%${sanitized}%,generic_name.ilike.%${sanitized}%`)
         .gt('stock_quantity', 0)
         .order('name')
         .limit(10);
