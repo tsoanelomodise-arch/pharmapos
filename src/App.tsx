@@ -24,6 +24,7 @@ const Reports = lazy(() => import("./pages/Reports"));
 const Management = lazy(() => import("./pages/Management"));
 const Help = lazy(() => import("./pages/Help"));
 const SystemUpdates = lazy(() => import("./pages/SystemUpdates"));
+const DatabaseStatus = lazy(() => import("./pages/DatabaseStatus"));
 const Auth = lazy(() => import("./pages/Auth"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -121,6 +122,11 @@ const App = () => (
                         <Route path="/help/updates" element={
                           <ModuleProtectedRoute module="help">
                             <SystemUpdates />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/help/database" element={
+                          <ModuleProtectedRoute module="help">
+                            <DatabaseStatus />
                           </ModuleProtectedRoute>
                         } />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
