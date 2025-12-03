@@ -41,12 +41,15 @@ export function BusinessSettingsForm() {
   }, [settings]);
 
   const handleSave = () => {
+    if (!settings?.id) return;
+    
     const rate = parseFloat(vatRate);
     if (isNaN(rate) || rate < 0 || rate > 100) {
       return;
     }
     
     updateSettings.mutate({
+      id: settings.id,
       pharmacy_name: pharmacyName.trim() || "Pharmacy",
       address: address.trim() || null,
       phone: phone.trim() || null,

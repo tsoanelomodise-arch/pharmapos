@@ -36,16 +36,18 @@ export function useUpdateBusinessSettings() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (settings: Partial<Omit<BusinessSettings, 'id' | 'updated_at'>>) => {
+    mutationFn: async (settings: Partial<Omit<BusinessSettings, 'id' | 'updated_at'>> & { id: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
+      const { id, ...updateData } = settings;
       
       const { data, error } = await supabase
         .from('business_settings')
         .update({
-          ...settings,
+          ...updateData,
           updated_by: user?.id,
           updated_at: new Date().toISOString(),
         })
+        .eq('id', id)
         .select()
         .single();
 
