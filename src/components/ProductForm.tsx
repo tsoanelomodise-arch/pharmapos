@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -26,6 +26,7 @@ const productSchema = z.object({
   description: z.string().optional(),
   unit_price: z.number().min(0, "Price must be positive"),
   cost_price: z.number().min(0, "Cost must be positive").optional(),
+  markup_percentage: z.number().min(0, "Markup must be non-negative").optional(),
   stock_quantity: z.number().min(0, "Stock must be non-negative"),
   minimum_stock: z.number().min(0, "Minimum stock must be non-negative"),
   expiry_date: z.string().optional(),
@@ -68,6 +69,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       description: product.description || "",
       unit_price: product.unit_price,
       cost_price: product.cost_price,
+      markup_percentage: product.markup_percentage || 0,
       stock_quantity: product.stock_quantity,
       minimum_stock: product.minimum_stock,
       expiry_date: product.expiry_date || "",
@@ -82,6 +84,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       description: "",
       unit_price: 0,
       cost_price: 0,
+      markup_percentage: 0,
       stock_quantity: 0,
       minimum_stock: 0,
       expiry_date: "",
@@ -89,6 +92,19 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       requires_prescription: false,
     },
   });
+
+  // Watch cost_price and markup_percentage for auto-calculation
+  const costPrice = form.watch("cost_price");
+  const markupPercentage = form.watch("markup_percentage");
+
+  // Auto-calculate unit price when cost or markup changes (for users with financial access)
+  useEffect(() => {
+    if (canAccessFinancialData && costPrice !== undefined && markupPercentage !== undefined) {
+      const calculatedPrice = costPrice * (1 + markupPercentage / 100);
+      const roundedPrice = Math.round(calculatedPrice * 100) / 100;
+      form.setValue("unit_price", roundedPrice);
+    }
+  }, [costPrice, markupPercentage, canAccessFinancialData, form]);
 
   const mutation = useMutation({
     mutationFn: async (data: ProductFormData) => {
@@ -101,6 +117,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         description: data.description || null,
         unit_price: data.unit_price,
         cost_price: canAccessFinancialData ? data.cost_price : (product?.cost_price || 0),
+        markup_percentage: canAccessFinancialData ? data.markup_percentage : (product?.markup_percentage || 0),
         stock_quantity: data.stock_quantity,
         minimum_stock: data.minimum_stock,
         expiry_date: data.expiry_date || null,
@@ -283,30 +300,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                 )}
               />
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="unit_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        Unit Price (R) *
-                        <FieldTooltip description="Selling price to customers" example="R45.99" />
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {canAccessFinancialData && (
+              {canAccessFinancialData && (
+                <div className="grid grid-cols-2 gap-4">
                   <FormField
                     control={form.control}
                     name="cost_price"
@@ -328,7 +323,53 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                       </FormItem>
                     )}
                   />
-                )}
+                  
+                  <FormField
+                    control={form.control}
+                    name="markup_percentage"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          Markup (%)
+                          <FieldTooltip description="Percentage added to cost price" example="40 for 40% markup" />
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.1" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="unit_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Unit Price (R) *
+                        <FieldTooltip description={canAccessFinancialData ? "Auto-calculated from cost + markup (editable)" : "Selling price to customers"} example="R45.99" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
