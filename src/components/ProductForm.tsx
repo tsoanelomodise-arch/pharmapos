@@ -5,15 +5,15 @@ import * as z from "zod";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit2 } from "lucide-react";
+import { Plus, Edit2, HelpCircle } from "lucide-react";
 import type { Product } from "@/hooks/useProducts";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
@@ -39,6 +39,17 @@ interface ProductFormProps {
   product?: Product;
   onSuccess?: () => void;
 }
+
+const FieldTooltip = ({ content }: { content: string }) => (
+  <Tooltip>
+    <TooltipTrigger asChild>
+      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help ml-1" />
+    </TooltipTrigger>
+    <TooltipContent className="max-w-xs">
+      <p>{content}</p>
+    </TooltipContent>
+  </Tooltip>
+);
 
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [open, setOpen] = useState(false);
@@ -151,134 +162,136 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
           <DialogTitle>{product ? 'Edit Product' : 'Add New Product'}</DialogTitle>
         </DialogHeader>
         
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Product Name *</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="generic_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Generic Name</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="brand"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Brand</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Category *</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="prescription">Prescription</SelectItem>
-                        <SelectItem value="otc">Over the Counter</SelectItem>
-                        <SelectItem value="supplement">Supplement</SelectItem>
-                        <SelectItem value="medical_device">Medical Device</SelectItem>
-                        <SelectItem value="cosmetic">Cosmetic</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="barcode"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Barcode</FormLabel>
-                  <FormControl>
-                    <Input {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description</FormLabel>
-                  <FormControl>
-                    <Textarea {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="unit_price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Unit Price (R) *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              {canAccessFinancialData && (
+        <TooltipProvider>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="cost_price"
+                  name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Cost Price (R) *</FormLabel>
+                      <FormLabel className="flex items-center">
+                        Product Name *
+                        <FieldTooltip content="The trade or brand name of the product as it appears on the packaging" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="generic_name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Generic Name
+                        <FieldTooltip content="The active ingredient or non-proprietary name (e.g., Paracetamol for Panado)" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="brand"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Brand
+                        <FieldTooltip content="The manufacturer or pharmaceutical company that produces the product" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Category *
+                        <FieldTooltip content="Product classification: Prescription (Schedule 3-6), OTC (over-the-counter), Supplement, Medical Device, or Cosmetic" />
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="prescription">Prescription</SelectItem>
+                          <SelectItem value="otc">Over the Counter</SelectItem>
+                          <SelectItem value="supplement">Supplement</SelectItem>
+                          <SelectItem value="medical_device">Medical Device</SelectItem>
+                          <SelectItem value="cosmetic">Cosmetic</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="barcode"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      Barcode
+                      <FieldTooltip content="The product's barcode number (EAN/UPC) for scanning at POS" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center">
+                      Description
+                      <FieldTooltip content="Additional product details such as dosage form, strength, pack size, or usage notes" />
+                    </FormLabel>
+                    <FormControl>
+                      <Textarea {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="unit_price"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Unit Price (R) *
+                        <FieldTooltip content="The selling price per unit charged to customers (including VAT if applicable)" />
+                      </FormLabel>
                       <FormControl>
                         <Input 
                           type="number" 
@@ -291,105 +304,142 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     </FormItem>
                   )}
                 />
-              )}
-            </div>
+                
+                {canAccessFinancialData && (
+                  <FormField
+                    control={form.control}
+                    name="cost_price"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="flex items-center">
+                          Cost Price (R) *
+                          <FieldTooltip content="The purchase price paid to the supplier (used for profit margin calculations)" />
+                        </FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="number" 
+                            step="0.01" 
+                            {...field}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
 
-            <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="stock_quantity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Stock Quantity *
+                        <FieldTooltip content="Current number of units available in inventory" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="minimum_stock"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Minimum Stock *
+                        <FieldTooltip content="Reorder threshold - you'll receive low stock alerts when quantity falls below this level" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          {...field}
+                          onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="expiry_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Expiry Date
+                        <FieldTooltip content="Product expiration date - you'll receive alerts for products expiring within 90 days" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input type="date" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="batch_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center">
+                        Batch Number
+                        <FieldTooltip content="Manufacturer's batch or lot number for traceability and recall purposes" />
+                      </FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="stock_quantity"
+                name="requires_prescription"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock Quantity *</FormLabel>
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5 flex items-center">
+                      <FormLabel>Requires Prescription</FormLabel>
+                      <FieldTooltip content="Enable if this product can only be dispensed with a valid prescription (Schedule 3-6 medicines)" />
+                    </div>
                     <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
                       />
                     </FormControl>
-                    <FormMessage />
                   </FormItem>
                 )}
               />
-              
-              <FormField
-                control={form.control}
-                name="minimum_stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Minimum Stock *</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        {...field}
-                        onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="expiry_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Expiry Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="batch_number"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Batch Number</FormLabel>
-                    <FormControl>
-                      <Input {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="requires_prescription"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                  <div className="space-y-0.5">
-                    <FormLabel>Requires Prescription</FormLabel>
-                  </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                </FormItem>
-              )}
-            />
-
-            <div className="flex justify-end gap-2">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={mutation.isPending}>
-                {mutation.isPending ? 'Saving...' : (product ? 'Update' : 'Create')}
-              </Button>
-            </div>
-          </form>
-        </Form>
+              <div className="flex justify-end gap-2">
+                <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={mutation.isPending}>
+                  {mutation.isPending ? 'Saving...' : (product ? 'Update' : 'Create')}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </TooltipProvider>
       </DialogContent>
     </Dialog>
   );
