@@ -4,7 +4,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Building2, Save, Loader2 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Building2, Save, Loader2, Percent } from "lucide-react";
 import { useBusinessSettings, useUpdateBusinessSettings } from "@/hooks/useBusinessSettings";
 import {
   Tooltip,
@@ -23,6 +25,8 @@ export function BusinessSettingsForm() {
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [vatNumber, setVatNumber] = useState("");
+  const [vatRate, setVatRate] = useState("15");
+  const [vatInclusive, setVatInclusive] = useState(false);
 
   useEffect(() => {
     if (settings) {
@@ -31,16 +35,25 @@ export function BusinessSettingsForm() {
       setPhone(settings.phone || "");
       setEmail(settings.email || "");
       setVatNumber(settings.vat_number || "");
+      setVatRate(settings.vat_rate?.toString() || "15");
+      setVatInclusive(settings.vat_inclusive || false);
     }
   }, [settings]);
 
   const handleSave = () => {
+    const rate = parseFloat(vatRate);
+    if (isNaN(rate) || rate < 0 || rate > 100) {
+      return;
+    }
+    
     updateSettings.mutate({
       pharmacy_name: pharmacyName.trim() || "Pharmacy",
       address: address.trim() || null,
       phone: phone.trim() || null,
       email: email.trim() || null,
       vat_number: vatNumber.trim() || null,
+      vat_rate: rate,
+      vat_inclusive: vatInclusive,
     });
   };
 
@@ -169,6 +182,65 @@ export function BusinessSettingsForm() {
               placeholder="Enter full address"
               rows={2}
             />
+          </div>
+
+          <Separator className="my-6" />
+
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Percent className="h-5 w-5" />
+              <h3 className="text-lg font-semibold">VAT Settings</h3>
+            </div>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="vatRate" className="flex items-center gap-2">
+                  VAT Rate (%)
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>Standard VAT rate for calculations (e.g., "15" for 15%)</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Label>
+                <Input
+                  id="vatRate"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  value={vatRate}
+                  onChange={(e) => setVatRate(e.target.value)}
+                  placeholder="15"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vatInclusive" className="flex items-center gap-2">
+                  Prices Include VAT
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs">
+                      <p>When ON, product prices already include VAT. When OFF, VAT is added on top of prices.</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </Label>
+                <div className="flex items-center gap-3 pt-2">
+                  <Switch
+                    id="vatInclusive"
+                    checked={vatInclusive}
+                    onCheckedChange={setVatInclusive}
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {vatInclusive ? "VAT Inclusive (prices include VAT)" : "VAT Exclusive (VAT added to prices)"}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div className="flex justify-end pt-4">
