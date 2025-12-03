@@ -195,7 +195,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
               </div>
             )}
             <div className="line text-sm">
-              <span>VAT (15%):</span>
+              <span>VAT ({businessSettings?.vat_rate ?? 15}%){businessSettings?.vat_inclusive ? ' incl.' : ''}:</span>
               <span>R{saleData.tax_amount.toFixed(2)}</span>
             </div>
             <Separator />

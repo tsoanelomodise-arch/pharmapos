@@ -9,6 +9,7 @@ import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, User, X }
 import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { useCustomerSearch } from "@/hooks/useCustomers";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
@@ -40,6 +41,7 @@ const POS = () => {
   const { data: searchResults = [] } = useProductSearch(searchTerm);
   const { data: recentSales = [] } = useRecentSales(5);
   const { data: customerResults = [] } = useCustomerSearch(customerSearchTerm);
+  const { data: businessSettings } = useBusinessSettings();
   const createSaleMutation = useCreateSaleMutation();
 
   // Pre-populate cart from prescription
@@ -103,9 +105,17 @@ const POS = () => {
     }
   }, [location.state]);
 
+  const vatRate = businessSettings?.vat_rate ?? 15;
+  const vatInclusive = businessSettings?.vat_inclusive ?? false;
+  
   const subtotal = cartItems.reduce((sum, item) => sum + item.total, 0);
-  const tax = subtotal * 0.15;
-  const total = subtotal + tax;
+  
+  // Calculate VAT based on inclusive/exclusive mode
+  const tax = vatInclusive 
+    ? subtotal - (subtotal / (1 + vatRate / 100)) // Extract VAT from inclusive price
+    : subtotal * (vatRate / 100); // Add VAT to exclusive price
+  
+  const total = vatInclusive ? subtotal : subtotal + tax;
   const cashAmount = parseFloat(cashPaid) || 0;
   const changeAmount = cashAmount - total;
 
@@ -200,6 +210,8 @@ const POS = () => {
       prescriptionId: activePrescription?.id,
       cashPaid: paymentMethod === 'cash' ? cashAmount : undefined,
       changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
+      vatRate,
+      vatInclusive,
       notes: activePrescription 
         ? `Prescription dispensed - Dr. ${activePrescription.doctor_name}` 
         : selectedCustomer 
@@ -442,7 +454,7 @@ const POS = () => {
                   <span>R{subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>VAT (15%):</span>
+                  <span>VAT ({vatRate}%){vatInclusive ? ' incl.' : ''}:</span>
                   <span>R{tax.toFixed(2)}</span>
                 </div>
                 <Separator />
