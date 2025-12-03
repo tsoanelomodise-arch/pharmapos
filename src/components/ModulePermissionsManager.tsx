@@ -18,6 +18,7 @@ const ALL_MODULES: { value: AppModule; label: string; description: string }[] = 
   { value: 'patients', label: 'Patient Management', description: 'View and manage patient records' },
   { value: 'doctors', label: 'Doctor Management', description: 'View and manage doctor records' },
   { value: 'medical_aid', label: 'Medical Aid', description: 'View and manage patient medical aid details' },
+  { value: 'settings', label: 'Settings', description: 'Configure business settings and VAT' },
   { value: 'help', label: 'Help', description: 'Access help documentation' },
 ];
 
