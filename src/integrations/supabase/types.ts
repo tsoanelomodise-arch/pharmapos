@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      business_settings: {
+        Row: {
+          address: string | null
+          email: string | null
+          id: string
+          pharmacy_name: string
+          phone: string | null
+          updated_at: string
+          updated_by: string | null
+          vat_number: string | null
+        }
+        Insert: {
+          address?: string | null
+          email?: string | null
+          id?: string
+          pharmacy_name?: string
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vat_number?: string | null
+        }
+        Update: {
+          address?: string | null
+          email?: string | null
+          id?: string
+          pharmacy_name?: string
+          phone?: string | null
+          updated_at?: string
+          updated_by?: string | null
+          vat_number?: string | null
+        }
+        Relationships: []
+      }
       customer_access_logs: {
         Row: {
           access_type: string

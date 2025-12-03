@@ -5,6 +5,7 @@ import { Receipt, Printer, Download } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 
 interface ReceiptDialogProps {
   saleId: string;
@@ -13,6 +14,7 @@ interface ReceiptDialogProps {
 }
 
 export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps) {
+  const { data: businessSettings } = useBusinessSettings();
   const { data: saleData, isLoading } = useQuery({
     queryKey: ['sale-receipt', saleId],
     queryFn: async () => {
@@ -137,8 +139,14 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
 
         <div id="receipt-content" className="receipt space-y-4">
           <div className="header text-center">
-            <h2 className="text-lg font-bold">PHARMACY POS</h2>
-            <p className="text-sm text-muted-foreground">
+            <h2 className="text-lg font-bold">{businessSettings?.pharmacy_name || 'PHARMACY POS'}</h2>
+            {businessSettings?.address && (
+              <p className="text-xs text-muted-foreground whitespace-pre-line">{businessSettings.address}</p>
+            )}
+            {businessSettings?.phone && (
+              <p className="text-xs text-muted-foreground">Tel: {businessSettings.phone}</p>
+            )}
+            <p className="text-sm text-muted-foreground mt-2">
               {new Date(saleData.created_at).toLocaleString()}
             </p>
             <p className="text-xs text-muted-foreground">
@@ -233,6 +241,9 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
           )}
 
           <div className="footer text-center text-xs text-muted-foreground">
+            {businessSettings?.vat_number && (
+              <p className="mb-2">VAT No: {businessSettings.vat_number}</p>
+            )}
             <p>Thank you for your business!</p>
             <p>Please keep this receipt for your records</p>
           </div>
