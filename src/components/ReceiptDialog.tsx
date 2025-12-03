@@ -184,25 +184,45 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
           <Separator />
 
           <div className="totals space-y-1">
-            <div className="line text-sm">
-              <span>Subtotal:</span>
-              <span>R{(saleData.total_amount - saleData.tax_amount + saleData.discount_amount).toFixed(2)}</span>
-            </div>
-            {saleData.discount_amount > 0 && (
-              <div className="line text-sm">
-                <span>Discount:</span>
-                <span>-R{saleData.discount_amount.toFixed(2)}</span>
-              </div>
+            {businessSettings?.vat_inclusive ? (
+              <>
+                {saleData.discount_amount > 0 && (
+                  <div className="line text-sm">
+                    <span>Discount:</span>
+                    <span>-R{saleData.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="line total">
+                  <span>TOTAL (VAT Incl.):</span>
+                  <span>R{saleData.total_amount.toFixed(2)}</span>
+                </div>
+                <p className="text-xs text-muted-foreground text-right">
+                  Includes R{saleData.tax_amount.toFixed(2)} VAT ({businessSettings?.vat_rate ?? 15}%)
+                </p>
+              </>
+            ) : (
+              <>
+                <div className="line text-sm">
+                  <span>Subtotal:</span>
+                  <span>R{(saleData.total_amount - saleData.tax_amount + saleData.discount_amount).toFixed(2)}</span>
+                </div>
+                {saleData.discount_amount > 0 && (
+                  <div className="line text-sm">
+                    <span>Discount:</span>
+                    <span>-R{saleData.discount_amount.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="line text-sm">
+                  <span>VAT ({businessSettings?.vat_rate ?? 15}%):</span>
+                  <span>R{saleData.tax_amount.toFixed(2)}</span>
+                </div>
+                <Separator />
+                <div className="line total">
+                  <span>TOTAL:</span>
+                  <span>R{saleData.total_amount.toFixed(2)}</span>
+                </div>
+              </>
             )}
-            <div className="line text-sm">
-              <span>VAT ({businessSettings?.vat_rate ?? 15}%){businessSettings?.vat_inclusive ? ' incl.' : ''}:</span>
-              <span>R{saleData.tax_amount.toFixed(2)}</span>
-            </div>
-            <Separator />
-            <div className="line total">
-              <span>TOTAL:</span>
-              <span>R{saleData.total_amount.toFixed(2)}</span>
-            </div>
           </div>
 
           <div className="payment-info space-y-1">
