@@ -450,10 +450,15 @@ const POS = () => {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 {vatInclusive ? (
-                  <div className="flex justify-between font-bold text-lg">
-                    <span>Total (VAT Incl.):</span>
-                    <span>R{subtotal.toFixed(2)}</span>
-                  </div>
+                  <>
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total (VAT Incl.):</span>
+                      <span>R{subtotal.toFixed(2)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground text-right">
+                      Includes R{tax.toFixed(2)} VAT ({vatRate}%)
+                    </p>
+                  </>
                 ) : (
                   <>
                     <div className="flex justify-between">
