@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound } from "lucide-react";
+import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound, Settings } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
 import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword, useUpdateUserProfile, useUpdateUserEmail } from "@/hooks/useUsers";
@@ -22,6 +22,7 @@ import { DoctorForm } from "@/components/DoctorForm";
 import { UserForm } from "@/components/UserForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
 import { ModulePermissionsManager } from "@/components/ModulePermissionsManager";
+import { BusinessSettingsForm } from "@/components/BusinessSettingsForm";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUserModules } from "@/hooks/useModulePermissions";
 import { format } from "date-fns";
@@ -232,7 +233,7 @@ export default function Management() {
       </div>
 
       <Tabs defaultValue={canAccessPatients ? "patients" : canManageUsers ? "users" : "patients"} className="w-full">
-        <TabsList className={`flex w-full overflow-x-auto ${isOwner ? 'md:grid md:grid-cols-4' : canManageUsers ? 'md:grid md:grid-cols-3' : 'md:grid md:grid-cols-2'}`}>
+        <TabsList className={`flex w-full overflow-x-auto ${isOwner ? 'md:grid md:grid-cols-5' : canManageUsers ? 'md:grid md:grid-cols-3' : 'md:grid md:grid-cols-2'}`}>
           {canAccessPatients && (
             <TabsTrigger value="patients" className="flex-1 md:flex-initial text-xs sm:text-sm">
               <UserPlus className="h-4 w-4 mr-1 sm:mr-2" />
@@ -259,6 +260,13 @@ export default function Management() {
               <Shield className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Module Permissions</span>
               <span className="sm:hidden">Permissions</span>
+            </TabsTrigger>
+          )}
+          {isOwner && (
+            <TabsTrigger value="settings" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <Settings className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Settings</span>
+              <span className="sm:hidden">Settings</span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -610,6 +618,12 @@ export default function Management() {
                 <ModulePermissionsManager />
               </CardContent>
             </Card>
+          </TabsContent>
+        )}
+
+        {isOwner && (
+          <TabsContent value="settings" className="space-y-4">
+            <BusinessSettingsForm />
           </TabsContent>
         )}
       </Tabs>
