@@ -12,6 +12,7 @@ export interface Product {
   description?: string;
   unit_price: number;
   cost_price: number;
+  markup_percentage: number;
   stock_quantity: number;
   minimum_stock: number;
   expiry_date?: string;
