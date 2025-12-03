@@ -23,7 +23,9 @@ export type Database = {
           phone: string | null
           updated_at: string
           updated_by: string | null
+          vat_inclusive: boolean
           vat_number: string | null
+          vat_rate: number
         }
         Insert: {
           address?: string | null
@@ -33,7 +35,9 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
+          vat_inclusive?: boolean
           vat_number?: string | null
+          vat_rate?: number
         }
         Update: {
           address?: string | null
@@ -43,7 +47,9 @@ export type Database = {
           phone?: string | null
           updated_at?: string
           updated_by?: string | null
+          vat_inclusive?: boolean
           vat_number?: string | null
+          vat_rate?: number
         }
         Relationships: []
       }

@@ -9,6 +9,8 @@ export interface BusinessSettings {
   phone: string | null;
   email: string | null;
   vat_number: string | null;
+  vat_rate: number;
+  vat_inclusive: boolean;
   updated_at: string;
   updated_by: string | null;
 }
