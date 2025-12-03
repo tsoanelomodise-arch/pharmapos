@@ -13,7 +13,8 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Edit2, HelpCircle } from "lucide-react";
+import { Plus, Edit2, HelpCircle, Calculator } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/hooks/useProducts";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
 
@@ -93,15 +94,24 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
     },
   });
 
-  // Watch cost_price and markup_percentage for auto-calculation
+  // Watch cost_price, markup_percentage, and unit_price for auto-calculation
   const costPrice = form.watch("cost_price");
   const markupPercentage = form.watch("markup_percentage");
+  const currentUnitPrice = form.watch("unit_price");
+
+  // Calculate expected price for comparison
+  const calculatedPrice = costPrice && markupPercentage !== undefined
+    ? Math.round(costPrice * (1 + markupPercentage / 100) * 100) / 100
+    : 0;
+
+  // Track if user has manually overridden the price
+  const isManualOverride = canAccessFinancialData && costPrice && costPrice > 0 && currentUnitPrice !== calculatedPrice;
 
   // Auto-calculate unit price when cost or markup changes (for users with financial access)
   useEffect(() => {
-    if (canAccessFinancialData && costPrice !== undefined && markupPercentage !== undefined) {
-      const calculatedPrice = costPrice * (1 + markupPercentage / 100);
-      const roundedPrice = Math.round(calculatedPrice * 100) / 100;
+    if (canAccessFinancialData && costPrice !== undefined && markupPercentage !== undefined && costPrice > 0) {
+      const newCalculatedPrice = costPrice * (1 + markupPercentage / 100);
+      const roundedPrice = Math.round(newCalculatedPrice * 100) / 100;
       form.setValue("unit_price", roundedPrice);
     }
   }, [costPrice, markupPercentage, canAccessFinancialData, form]);
@@ -348,29 +358,41 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                 </div>
               )}
 
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="unit_price"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center">
-                        Unit Price (R) *
-                        <FieldTooltip description={canAccessFinancialData ? "Auto-calculated from cost + markup (editable)" : "Selling price to customers"} example="R45.99" />
-                      </FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          step="0.01" 
-                          {...field}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="unit_price"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-muted-foreground" />
+                      Unit Price (R) *
+                      {canAccessFinancialData && costPrice && costPrice > 0 && (
+                        <Badge variant={isManualOverride ? "outline" : "secondary"} className="text-xs ml-1">
+                          {isManualOverride ? "Manual override" : "Auto-calculated"}
+                        </Badge>
+                      )}
+                      <FieldTooltip description={canAccessFinancialData ? "Auto-calculated from cost + markup (editable)" : "Selling price to customers"} example="R45.99" />
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        className={canAccessFinancialData && costPrice && costPrice > 0 && !isManualOverride 
+                          ? "border-l-4 border-l-primary/50 bg-primary/5" 
+                          : ""}
+                        {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    {canAccessFinancialData && costPrice && costPrice > 0 && markupPercentage !== undefined && (
+                      <p className="text-xs text-muted-foreground">
+                        R{costPrice.toFixed(2)} × (1 + {markupPercentage}%) = <span className="font-medium text-foreground">R{calculatedPrice.toFixed(2)}</span>
+                      </p>
+                    )}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-2 gap-4">
                 <FormField
