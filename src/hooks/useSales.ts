@@ -107,6 +107,8 @@ export function useCreateSaleMutation() {
       discountAmount = 0,
       cashPaid,
       changeGiven,
+      vatRate = 15,
+      vatInclusive = false,
       notes 
     }: {
       customerId?: string;
@@ -116,14 +118,22 @@ export function useCreateSaleMutation() {
       discountAmount?: number;
       cashPaid?: number;
       changeGiven?: number;
+      vatRate?: number;
+      vatInclusive?: boolean;
       notes?: string;
     }) => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("User not authenticated");
 
       const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
-      const taxAmount = (subtotal - discountAmount) * 0.15;
-      const totalAmount = subtotal - discountAmount + taxAmount;
+      const afterDiscount = subtotal - discountAmount;
+      
+      // Calculate VAT based on inclusive/exclusive mode
+      const taxAmount = vatInclusive 
+        ? afterDiscount - (afterDiscount / (1 + vatRate / 100)) // Extract VAT from inclusive price
+        : afterDiscount * (vatRate / 100); // Add VAT to exclusive price
+      
+      const totalAmount = vatInclusive ? afterDiscount : afterDiscount + taxAmount;
       
       // Create sale
       const { data: sale, error: saleError } = await supabase
