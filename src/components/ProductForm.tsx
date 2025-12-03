@@ -40,13 +40,14 @@ interface ProductFormProps {
   onSuccess?: () => void;
 }
 
-const FieldTooltip = ({ content }: { content: string }) => (
+const FieldTooltip = ({ description, example }: { description: string; example: string }) => (
   <Tooltip>
     <TooltipTrigger asChild>
       <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help ml-1" />
     </TooltipTrigger>
     <TooltipContent className="max-w-xs">
-      <p>{content}</p>
+      <p className="font-medium">{description}</p>
+      <p className="text-muted-foreground text-xs mt-1">Example: {example}</p>
     </TooltipContent>
   </Tooltip>
 );
@@ -173,7 +174,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Product Name *
-                        <FieldTooltip content="The trade or brand name of the product as it appears on the packaging" />
+                        <FieldTooltip description="Name as shown on packaging" example="Panado 500mg Tablets" />
                       </FormLabel>
                       <FormControl>
                         <Input {...field} />
@@ -190,7 +191,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Generic Name
-                        <FieldTooltip content="The active ingredient or non-proprietary name (e.g., Paracetamol for Panado)" />
+                        <FieldTooltip description="Active ingredient name" example="Paracetamol" />
                       </FormLabel>
                       <FormControl>
                         <Input {...field} />
@@ -209,7 +210,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Brand
-                        <FieldTooltip content="The manufacturer or pharmaceutical company that produces the product" />
+                        <FieldTooltip description="Manufacturer or company" example="Adcock Ingram" />
                       </FormLabel>
                       <FormControl>
                         <Input {...field} />
@@ -226,7 +227,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Category *
-                        <FieldTooltip content="Product classification: Prescription (Schedule 3-6), OTC (over-the-counter), Supplement, Medical Device, or Cosmetic" />
+                        <FieldTooltip description="Product type classification" example="OTC for headache tablets" />
                       </FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
@@ -255,7 +256,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       Barcode
-                      <FieldTooltip content="The product's barcode number (EAN/UPC) for scanning at POS" />
+                      <FieldTooltip description="Barcode for POS scanning" example="6001505012345" />
                     </FormLabel>
                     <FormControl>
                       <Input {...field} />
@@ -272,7 +273,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   <FormItem>
                     <FormLabel className="flex items-center">
                       Description
-                      <FieldTooltip content="Additional product details such as dosage form, strength, pack size, or usage notes" />
+                      <FieldTooltip description="Extra details or notes" example="24 tablets per pack, sugar-free" />
                     </FormLabel>
                     <FormControl>
                       <Textarea {...field} />
@@ -290,7 +291,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Unit Price (R) *
-                        <FieldTooltip content="The selling price per unit charged to customers (including VAT if applicable)" />
+                        <FieldTooltip description="Selling price to customers" example="R45.99" />
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -313,7 +314,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                       <FormItem>
                         <FormLabel className="flex items-center">
                           Cost Price (R) *
-                          <FieldTooltip content="The purchase price paid to the supplier (used for profit margin calculations)" />
+                          <FieldTooltip description="Your purchase cost from supplier" example="R32.50" />
                         </FormLabel>
                         <FormControl>
                           <Input 
@@ -338,7 +339,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Stock Quantity *
-                        <FieldTooltip content="Current number of units available in inventory" />
+                        <FieldTooltip description="Units currently in stock" example="150" />
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -359,7 +360,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Minimum Stock *
-                        <FieldTooltip content="Reorder threshold - you'll receive low stock alerts when quantity falls below this level" />
+                        <FieldTooltip description="Alert when stock falls below this" example="20" />
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -382,7 +383,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Expiry Date
-                        <FieldTooltip content="Product expiration date - you'll receive alerts for products expiring within 90 days" />
+                        <FieldTooltip description="When product expires" example="2025-12-31" />
                       </FormLabel>
                       <FormControl>
                         <Input type="date" {...field} />
@@ -399,7 +400,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                     <FormItem>
                       <FormLabel className="flex items-center">
                         Batch Number
-                        <FieldTooltip content="Manufacturer's batch or lot number for traceability and recall purposes" />
+                        <FieldTooltip description="Lot number for tracking" example="BN2024-0815" />
                       </FormLabel>
                       <FormControl>
                         <Input {...field} />
@@ -417,7 +418,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                     <div className="space-y-0.5 flex items-center">
                       <FormLabel>Requires Prescription</FormLabel>
-                      <FieldTooltip content="Enable if this product can only be dispensed with a valid prescription (Schedule 3-6 medicines)" />
+                      <FieldTooltip description="Needs prescription to dispense" example="ON for Schedule 4 antibiotics" />
                     </div>
                     <FormControl>
                       <Switch
