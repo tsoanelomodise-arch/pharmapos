@@ -2,7 +2,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor, Download, History } from "lucide-react";
+import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor, Download, History, Database } from "lucide-react";
 import { generateHelpPdf } from "@/utils/generateHelpPdf";
 import { Link } from "react-router-dom";
 
@@ -24,6 +24,12 @@ export default function Help() {
               <Link to="/help/updates">
                 <History className="h-4 w-4" />
                 System Updates
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="gap-2">
+              <Link to="/help/database">
+                <Database className="h-4 w-4" />
+                Database Status
               </Link>
             </Button>
             <Button onClick={handleDownloadPdf} variant="outline" className="gap-2">
