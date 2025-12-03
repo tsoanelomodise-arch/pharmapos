@@ -73,6 +73,7 @@ export default function Management() {
   const canManageUsers = role && ['admin', 'owner'].includes(role);
   const canAccessPatients = userModules.includes('patients');
   const canAccessDoctors = userModules.includes('doctors');
+  const canAccessSettings = userModules.includes('settings');
 
   const filteredPatients = customers?.filter(customer =>
     customer.name.toLowerCase().includes(patientSearch.toLowerCase()) ||
@@ -233,7 +234,7 @@ export default function Management() {
       </div>
 
       <Tabs defaultValue={canAccessPatients ? "patients" : canManageUsers ? "users" : "patients"} className="w-full">
-        <TabsList className={`flex w-full overflow-x-auto ${isOwner ? 'md:grid md:grid-cols-5' : canManageUsers ? 'md:grid md:grid-cols-3' : 'md:grid md:grid-cols-2'}`}>
+        <TabsList className="flex w-full overflow-x-auto">
           {canAccessPatients && (
             <TabsTrigger value="patients" className="flex-1 md:flex-initial text-xs sm:text-sm">
               <UserPlus className="h-4 w-4 mr-1 sm:mr-2" />
@@ -262,7 +263,7 @@ export default function Management() {
               <span className="sm:hidden">Permissions</span>
             </TabsTrigger>
           )}
-          {isOwner && (
+          {canAccessSettings && (
             <TabsTrigger value="settings" className="flex-1 md:flex-initial text-xs sm:text-sm">
               <Settings className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Settings</span>
@@ -621,7 +622,7 @@ export default function Management() {
           </TabsContent>
         )}
 
-        {isOwner && (
+        {canAccessSettings && (
           <TabsContent value="settings" className="space-y-4">
             <BusinessSettingsForm />
           </TabsContent>
