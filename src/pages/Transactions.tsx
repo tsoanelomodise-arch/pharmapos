@@ -5,9 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp } from "lucide-react";
-import { useAllSalesWithDetails } from "@/hooks/useSales";
+import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil } from "lucide-react";
+import { useAllSalesWithDetails, SaleWithDetails } from "@/hooks/useSales";
+import { useUserModules } from "@/hooks/useModulePermissions";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
+import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { Link } from "react-router-dom";
 
@@ -18,8 +20,12 @@ const Transactions = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
+  const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
+
+  const { data: userModules } = useUserModules();
+  const canEditTransactions = userModules?.includes('edit_transactions');
 
   // Calculate date filters based on preset
   const getDateFilter = () => {
@@ -241,13 +247,24 @@ const Transactions = () => {
                         </TableCell>
                         <TableCell>{getStatusBadge(sale.payment_status)}</TableCell>
                         <TableCell className="text-right">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => setSelectedSaleId(sale.id)}
-                          >
-                            <Receipt className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center justify-end gap-1">
+                            {canEditTransactions && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingSale(sale)}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setSelectedSaleId(sale.id)}
+                            >
+                              <Receipt className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     ))}
@@ -292,6 +309,13 @@ const Transactions = () => {
           onOpenChange={(open) => !open && setSelectedSaleId(null)}
         />
       )}
+
+      {/* Edit Transaction Dialog */}
+      <EditTransactionDialog
+        sale={editingSale}
+        open={!!editingSale}
+        onOpenChange={(open) => !open && setEditingSale(null)}
+      />
     </div>
   );
 };

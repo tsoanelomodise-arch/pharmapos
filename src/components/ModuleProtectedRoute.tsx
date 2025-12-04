@@ -38,6 +38,7 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       management: '/management',
       medical_aid: '/patients', // Medical aid is a data permission, not a route
       settings: '/management', // Settings is a tab within Management
+      edit_transactions: '/pos/transactions', // Edit transactions is a data permission
       help: '/help',
     };
 
