@@ -269,3 +269,57 @@ export function useCreateSaleMutation() {
     }
   });
 }
+
+export function useUpdateSaleMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ 
+      saleId,
+      paymentMethod,
+      paymentStatus,
+      discountAmount,
+      notes,
+      customerId,
+    }: {
+      saleId: string;
+      paymentMethod?: 'cash' | 'card' | 'credit' | 'insurance';
+      paymentStatus?: string;
+      discountAmount?: number;
+      notes?: string;
+      customerId?: string | null;
+    }) => {
+      const updateData: Record<string, any> = {};
+      
+      if (paymentMethod !== undefined) updateData.payment_method = paymentMethod;
+      if (paymentStatus !== undefined) updateData.payment_status = paymentStatus;
+      if (discountAmount !== undefined) updateData.discount_amount = discountAmount;
+      if (notes !== undefined) updateData.notes = notes;
+      if (customerId !== undefined) updateData.customer_id = customerId;
+      
+      const { data, error } = await supabase
+        .from('sales')
+        .update(updateData)
+        .eq('id', saleId)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data as Sale;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todays-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sales-details'] });
+      toast({ title: 'Transaction updated successfully' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error updating transaction', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}
