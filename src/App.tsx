@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Dispensing = lazy(() => import("./pages/Dispensing"));
 const POS = lazy(() => import("./pages/POS"));
+const Transactions = lazy(() => import("./pages/Transactions"));
 const Debtors = lazy(() => import("./pages/Debtors"));
 const Patients = lazy(() => import("./pages/Patients"));
 const Doctors = lazy(() => import("./pages/Doctors"));
@@ -77,6 +78,11 @@ const App = () => (
                         <Route path="/pos" element={
                           <ModuleProtectedRoute module="pos">
                             <POS />
+                          </ModuleProtectedRoute>
+                        } />
+                        <Route path="/pos/transactions" element={
+                          <ModuleProtectedRoute module="pos">
+                            <Transactions />
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/debtors" element={

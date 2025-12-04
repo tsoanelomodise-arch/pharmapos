@@ -13,7 +13,7 @@ import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -598,8 +598,11 @@ const POS = () => {
 
       {/* Recent Transactions */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>Recent Transactions</CardTitle>
+          <Link to="/pos/transactions" className="text-sm text-primary hover:underline">
+            View All →
+          </Link>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">

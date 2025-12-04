@@ -95,6 +95,61 @@ export function useAllSales(filters?: {
   });
 }
 
+export interface SaleWithDetails extends Sale {
+  customer?: { id: string; name: string; phone?: string } | null;
+  items_count: number;
+}
+
+export function useAllSalesWithDetails(filters?: {
+  paymentMethod?: string;
+  startDate?: string;
+  endDate?: string;
+  searchTerm?: string;
+}) {
+  return useQuery({
+    queryKey: ['all-sales-details', filters],
+    queryFn: async () => {
+      let query = supabase
+        .from('sales')
+        .select(`
+          *,
+          customers (id, name, phone),
+          sale_items (id)
+        `)
+        .order('created_at', { ascending: false });
+      
+      if (filters?.paymentMethod && filters.paymentMethod !== 'all') {
+        query = query.eq('payment_method', filters.paymentMethod as 'cash' | 'card' | 'credit' | 'insurance');
+      }
+      
+      if (filters?.startDate) {
+        query = query.gte('created_at', filters.startDate);
+      }
+      
+      if (filters?.endDate) {
+        query = query.lte('created_at', filters.endDate);
+      }
+
+      if (filters?.searchTerm) {
+        query = query.ilike('id', `%${filters.searchTerm}%`);
+      }
+      
+      const { data, error } = await query;
+      
+      if (error) throw error;
+      
+      // Transform data to include items_count
+      return (data || []).map((sale: any) => ({
+        ...sale,
+        customer: sale.customers,
+        items_count: sale.sale_items?.length || 0,
+        customers: undefined,
+        sale_items: undefined,
+      })) as SaleWithDetails[];
+    }
+  });
+}
+
 export function useCreateSaleMutation() {
   const queryClient = useQueryClient();
   
