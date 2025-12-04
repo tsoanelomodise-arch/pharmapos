@@ -364,6 +364,61 @@ const POS = () => {
               </div>
             </CardContent>
           </Card>
+
+          {/* Recent Transactions */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle>Recent Transactions</CardTitle>
+              <Link to="/pos/transactions" className="text-sm text-primary hover:underline">
+                View All →
+              </Link>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {recentSales.map((sale) => (
+                  <div 
+                    key={sale.id} 
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
+                    onClick={() => {
+                      setLastSaleId(sale.id);
+                      setShowLastReceipt(true);
+                    }}
+                  >
+                    <div>
+                      <p className="font-medium">Transaction #{sale.id.slice(-8)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {new Date(sale.created_at).toLocaleTimeString()} - {sale.payment_method} Payment
+                      </p>
+                    </div>
+                    <div className="text-right flex items-center gap-2">
+                      <div>
+                        <p className="font-medium">R{sale.total_amount.toFixed(2)}</p>
+                        <Badge variant="secondary">{sale.payment_status}</Badge>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLastSaleId(sale.id);
+                          setShowLastReceipt(true);
+                        }}
+                      >
+                        <Receipt className="h-3 w-3" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                
+                {recentSales.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No recent transactions</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Payment & Checkout */}
@@ -595,62 +650,6 @@ const POS = () => {
           </Card>
         </div>
       </div>
-
-      {/* Recent Transactions */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle>Recent Transactions</CardTitle>
-          <Link to="/pos/transactions" className="text-sm text-primary hover:underline">
-            View All →
-          </Link>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            {recentSales.map((sale) => (
-              <div 
-                key={sale.id} 
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent cursor-pointer transition-colors"
-                onClick={() => {
-                  setLastSaleId(sale.id);
-                  setShowLastReceipt(true);
-                }}
-              >
-                <div>
-                  <p className="font-medium">Transaction #{sale.id.slice(-8)}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {new Date(sale.created_at).toLocaleTimeString()} - {sale.payment_method} Payment
-                  </p>
-                </div>
-                <div className="text-right flex items-center gap-2">
-                  <div>
-                    <p className="font-medium">R{sale.total_amount.toFixed(2)}</p>
-                    <Badge variant="secondary">{sale.payment_status}</Badge>
-                  </div>
-                  <Button 
-                    size="sm" 
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLastSaleId(sale.id);
-                      setShowLastReceipt(true);
-                    }}
-                  >
-                    <Receipt className="h-3 w-3" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            
-            {recentSales.length === 0 && (
-              <div className="text-center py-8 text-muted-foreground">
-                <Receipt className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No recent transactions</p>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Receipt Dialog */}
       {lastSaleId && (
         <ReceiptDialog
