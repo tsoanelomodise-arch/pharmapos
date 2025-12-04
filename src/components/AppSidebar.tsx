@@ -37,7 +37,16 @@ interface NavigationItem {
 const navigationItems: NavigationItem[] = [
   { title: "Dashboard", url: "/", icon: BarChart3, module: "dashboard" },
   { title: "Dispensing", url: "/dispensing", icon: Pill, module: "dispensing" },
-  { title: "POS & Sales", url: "/pos", icon: ShoppingCart, module: "pos" },
+  { 
+    title: "POS & Sales", 
+    url: "/pos", 
+    icon: ShoppingCart, 
+    module: "pos",
+    subItems: [
+      { title: "Point of Sale", url: "/pos", icon: ShoppingCart },
+      { title: "Transactions", url: "/pos/transactions", icon: Receipt },
+    ]
+  },
   { title: "Debtors", url: "/debtors", icon: Users, module: "debtors" },
   { 
     title: "Customers", 
@@ -84,6 +93,10 @@ export function AppSidebar() {
   const isDoctorsActive = location.pathname === "/doctors";
   const isCustomersSectionActive = isPatientsActive || isDoctorsActive;
 
+  const isPOSActive = location.pathname === "/pos";
+  const isTransactionsActive = location.pathname === "/pos/transactions";
+  const isPOSSectionActive = isPOSActive || isTransactionsActive;
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="p-4">
@@ -121,7 +134,9 @@ export function AppSidebar() {
                     ? isStockSectionActive 
                     : item.title === "Customers" 
                       ? isCustomersSectionActive 
-                      : false;
+                      : item.title === "POS & Sales"
+                        ? isPOSSectionActive
+                        : false;
                   
                   return (
                     <Collapsible key={item.title} defaultOpen={isSectionActive} className="group/collapsible">
@@ -180,6 +195,10 @@ export function AppSidebar() {
                                   isSubActive = isPatientsActive;
                                 } else if (subItem.url === "/doctors") {
                                   isSubActive = isDoctorsActive;
+                                } else if (subItem.url === "/pos" && !subItem.url.includes("transactions")) {
+                                  isSubActive = isPOSActive && !isTransactionsActive;
+                                } else if (subItem.url === "/pos/transactions") {
+                                  isSubActive = isTransactionsActive;
                                 }
                                 
                                 return (
