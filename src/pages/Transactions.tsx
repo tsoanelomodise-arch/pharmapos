@@ -5,18 +5,23 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil } from "lucide-react";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon } from "lucide-react";
 import { useAllSalesWithDetails, SaleWithDetails } from "@/hooks/useSales";
 import { useUserModules } from "@/hooks/useModulePermissions";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
-type DatePreset = "today" | "7days" | "30days" | "all";
+type DatePreset = "today" | "7days" | "30days" | "all" | "custom";
 
 const Transactions = () => {
   const [datePreset, setDatePreset] = useState<DatePreset>("today");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
@@ -46,6 +51,14 @@ const Transactions = () => {
           startDate: startOfDay(subDays(now, 30)).toISOString(),
           endDate: endOfDay(now).toISOString(),
         };
+      case "custom":
+        if (customStartDate && customEndDate) {
+          return {
+            startDate: startOfDay(customStartDate).toISOString(),
+            endDate: endOfDay(customEndDate).toISOString(),
+          };
+        }
+        return {};
       default:
         return {};
     }
@@ -147,45 +160,106 @@ const Transactions = () => {
           <CardTitle className="text-base">Filters</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-              <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="7days">Last 7 Days</SelectItem>
-                  <SelectItem value="30days">Last 30 Days</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="7days">Last 7 Days</SelectItem>
+                    <SelectItem value="30days">Last 30 Days</SelectItem>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-muted-foreground" />
+                <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Methods</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="credit">Credit</SelectItem>
+                    <SelectItem value="insurance">Insurance</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex-1 flex items-center gap-2">
+                <Search className="h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search by transaction ID..."
+                  value={searchTerm}
+                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  className="max-w-xs"
+                />
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <CreditCard className="h-4 w-4 text-muted-foreground" />
-              <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[140px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Methods</SelectItem>
-                  <SelectItem value="cash">Cash</SelectItem>
-                  <SelectItem value="card">Card</SelectItem>
-                  <SelectItem value="credit">Credit</SelectItem>
-                  <SelectItem value="insurance">Insurance</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex-1 flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search by transaction ID..."
-                value={searchTerm}
-                onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-                className="max-w-xs"
-              />
-            </div>
+            
+            {/* Custom Date Range Pickers */}
+            {datePreset === "custom" && (
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 pt-2 border-t">
+                <span className="text-sm text-muted-foreground">Date Range:</span>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !customStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customStartDate ? format(customStartDate, "MMM d, yyyy") : "Start date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customStartDate}
+                        onSelect={(date) => { setCustomStartDate(date); setCurrentPage(1); }}
+                        disabled={(date) => customEndDate ? date > customEndDate : false}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">to</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !customEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customEndDate ? format(customEndDate, "MMM d, yyyy") : "End date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customEndDate}
+                        onSelect={(date) => { setCustomEndDate(date); setCurrentPage(1); }}
+                        disabled={(date) => customStartDate ? date < customStartDate : false}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
