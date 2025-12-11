@@ -1,11 +1,20 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { startOfDay, endOfDay } from 'date-fns';
 
-export function useDashboardStats() {
+interface DashboardStatsParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export function useDashboardStats(params?: DashboardStatsParams) {
   return useQuery({
-    queryKey: ['dashboard-stats'],
+    queryKey: ['dashboard-stats', params?.startDate, params?.endDate],
     queryFn: async () => {
-      const today = new Date().toISOString().split('T')[0];
+      // Use provided dates or default to today
+      const startDateTime = params?.startDate || startOfDay(new Date()).toISOString();
+      const endDateTime = params?.endDate || endOfDay(new Date()).toISOString();
+      
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
       const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
@@ -15,26 +24,26 @@ export function useDashboardStats() {
       // Run all queries in parallel for faster loading
       const [
         prescriptionsResult,
-        todaysSalesResult,
+        salesResult,
         lowStockResult,
         debtorsResult,
         expiringResult,
         weekSalesResult,
         topProductsResult
       ] = await Promise.all([
-        // Today's prescriptions count
+        // Prescriptions count for selected period
         supabase
           .from('prescriptions')
           .select('*', { count: 'exact', head: true })
-          .gte('created_at', `${today}T00:00:00`)
-          .lt('created_at', `${today}T23:59:59`),
+          .gte('created_at', startDateTime)
+          .lte('created_at', endDateTime),
         
-        // Today's sales total
+        // Sales total for selected period
         supabase
           .from('sales')
           .select('total_amount')
-          .gte('created_at', `${today}T00:00:00`)
-          .lt('created_at', `${today}T23:59:59`),
+          .gte('created_at', startDateTime)
+          .lte('created_at', endDateTime),
         
         // Low stock items with details - fetch all and filter client-side
         // since Supabase doesn't support column-to-column comparison directly
@@ -72,7 +81,7 @@ export function useDashboardStats() {
 
       // Process results
       const prescriptionsCount = prescriptionsResult.count || 0;
-      const salesToday = todaysSalesResult.data?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
+      const salesTotal = salesResult.data?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
       
       // Filter low stock products client-side (stock_quantity < minimum_stock)
       const lowStockProducts = (lowStockResult.data || [])
@@ -134,8 +143,8 @@ export function useDashboardStats() {
       ];
 
       return {
-        prescriptionsToday: prescriptionsCount,
-        salesToday,
+        prescriptionsCount,
+        salesTotal,
         lowStockItems: lowStockCount,
         lowStockProducts,
         totalDebt,

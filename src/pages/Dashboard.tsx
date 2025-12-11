@@ -1,16 +1,64 @@
+import { useState, memo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon, Calendar } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useNavigate } from "react-router-dom";
-import { memo } from "react";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
 import { useUserModules } from "@/hooks/useModulePermissions";
+import { format, subDays, startOfDay, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
+
+type DatePreset = "today" | "7days" | "30days" | "all" | "custom";
 
 const Dashboard = memo(() => {
-  const { data: stats, isLoading } = useDashboardStats();
+  const [datePreset, setDatePreset] = useState<DatePreset>("today");
+  const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
+  const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
+
+  // Calculate date filters based on preset
+  const getDateFilter = () => {
+    const now = new Date();
+    switch (datePreset) {
+      case "today":
+        return {
+          startDate: startOfDay(now).toISOString(),
+          endDate: endOfDay(now).toISOString(),
+        };
+      case "7days":
+        return {
+          startDate: startOfDay(subDays(now, 7)).toISOString(),
+          endDate: endOfDay(now).toISOString(),
+        };
+      case "30days":
+        return {
+          startDate: startOfDay(subDays(now, 30)).toISOString(),
+          endDate: endOfDay(now).toISOString(),
+        };
+      case "custom":
+        if (customStartDate && customEndDate) {
+          return {
+            startDate: startOfDay(customStartDate).toISOString(),
+            endDate: endOfDay(customEndDate).toISOString(),
+          };
+        }
+        return {};
+      default:
+        return {};
+    }
+  };
+
+  const dateFilter = getDateFilter();
+  
+  const { data: stats, isLoading } = useDashboardStats({
+    startDate: dateFilter.startDate,
+    endDate: dateFilter.endDate,
+  });
   const { data: userModules, isLoading: modulesLoading } = useUserModules();
   const navigate = useNavigate();
 
@@ -41,18 +89,27 @@ const Dashboard = memo(() => {
   const showMetricCards = hasAccess('dispensing') || hasAccess('pos') || hasAccess('stock') || hasAccess('debtors');
   const showCharts = hasAccess('reports') || hasAccess('pos') || hasAccess('stock');
 
+  // Get label for selected period
+  const getPeriodLabel = () => {
+    switch (datePreset) {
+      case "today": return "Today";
+      case "7days": return "Last 7 Days";
+      case "30days": return "Last 30 Days";
+      case "custom": return customStartDate && customEndDate 
+        ? `${format(customStartDate, "MMM d")} - ${format(customEndDate, "MMM d")}`
+        : "Custom Range";
+      default: return "All Time";
+    }
+  };
+
   return (
     <div className="space-y-6 md:space-y-8">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">Welcome back! Here's what's happening today.</p>
+          <p className="text-muted-foreground mt-1 text-sm md:text-base">Welcome back! Here's your overview for {getPeriodLabel().toLowerCase()}.</p>
         </div>
-        <div className="flex gap-2 sm:gap-3 flex-wrap">
-          <Badge variant="secondary" className="px-2 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm">
-            <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-            {new Date().toLocaleDateString('en-ZA', { weekday: 'short', month: 'short', day: 'numeric' })}
-          </Badge>
+        <div className="flex gap-2 sm:gap-3 flex-wrap items-center">
           {hasAccess('pos') && (
             <Button onClick={() => navigate('/pos')} size="default" className="shadow-lg text-sm sm:text-base">
               <Plus className="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -62,13 +119,93 @@ const Dashboard = memo(() => {
         </div>
       </div>
 
+      {/* Date Filters */}
+      <Card>
+        <CardContent className="pt-4 pb-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+                <Select value={datePreset} onValueChange={(v) => setDatePreset(v as DatePreset)}>
+                  <SelectTrigger className="w-[160px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="7days">Last 7 Days</SelectItem>
+                    <SelectItem value="30days">Last 30 Days</SelectItem>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              {/* Custom Date Range Pickers */}
+              {datePreset === "custom" && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !customStartDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customStartDate ? format(customStartDate, "MMM d, yyyy") : "Start date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customStartDate}
+                        onSelect={setCustomStartDate}
+                        disabled={(date) => customEndDate ? date > customEndDate : false}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <span className="text-muted-foreground">to</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[160px] justify-start text-left font-normal",
+                          !customEndDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {customEndDate ? format(customEndDate, "MMM d, yyyy") : "End date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={customEndDate}
+                        onSelect={setCustomEndDate}
+                        disabled={(date) => customStartDate ? date < customStartDate : false}
+                        initialFocus
+                        className="pointer-events-auto"
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Key Metrics */}
       {showMetricCards && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {hasAccess('dispensing') && (
             <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20 hover:border-primary/40 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Prescriptions Today</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Prescriptions</CardTitle>
                 <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                   <Pill className="h-5 w-5 text-primary" />
                 </div>
@@ -78,9 +215,9 @@ const Dashboard = memo(() => {
                   className="text-3xl font-bold cursor-pointer hover:text-primary transition-colors" 
                   onClick={() => navigate('/dispensing')}
                 >
-                  {stats?.prescriptionsToday || 0}
+                  {stats?.prescriptionsCount || 0}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Processed today</p>
+                <p className="text-xs text-muted-foreground mt-1">Processed in period</p>
               </CardContent>
             </Card>
           )}
@@ -88,7 +225,7 @@ const Dashboard = memo(() => {
           {hasAccess('pos') && (
             <Card className="bg-gradient-to-br from-emerald-500/5 to-emerald-500/10 border-emerald-500/20 hover:border-emerald-500/40 transition-colors">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                <CardTitle className="text-sm font-medium text-muted-foreground">Sales Today</CardTitle>
+                <CardTitle className="text-sm font-medium text-muted-foreground">Sales</CardTitle>
                 <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
                   <ShoppingCart className="h-5 w-5 text-emerald-600" />
                 </div>
@@ -98,9 +235,9 @@ const Dashboard = memo(() => {
                   className="text-3xl font-bold cursor-pointer hover:text-emerald-600 transition-colors" 
                   onClick={() => navigate('/pos')}
                 >
-                  R{stats?.salesToday.toFixed(2) || '0.00'}
+                  R{stats?.salesTotal.toFixed(2) || '0.00'}
                 </div>
-                <p className="text-xs text-muted-foreground mt-1">Total revenue today</p>
+                <p className="text-xs text-muted-foreground mt-1">Total revenue in period</p>
               </CardContent>
             </Card>
           )}
