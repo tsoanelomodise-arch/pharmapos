@@ -32,43 +32,34 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend
 
 type DatePreset = "today" | "7days" | "30days" | "this-month" | "all" | "custom";
 
-const getDateRange = (preset: DatePreset): { start?: Date; end?: Date } => {
-  const today = new Date();
-  switch (preset) {
-    case "today":
-      return { start: today, end: today };
-    case "7days":
-      return { start: subDays(today, 7), end: today };
-    case "30days":
-      return { start: subDays(today, 30), end: today };
-    case "this-month":
-      return { start: startOfMonth(today), end: endOfMonth(today) };
-    case "all":
-      return { start: undefined, end: undefined };
-    case "custom":
-      return { start: undefined, end: undefined };
-  }
-};
-
 export default function StockMovement() {
   const [datePreset, setDatePreset] = useState<DatePreset>("7days");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
 
-  const getActiveDates = () => {
+  // Memoize dates to prevent infinite re-renders
+  const { startDate, endDate } = useMemo(() => {
     if (datePreset === "custom") {
-      return { start: customStartDate, end: customEndDate };
+      return { startDate: customStartDate, endDate: customEndDate };
     }
-    return getDateRange(datePreset);
-  };
+    
+    const today = new Date();
+    switch (datePreset) {
+      case "today":
+        return { startDate: today, endDate: today };
+      case "7days":
+        return { startDate: subDays(today, 7), endDate: today };
+      case "30days":
+        return { startDate: subDays(today, 30), endDate: today };
+      case "this-month":
+        return { startDate: startOfMonth(today), endDate: endOfMonth(today) };
+      case "all":
+      default:
+        return { startDate: undefined, endDate: undefined };
+    }
+  }, [datePreset, customStartDate, customEndDate]);
 
-  const { start, end } = getActiveDates();
-  const { data, isLoading, error } = useStockMovements({ startDate: start, endDate: end });
-
-  // Debug: Log any errors
-  if (error) {
-    console.error("Stock movement query error:", error);
-  }
+  const { data, isLoading, error } = useStockMovements({ startDate, endDate });
 
   const handlePresetChange = (value: DatePreset) => {
     setDatePreset(value);
