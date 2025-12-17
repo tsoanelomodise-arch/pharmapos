@@ -29,6 +29,8 @@ export function useStockMovements({ startDate, endDate }: UseStockMovementsParam
   return useQuery({
     queryKey: ["stock-movements", startDate?.toISOString(), endDate?.toISOString()],
     queryFn: async () => {
+      console.log("Fetching stock movements...", { startDate, endDate });
+      
       let query = supabase
         .from("stock_movements")
         .select(`
@@ -39,7 +41,7 @@ export function useStockMovements({ startDate, endDate }: UseStockMovementsParam
           notes,
           reference_id,
           created_at,
-          products!inner(name)
+          products(name)
         `)
         .order("created_at", { ascending: false });
 
@@ -51,6 +53,8 @@ export function useStockMovements({ startDate, endDate }: UseStockMovementsParam
       }
 
       const { data, error } = await query;
+
+      console.log("Stock movements response:", { data: data?.length, error });
 
       if (error) throw error;
 
