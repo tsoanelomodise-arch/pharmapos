@@ -301,7 +301,7 @@ export default function StockMovement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data?.movements.length === 0 ? (
+                {!data?.movements || data.movements.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
                       No stock movements found for the selected period
