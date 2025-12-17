@@ -23,11 +23,12 @@ interface StockMovementSummary {
 interface UseStockMovementsParams {
   startDate?: Date;
   endDate?: Date;
+  productIds?: string[];
 }
 
-export function useStockMovements({ startDate, endDate }: UseStockMovementsParams = {}) {
+export function useStockMovements({ startDate, endDate, productIds }: UseStockMovementsParams = {}) {
   return useQuery({
-    queryKey: ["stock-movements", startDate?.toISOString(), endDate?.toISOString()],
+    queryKey: ["stock-movements", startDate?.toISOString(), endDate?.toISOString(), productIds],
     queryFn: async () => {
       let query = supabase
         .from("stock_movements")
@@ -48,6 +49,9 @@ export function useStockMovements({ startDate, endDate }: UseStockMovementsParam
       }
       if (endDate) {
         query = query.lte("created_at", endOfDay(endDate).toISOString());
+      }
+      if (productIds && productIds.length > 0) {
+        query = query.in("product_id", productIds);
       }
 
       const { data, error } = await query;

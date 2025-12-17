@@ -2,6 +2,7 @@ import { useState, useMemo } from "react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { Calendar as CalendarIcon, Package, ArrowDown, ArrowUp, RefreshCw, Loader2 } from "lucide-react";
 import { useStockMovements } from "@/hooks/useStockMovements";
+import { useProducts } from "@/hooks/useProducts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -28,14 +29,27 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Legend, LineChart, Line } from "recharts";
+import { ProductMultiSelect } from "@/components/ProductMultiSelect";
 
 type DatePreset = "today" | "7days" | "30days" | "this-month" | "all" | "custom";
+
+// Color palette for product lines
+const PRODUCT_COLORS = [
+  "hsl(210 100% 50%)",  // Blue
+  "hsl(142 76% 36%)",   // Green
+  "hsl(38 92% 50%)",    // Orange
+  "hsl(280 70% 50%)",   // Purple
+  "hsl(350 80% 50%)",   // Red
+];
 
 export default function StockMovement() {
   const [datePreset, setDatePreset] = useState<DatePreset>("7days");
   const [customStartDate, setCustomStartDate] = useState<Date | undefined>();
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
+  const [selectedProductIds, setSelectedProductIds] = useState<string[]>([]);
+
+  const { data: products } = useProducts();
 
   // Memoize dates to prevent infinite re-renders
   const { startDate, endDate } = useMemo(() => {
@@ -59,7 +73,11 @@ export default function StockMovement() {
     }
   }, [datePreset, customStartDate, customEndDate]);
 
-  const { data, isLoading, error } = useStockMovements({ startDate, endDate });
+  const { data, isLoading, error } = useStockMovements({ 
+    startDate, 
+    endDate,
+    productIds: selectedProductIds.length > 0 ? selectedProductIds : undefined
+  });
 
   const handlePresetChange = (value: DatePreset) => {
     setDatePreset(value);
@@ -82,10 +100,47 @@ export default function StockMovement() {
     }
   };
 
+  // Get selected product names for chart legend
+  const selectedProductNames = useMemo(() => {
+    if (!products) return {};
+    return selectedProductIds.reduce((acc, id, index) => {
+      const product = products.find(p => p.id === id);
+      if (product) {
+        acc[id] = { name: product.name, color: PRODUCT_COLORS[index % PRODUCT_COLORS.length] };
+      }
+      return acc;
+    }, {} as Record<string, { name: string; color: string }>);
+  }, [products, selectedProductIds]);
+
   // Prepare chart data - aggregate movements by date
   const chartData = useMemo(() => {
     if (!data?.movements) return [];
     
+    // When products are selected, show per-product trends
+    if (selectedProductIds.length > 0) {
+      const dailyData: Record<string, Record<string, number> & { date: string }> = {};
+      
+      data.movements.forEach((movement) => {
+        const date = format(new Date(movement.created_at), "MMM dd");
+        if (!dailyData[date]) {
+          dailyData[date] = { date } as any;
+          selectedProductIds.forEach(id => {
+            dailyData[date][id] = 0;
+          });
+        }
+        // Net movement: sales are negative, returns are positive
+        const qty = movement.movement_type === "sale" 
+          ? -Math.abs(movement.quantity)
+          : movement.movement_type === "return"
+          ? Math.abs(movement.quantity)
+          : movement.quantity;
+        dailyData[date][movement.product_id] = (dailyData[date][movement.product_id] || 0) + Math.abs(movement.quantity);
+      });
+      
+      return Object.values(dailyData).reverse();
+    }
+    
+    // Default: show by movement type
     const dailyData: Record<string, { date: string; sales: number; returns: number; adjustments: number }> = {};
     
     data.movements.forEach((movement) => {
@@ -104,13 +159,25 @@ export default function StockMovement() {
     });
     
     return Object.values(dailyData).reverse();
-  }, [data?.movements]);
+  }, [data?.movements, selectedProductIds]);
 
-  const chartConfig = {
-    sales: { label: "Sales", color: "hsl(var(--destructive))" },
-    returns: { label: "Returns", color: "hsl(142 76% 36%)" },
-    adjustments: { label: "Adjustments", color: "hsl(var(--muted-foreground))" },
-  };
+  const chartConfig = useMemo(() => {
+    if (selectedProductIds.length > 0) {
+      return selectedProductIds.reduce((acc, id, index) => {
+        const product = products?.find(p => p.id === id);
+        acc[id] = { 
+          label: product?.name || "Unknown", 
+          color: PRODUCT_COLORS[index % PRODUCT_COLORS.length] 
+        };
+        return acc;
+      }, {} as Record<string, { label: string; color: string }>);
+    }
+    return {
+      sales: { label: "Sales", color: "hsl(var(--destructive))" },
+      returns: { label: "Returns", color: "hsl(142 76% 36%)" },
+      adjustments: { label: "Adjustments", color: "hsl(var(--muted-foreground))" },
+    };
+  }, [selectedProductIds, products]);
 
   return (
     <div className="space-y-6">
@@ -122,81 +189,93 @@ export default function StockMovement() {
       {/* Filter Bar */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-wrap gap-4 items-end">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Date Range</label>
-              <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder="Select range" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="today">Today</SelectItem>
-                  <SelectItem value="7days">Last 7 Days</SelectItem>
-                  <SelectItem value="30days">Last 30 Days</SelectItem>
-                  <SelectItem value="this-month">This Month</SelectItem>
-                  <SelectItem value="all">All Time</SelectItem>
-                  <SelectItem value="custom">Custom Range</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-wrap gap-4 items-end">
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Date Range</label>
+                <Select value={datePreset} onValueChange={(v) => handlePresetChange(v as DatePreset)}>
+                  <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Select range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="7days">Last 7 Days</SelectItem>
+                    <SelectItem value="30days">Last 30 Days</SelectItem>
+                    <SelectItem value="this-month">This Month</SelectItem>
+                    <SelectItem value="all">All Time</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {datePreset === "custom" && (
+                <>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Start Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customStartDate ? format(customStartDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={setCustomStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">End Date</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[180px] justify-start text-left font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customEndDate ? format(customEndDate, "PPP") : "Pick a date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={setCustomEndDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </>
+              )}
             </div>
 
-            {datePreset === "custom" && (
-              <>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Start Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start text-left font-normal",
-                          !customStartDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customStartDate ? format(customStartDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customStartDate}
-                        onSelect={setCustomStartDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">End Date</label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "w-[180px] justify-start text-left font-normal",
-                          !customEndDate && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customEndDate ? format(customEndDate, "PPP") : "Pick a date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={customEndDate}
-                        onSelect={setCustomEndDate}
-                        initialFocus
-                        className="pointer-events-auto"
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </>
-            )}
+            {/* Product Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Compare Products</label>
+              <ProductMultiSelect
+                selectedIds={selectedProductIds}
+                onSelectionChange={setSelectedProductIds}
+                maxSelection={5}
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -245,31 +324,68 @@ export default function StockMovement() {
       {chartData.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle>Movement Trend</CardTitle>
+            <CardTitle>
+              {selectedProductIds.length > 0 
+                ? "Product Movement Comparison" 
+                : "Movement Trend"}
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <ChartContainer config={chartConfig} className="h-[300px] w-full">
-              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis 
-                  dataKey="date" 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false}
-                  axisLine={false}
-                  className="fill-muted-foreground"
-                />
-                <YAxis 
-                  tick={{ fontSize: 12 }} 
-                  tickLine={false}
-                  axisLine={false}
-                  className="fill-muted-foreground"
-                />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <Legend />
-                <Bar dataKey="sales" name="Sales" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="returns" name="Returns" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="adjustments" name="Adjustments" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
-              </BarChart>
+              {selectedProductIds.length > 0 ? (
+                <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    className="fill-muted-foreground"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    className="fill-muted-foreground"
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  {selectedProductIds.map((productId, index) => (
+                    <Line
+                      key={productId}
+                      type="monotone"
+                      dataKey={productId}
+                      name={selectedProductNames[productId]?.name || "Unknown"}
+                      stroke={PRODUCT_COLORS[index % PRODUCT_COLORS.length]}
+                      strokeWidth={2}
+                      dot={{ fill: PRODUCT_COLORS[index % PRODUCT_COLORS.length], r: 4 }}
+                      activeDot={{ r: 6 }}
+                    />
+                  ))}
+                </LineChart>
+              ) : (
+                <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis 
+                    dataKey="date" 
+                    tick={{ fontSize: 12 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    className="fill-muted-foreground"
+                  />
+                  <YAxis 
+                    tick={{ fontSize: 12 }} 
+                    tickLine={false}
+                    axisLine={false}
+                    className="fill-muted-foreground"
+                  />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <Legend />
+                  <Bar dataKey="sales" name="Sales" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="returns" name="Returns" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="adjustments" name="Adjustments" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              )}
             </ChartContainer>
           </CardContent>
         </Card>
