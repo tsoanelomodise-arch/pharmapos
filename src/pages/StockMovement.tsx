@@ -63,7 +63,12 @@ export default function StockMovement() {
   };
 
   const { start, end } = getActiveDates();
-  const { data, isLoading } = useStockMovements({ startDate: start, endDate: end });
+  const { data, isLoading, error } = useStockMovements({ startDate: start, endDate: end });
+
+  // Debug: Log any errors
+  if (error) {
+    console.error("Stock movement query error:", error);
+  }
 
   const handlePresetChange = (value: DatePreset) => {
     setDatePreset(value);
@@ -288,6 +293,10 @@ export default function StockMovement() {
           {isLoading ? (
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="text-center text-destructive py-8">
+              Error loading stock movements: {error.message}
             </div>
           ) : (
             <Table>
