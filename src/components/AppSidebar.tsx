@@ -1,4 +1,4 @@
-import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList, UserPlus, Stethoscope } from "lucide-react";
+import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList, UserPlus, Stethoscope, TrendingUp } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import pharmaposLogo from "@/assets/pharmapos-logo.png";
 
@@ -68,7 +68,16 @@ const navigationItems: NavigationItem[] = [
       { title: "Orders", url: "/orders", icon: ClipboardList, module: "orders" },
     ]
   },
-  { title: "Reports", url: "/reports", icon: Receipt, module: "reports" },
+  { 
+    title: "Reports", 
+    url: "/reports", 
+    icon: Receipt, 
+    module: "reports",
+    subItems: [
+      { title: "Reports Dashboard", url: "/reports", icon: BarChart3 },
+      { title: "Stock Movement", url: "/reports/stock-movement", icon: TrendingUp },
+    ]
+  },
   { title: "Admin", url: "/management", icon: Settings, module: "management" },
   { title: "Help", url: "/help", icon: BookOpen, module: "help" },
 ];
@@ -96,6 +105,10 @@ export function AppSidebar() {
   const isPOSActive = location.pathname === "/pos";
   const isTransactionsActive = location.pathname === "/pos/transactions";
   const isPOSSectionActive = isPOSActive || isTransactionsActive;
+
+  const isReportsActive = location.pathname === "/reports";
+  const isStockMovementActive = location.pathname === "/reports/stock-movement";
+  const isReportsSectionActive = isReportsActive || isStockMovementActive;
 
   return (
     <Sidebar collapsible="icon">
@@ -136,7 +149,9 @@ export function AppSidebar() {
                       ? isCustomersSectionActive 
                       : item.title === "POS & Sales"
                         ? isPOSSectionActive
-                        : false;
+                        : item.title === "Reports"
+                          ? isReportsSectionActive
+                          : false;
                   
                   return (
                     <Collapsible key={item.title} defaultOpen={isSectionActive} className="group/collapsible">
@@ -199,6 +214,10 @@ export function AppSidebar() {
                                   isSubActive = isPOSActive && !isTransactionsActive;
                                 } else if (subItem.url === "/pos/transactions") {
                                   isSubActive = isTransactionsActive;
+                                } else if (subItem.url === "/reports" && !subItem.url.includes("stock-movement")) {
+                                  isSubActive = isReportsActive && !isStockMovementActive;
+                                } else if (subItem.url === "/reports/stock-movement") {
+                                  isSubActive = isStockMovementActive;
                                 }
                                 
                                 return (
