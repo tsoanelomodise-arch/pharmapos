@@ -12,6 +12,7 @@ const moduleRouteMap: Record<AppModule, string> = {
   stock: '/stock',
   orders: '/orders',
   reports: '/reports',
+  stock_movement: '/reports/stock-movement',
   management: '/management',
   medical_aid: '/patients', // Medical aid is a data permission, not a route
   settings: '/management', // Settings is a tab within Management

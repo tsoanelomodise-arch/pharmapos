@@ -117,7 +117,7 @@ const App = () => (
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/reports/stock-movement" element={
-                          <ModuleProtectedRoute module="reports">
+                          <ModuleProtectedRoute module="stock_movement">
                             <StockMovement />
                           </ModuleProtectedRoute>
                         } />
