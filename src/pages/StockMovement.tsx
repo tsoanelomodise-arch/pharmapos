@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { Calendar as CalendarIcon, Package, ArrowDown, ArrowUp, RefreshCw, Loader2 } from "lucide-react";
 import { useStockMovements } from "@/hooks/useStockMovements";
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from "recharts";
 
 type DatePreset = "today" | "7days" | "30days" | "this-month" | "all" | "custom";
 
@@ -82,6 +84,36 @@ export default function StockMovement() {
       default:
         return <Badge variant="outline">{type}</Badge>;
     }
+  };
+
+  // Prepare chart data - aggregate movements by date
+  const chartData = useMemo(() => {
+    if (!data?.movements) return [];
+    
+    const dailyData: Record<string, { date: string; sales: number; returns: number; adjustments: number }> = {};
+    
+    data.movements.forEach((movement) => {
+      const date = format(new Date(movement.created_at), "MMM dd");
+      if (!dailyData[date]) {
+        dailyData[date] = { date, sales: 0, returns: 0, adjustments: 0 };
+      }
+      const qty = Math.abs(movement.quantity);
+      if (movement.movement_type === "sale") {
+        dailyData[date].sales += qty;
+      } else if (movement.movement_type === "return") {
+        dailyData[date].returns += qty;
+      } else if (movement.movement_type === "adjustment") {
+        dailyData[date].adjustments += qty;
+      }
+    });
+    
+    return Object.values(dailyData).reverse();
+  }, [data?.movements]);
+
+  const chartConfig = {
+    sales: { label: "Sales", color: "hsl(var(--destructive))" },
+    returns: { label: "Returns", color: "hsl(142 76% 36%)" },
+    adjustments: { label: "Adjustments", color: "hsl(var(--muted-foreground))" },
   };
 
   return (
@@ -212,6 +244,40 @@ export default function StockMovement() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Stock Movement Chart */}
+      {chartData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Movement Trend</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={chartConfig} className="h-[300px] w-full">
+              <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                <XAxis 
+                  dataKey="date" 
+                  tick={{ fontSize: 12 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  className="fill-muted-foreground"
+                />
+                <YAxis 
+                  tick={{ fontSize: 12 }} 
+                  tickLine={false}
+                  axisLine={false}
+                  className="fill-muted-foreground"
+                />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Legend />
+                <Bar dataKey="sales" name="Sales" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="returns" name="Returns" fill="hsl(142 76% 36%)" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="adjustments" name="Adjustments" fill="hsl(var(--muted-foreground))" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Movement Table */}
       <Card>
