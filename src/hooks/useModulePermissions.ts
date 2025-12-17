@@ -17,7 +17,8 @@ export type AppModule =
   | 'help'
   | 'medical_aid'
   | 'settings'
-  | 'edit_transactions';
+  | 'edit_transactions'
+  | 'stock_movement';
 
 export interface ModulePermission {
   id: string;

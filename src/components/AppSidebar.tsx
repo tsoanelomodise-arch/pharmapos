@@ -75,7 +75,7 @@ const navigationItems: NavigationItem[] = [
     module: "reports",
     subItems: [
       { title: "Reports Dashboard", url: "/reports", icon: BarChart3 },
-      { title: "Stock Movement", url: "/reports/stock-movement", icon: TrendingUp },
+      { title: "Stock Movement", url: "/reports/stock-movement", icon: TrendingUp, module: "stock_movement" },
     ]
   },
   { title: "Admin", url: "/management", icon: Settings, module: "management" },
