@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -6,11 +6,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { BarChart3, FileText, Download, TrendingUp, Users, Package, DollarSign, Receipt, Search, Loader2 } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { BarChart3, FileText, Download, TrendingUp, Users, Package, DollarSign, Receipt, Search, Loader2, CalendarIcon } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { useAllSales } from "@/hooks/useSales";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay, startOfWeek, startOfMonth, startOfYear, subDays } from "date-fns";
 import { 
   useReportsSummary, 
   useTopSellingProducts, 
@@ -25,11 +28,82 @@ const Reports = () => {
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
   
+  // Date filter state
+  const [datePreset, setDatePreset] = useState<string>('today');
+  const [customStartDate, setCustomStartDate] = useState<Date>();
+  const [customEndDate, setCustomEndDate] = useState<Date>();
+
+  // Memoize date range calculation to prevent infinite re-renders
+  const { startDate, endDate } = useMemo(() => {
+    const now = new Date();
+    
+    switch (datePreset) {
+      case 'today':
+        return {
+          startDate: startOfDay(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+      case 'yesterday':
+        const yesterday = subDays(now, 1);
+        return {
+          startDate: startOfDay(yesterday).toISOString(),
+          endDate: endOfDay(yesterday).toISOString()
+        };
+      case 'week':
+        return {
+          startDate: startOfWeek(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+      case 'month':
+        return {
+          startDate: startOfMonth(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+      case 'year':
+        return {
+          startDate: startOfYear(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+      case 'custom':
+        if (customStartDate && customEndDate) {
+          return {
+            startDate: startOfDay(customStartDate).toISOString(),
+            endDate: endOfDay(customEndDate).toISOString()
+          };
+        }
+        return {
+          startDate: startOfDay(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+      default:
+        return {
+          startDate: startOfDay(now).toISOString(),
+          endDate: endOfDay(now).toISOString()
+        };
+    }
+  }, [datePreset, customStartDate, customEndDate]);
+
+  const getPeriodLabel = () => {
+    switch (datePreset) {
+      case 'today': return 'Today';
+      case 'yesterday': return 'Yesterday';
+      case 'week': return 'This Week';
+      case 'month': return 'This Month';
+      case 'year': return 'This Year';
+      case 'custom': 
+        if (customStartDate && customEndDate) {
+          return `${format(customStartDate, 'MMM dd')} - ${format(customEndDate, 'MMM dd, yyyy')}`;
+        }
+        return 'Custom Range';
+      default: return 'Today';
+    }
+  };
+  
   const { data: allSales = [] } = useAllSales({
     paymentMethod: paymentMethodFilter,
   });
 
-  const { data: summary, isLoading: summaryLoading } = useReportsSummary();
+  const { data: summary, isLoading: summaryLoading } = useReportsSummary({ startDate, endDate });
   const { data: topProducts = [], isLoading: topProductsLoading } = useTopSellingProducts(5);
   const { data: salesByCategory = [], isLoading: categoryLoading } = useSalesByCategory();
   const { data: stockMovement, isLoading: stockMovementLoading } = useStockMovementStats();
@@ -81,11 +155,90 @@ const Reports = () => {
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-4 md:space-y-6">
+          {/* Date Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">Period:</span>
+                <Select value={datePreset} onValueChange={setDatePreset}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {datePreset === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customStartDate ? format(customStartDate, "MMM dd, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={setCustomStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customEndDate ? format(customEndDate, "MMM dd, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={setCustomEndDate}
+                          disabled={(date) => customStartDate ? date < customStartDate : false}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+
+                <Badge variant="secondary" className="ml-auto">
+                  {getPeriodLabel()}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Key Performance Indicators */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Daily Revenue</CardTitle>
+                <CardTitle className="text-sm font-medium">Revenue</CardTitle>
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
@@ -95,7 +248,7 @@ const Reports = () => {
                   <>
                     <div className="text-2xl font-bold">{formatCurrency(summary?.dailyRevenue || 0)}</div>
                     <p className={`text-xs ${(summary?.dailyRevenueChange || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPercentage(summary?.dailyRevenueChange || 0)} from yesterday
+                      {formatPercentage(summary?.dailyRevenueChange || 0)} vs previous period
                     </p>
                   </>
                 )}
@@ -114,7 +267,7 @@ const Reports = () => {
                   <>
                     <div className="text-2xl font-bold">{summary?.prescriptionsToday || 0}</div>
                     <p className={`text-xs ${(summary?.prescriptionsChange || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatPercentage(summary?.prescriptionsChange || 0)} from yesterday
+                      {formatPercentage(summary?.prescriptionsChange || 0)} vs previous period
                     </p>
                   </>
                 )}
