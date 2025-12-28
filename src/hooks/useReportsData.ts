@@ -213,17 +213,28 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
   });
 }
 
-export function useTopSellingProducts(limit: number = 5) {
-  return useQuery({
-    queryKey: ['top-selling-products', limit],
-    queryFn: async (): Promise<TopSellingProduct[]> => {
-      const monthStart = startOfMonth(new Date()).toISOString();
+export interface TopSellingProductsParams {
+  startDate?: string;
+  endDate?: string;
+  limit?: number;
+}
 
-      // Get all sale items for this month
+export function useTopSellingProducts(params?: TopSellingProductsParams) {
+  const limit = params?.limit ?? 5;
+  
+  return useQuery({
+    queryKey: ['top-selling-products', params?.startDate, params?.endDate, limit],
+    queryFn: async (): Promise<TopSellingProduct[]> => {
+      const now = new Date();
+      const periodStart = params?.startDate || startOfMonth(now).toISOString();
+      const periodEnd = params?.endDate || endOfDay(now).toISOString();
+
+      // Get all sale items for the period
       const { data: saleItems, error: saleItemsError } = await supabase
         .from('sale_items')
         .select('product_id, quantity, total_price')
-        .gte('created_at', monthStart);
+        .gte('created_at', periodStart)
+        .lte('created_at', periodEnd);
 
       if (saleItemsError) throw saleItemsError;
 
@@ -264,17 +275,25 @@ export function useTopSellingProducts(limit: number = 5) {
   });
 }
 
-export function useSalesByCategory() {
+export interface SalesByCategoryParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export function useSalesByCategory(params?: SalesByCategoryParams) {
   return useQuery({
-    queryKey: ['sales-by-category'],
+    queryKey: ['sales-by-category', params?.startDate, params?.endDate],
     queryFn: async (): Promise<SalesByCategory[]> => {
-      const monthStart = startOfMonth(new Date()).toISOString();
+      const now = new Date();
+      const periodStart = params?.startDate || startOfMonth(now).toISOString();
+      const periodEnd = params?.endDate || endOfDay(now).toISOString();
 
       // Get all sale items with product info
       const { data: saleItems, error: saleItemsError } = await supabase
         .from('sale_items')
         .select('product_id, quantity')
-        .gte('created_at', monthStart);
+        .gte('created_at', periodStart)
+        .lte('created_at', periodEnd);
 
       if (saleItemsError) throw saleItemsError;
 
@@ -357,27 +376,36 @@ export function useStockMovementStats() {
   });
 }
 
-export function useDispensingStats() {
-  return useQuery({
-    queryKey: ['dispensing-stats'],
-    queryFn: async () => {
-      const todayStart = startOfDay(new Date()).toISOString();
-      const monthStart = startOfMonth(new Date()).toISOString();
+export interface DispensingStatsParams {
+  startDate?: string;
+  endDate?: string;
+}
 
-      const [todayPrescriptions, medicalAidClaims, chronicPatients] = await Promise.all([
+export function useDispensingStats(params?: DispensingStatsParams) {
+  return useQuery({
+    queryKey: ['dispensing-stats', params?.startDate, params?.endDate],
+    queryFn: async () => {
+      const now = new Date();
+      const periodStart = params?.startDate || startOfDay(now).toISOString();
+      const periodEnd = params?.endDate || endOfDay(now).toISOString();
+
+      const [periodPrescriptions, medicalAidClaims, chronicPatients] = await Promise.all([
         supabase
           .from('prescriptions')
           .select('id')
-          .gte('created_at', todayStart),
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd),
         supabase
           .from('sales')
           .select('id')
           .eq('payment_method', 'insurance')
-          .gte('created_at', monthStart),
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd),
         supabase
           .from('prescriptions')
           .select('customer_id')
-          .gte('created_at', monthStart)
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd)
       ]);
 
       // Count unique chronic patients (patients with multiple prescriptions)
@@ -390,7 +418,7 @@ export function useDispensingStats() {
         .filter(count => count >= 2).length;
 
       return {
-        prescriptionsToday: todayPrescriptions.data?.length || 0,
+        prescriptionsInPeriod: periodPrescriptions.data?.length || 0,
         chronicPatients: chronicPatientCount,
         medicalAidClaims: medicalAidClaims.data?.length || 0
       };
