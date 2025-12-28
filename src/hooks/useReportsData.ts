@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
-import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, format } from 'date-fns';
+import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, endOfDay, format } from 'date-fns';
 
 export interface ReportsSummary {
   dailyRevenue: number;
@@ -36,14 +36,28 @@ export interface SalesByCategory {
   percentage: number;
 }
 
-export function useReportsSummary() {
+export interface ReportsSummaryParams {
+  startDate?: string;
+  endDate?: string;
+}
+
+export function useReportsSummary(params?: ReportsSummaryParams) {
   return useQuery({
-    queryKey: ['reports-summary'],
+    queryKey: ['reports-summary', params?.startDate, params?.endDate],
     queryFn: async (): Promise<ReportsSummary> => {
       const now = new Date();
-      const todayStart = startOfDay(now).toISOString();
-      const yesterdayStart = startOfDay(subDays(now, 1)).toISOString();
-      const yesterdayEnd = startOfDay(now).toISOString();
+      
+      // Use provided dates or default to today
+      const periodStart = params?.startDate || startOfDay(now).toISOString();
+      const periodEnd = params?.endDate || endOfDay(now).toISOString();
+      
+      // Calculate previous period for comparison (same duration before start date)
+      const startDateObj = new Date(periodStart);
+      const endDateObj = new Date(periodEnd);
+      const periodDuration = endDateObj.getTime() - startDateObj.getTime();
+      const previousPeriodStart = new Date(startDateObj.getTime() - periodDuration).toISOString();
+      const previousPeriodEnd = periodStart;
+      
       const weekStart = startOfWeek(now).toISOString();
       const monthStart = startOfMonth(now).toISOString();
       const yearStart = startOfYear(now).toISOString();
@@ -51,30 +65,31 @@ export function useReportsSummary() {
 
       // Fetch all required data in parallel
       const [
-        todaySales,
-        yesterdaySales,
+        periodSales,
+        previousPeriodSales,
         weekSales,
         monthSales,
         yearSales,
-        todayPrescriptions,
-        yesterdayPrescriptions,
+        periodPrescriptions,
+        previousPeriodPrescriptions,
         allCustomers,
         newCustomers,
         products,
         saleItems
       ] = await Promise.all([
-        // Today's sales
+        // Period sales
         supabase
           .from('sales')
           .select('total_amount, payment_status')
-          .gte('created_at', todayStart)
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd)
           .eq('payment_status', 'completed'),
-        // Yesterday's sales
+        // Previous period sales
         supabase
           .from('sales')
           .select('total_amount')
-          .gte('created_at', yesterdayStart)
-          .lt('created_at', yesterdayEnd)
+          .gte('created_at', previousPeriodStart)
+          .lt('created_at', previousPeriodEnd)
           .eq('payment_status', 'completed'),
         // Week sales
         supabase
@@ -94,17 +109,18 @@ export function useReportsSummary() {
           .select('total_amount')
           .gte('created_at', yearStart)
           .eq('payment_status', 'completed'),
-        // Today's prescriptions
+        // Period prescriptions
         supabase
           .from('prescriptions')
           .select('id')
-          .gte('created_at', todayStart),
-        // Yesterday's prescriptions
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd),
+        // Previous period prescriptions
         supabase
           .from('prescriptions')
           .select('id')
-          .gte('created_at', yesterdayStart)
-          .lt('created_at', yesterdayEnd),
+          .gte('created_at', previousPeriodStart)
+          .lt('created_at', previousPeriodEnd),
         // All customers
         supabase
           .from('customers')
@@ -122,22 +138,23 @@ export function useReportsSummary() {
         supabase
           .from('sale_items')
           .select('quantity, product_id, total_price, unit_price')
-          .gte('created_at', todayStart)
+          .gte('created_at', periodStart)
+          .lte('created_at', periodEnd)
       ]);
 
       // Calculate revenues
-      const dailyRevenue = todaySales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const yesterdayRevenue = yesterdaySales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const dailyRevenueChange = yesterdayRevenue > 0 
-        ? ((dailyRevenue - yesterdayRevenue) / yesterdayRevenue) * 100 
+      const dailyRevenue = periodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const previousRevenue = previousPeriodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const dailyRevenueChange = previousRevenue > 0 
+        ? ((dailyRevenue - previousRevenue) / previousRevenue) * 100 
         : 0;
       const weeklyRevenue = weekSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
       const monthlyRevenue = monthSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
       const yearlyRevenue = yearSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
 
       // Prescriptions
-      const prescriptionsToday = todayPrescriptions.data?.length || 0;
-      const prescriptionsYesterday = yesterdayPrescriptions.data?.length || 0;
+      const prescriptionsToday = periodPrescriptions.data?.length || 0;
+      const prescriptionsYesterday = previousPeriodPrescriptions.data?.length || 0;
       const prescriptionsChange = prescriptionsYesterday > 0
         ? ((prescriptionsToday - prescriptionsYesterday) / prescriptionsYesterday) * 100
         : 0;
