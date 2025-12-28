@@ -104,10 +104,10 @@ const Reports = () => {
   });
 
   const { data: summary, isLoading: summaryLoading } = useReportsSummary({ startDate, endDate });
-  const { data: topProducts = [], isLoading: topProductsLoading } = useTopSellingProducts(5);
-  const { data: salesByCategory = [], isLoading: categoryLoading } = useSalesByCategory();
+  const { data: topProducts = [], isLoading: topProductsLoading } = useTopSellingProducts({ startDate, endDate, limit: 5 });
+  const { data: salesByCategory = [], isLoading: categoryLoading } = useSalesByCategory({ startDate, endDate });
   const { data: stockMovement, isLoading: stockMovementLoading } = useStockMovementStats();
-  const { data: dispensingStats, isLoading: dispensingLoading } = useDispensingStats();
+  const { data: dispensingStats, isLoading: dispensingLoading } = useDispensingStats({ startDate, endDate });
 
   const handleExportReport = (reportType: string) => {
     toast({ 
@@ -493,6 +493,85 @@ const Reports = () => {
         </TabsContent>
 
         <TabsContent value="sales" className="space-y-6">
+          {/* Date Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">Period:</span>
+                <Select value={datePreset} onValueChange={setDatePreset}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {datePreset === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customStartDate ? format(customStartDate, "MMM dd, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={setCustomStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customEndDate ? format(customEndDate, "MMM dd, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={setCustomEndDate}
+                          disabled={(date) => customStartDate ? date < customStartDate : false}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+
+                <Badge variant="secondary" className="ml-auto">
+                  {getPeriodLabel()}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -506,7 +585,7 @@ const Reports = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-accent rounded-lg">
-                      <span>Today's Sales:</span>
+                      <span>Period Sales:</span>
                       <span className="font-bold">{formatCurrency(summary?.dailyRevenue || 0)}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-accent rounded-lg">
@@ -560,6 +639,85 @@ const Reports = () => {
         </TabsContent>
 
         <TabsContent value="dispensing" className="space-y-6">
+          {/* Date Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">Period:</span>
+                <Select value={datePreset} onValueChange={setDatePreset}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {datePreset === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customStartDate ? format(customStartDate, "MMM dd, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={setCustomStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customEndDate ? format(customEndDate, "MMM dd, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={setCustomEndDate}
+                          disabled={(date) => customStartDate ? date < customStartDate : false}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+
+                <Badge variant="secondary" className="ml-auto">
+                  {getPeriodLabel()}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <Card>
               <CardHeader>
@@ -573,8 +731,8 @@ const Reports = () => {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex justify-between items-center p-3 bg-accent rounded-lg">
-                      <span>Prescriptions Today:</span>
-                      <span className="font-bold">{dispensingStats?.prescriptionsToday || 0}</span>
+                      <span>Prescriptions:</span>
+                      <span className="font-bold">{dispensingStats?.prescriptionsInPeriod || 0}</span>
                     </div>
                     <div className="flex justify-between items-center p-3 bg-accent rounded-lg">
                       <span>Chronic Patients:</span>
@@ -696,6 +854,85 @@ const Reports = () => {
         </TabsContent>
 
         <TabsContent value="financial" className="space-y-6">
+          {/* Date Filters */}
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="text-sm font-medium text-muted-foreground">Period:</span>
+                <Select value={datePreset} onValueChange={setDatePreset}>
+                  <SelectTrigger className="w-[140px]">
+                    <SelectValue placeholder="Select period" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
+                    <SelectItem value="week">This Week</SelectItem>
+                    <SelectItem value="month">This Month</SelectItem>
+                    <SelectItem value="year">This Year</SelectItem>
+                    <SelectItem value="custom">Custom Range</SelectItem>
+                  </SelectContent>
+                </Select>
+
+                {datePreset === 'custom' && (
+                  <div className="flex items-center gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customStartDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customStartDate ? format(customStartDate, "MMM dd, yyyy") : "Start date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customStartDate}
+                          onSelect={setCustomStartDate}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <span className="text-muted-foreground">to</span>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          className={cn(
+                            "w-[130px] justify-start text-left font-normal",
+                            !customEndDate && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {customEndDate ? format(customEndDate, "MMM dd, yyyy") : "End date"}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={customEndDate}
+                          onSelect={setCustomEndDate}
+                          disabled={(date) => customStartDate ? date < customStartDate : false}
+                          initialFocus
+                          className="pointer-events-auto"
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                )}
+
+                <Badge variant="secondary" className="ml-auto">
+                  {getPeriodLabel()}
+                </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle>Financial Overview</CardTitle>
@@ -708,10 +945,10 @@ const Reports = () => {
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-3">
-                    <h4 className="font-medium">Revenue</h4>
+                    <h4 className="font-medium">Revenue ({getPeriodLabel()})</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
-                        <span className="text-sm">Today:</span>
+                        <span className="text-sm">Period Total:</span>
                         <span className="font-medium">{formatCurrency(summary?.dailyRevenue || 0)}</span>
                       </div>
                       <div className="flex justify-between">
@@ -726,7 +963,7 @@ const Reports = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="font-medium">Costs (Today)</h4>
+                    <h4 className="font-medium">Costs ({getPeriodLabel()})</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">Cost of Goods:</span>
@@ -740,7 +977,7 @@ const Reports = () => {
                   </div>
 
                   <div className="space-y-3">
-                    <h4 className="font-medium">Profit (Today)</h4>
+                    <h4 className="font-medium">Profit ({getPeriodLabel()})</h4>
                     <div className="space-y-2">
                       <div className="flex justify-between">
                         <span className="text-sm">Gross Profit:</span>
