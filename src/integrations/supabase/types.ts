@@ -236,6 +236,54 @@ export type Database = {
           },
         ]
       }
+      product_suppliers: {
+        Row: {
+          cost_price: number | null
+          created_at: string | null
+          id: string
+          is_primary: boolean | null
+          notes: string | null
+          product_id: string
+          supplier_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          cost_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          product_id: string
+          supplier_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          cost_price?: number | null
+          created_at?: string | null
+          id?: string
+          is_primary?: boolean | null
+          notes?: string | null
+          product_id?: string
+          supplier_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_suppliers_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "product_suppliers_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       products: {
         Row: {
           barcode: string | null
@@ -253,7 +301,6 @@ export type Database = {
           name: string
           requires_prescription: boolean
           stock_quantity: number
-          supplier_id: string | null
           unit_price: number
           updated_at: string
         }
@@ -273,7 +320,6 @@ export type Database = {
           name: string
           requires_prescription?: boolean
           stock_quantity?: number
-          supplier_id?: string | null
           unit_price?: number
           updated_at?: string
         }
@@ -293,19 +339,10 @@ export type Database = {
           name?: string
           requires_prescription?: boolean
           stock_quantity?: number
-          supplier_id?: string | null
           unit_price?: number
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fk_products_supplier"
-            columns: ["supplier_id"]
-            isOneToOne: false
-            referencedRelation: "suppliers"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {

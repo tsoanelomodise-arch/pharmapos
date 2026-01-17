@@ -17,6 +17,8 @@ import { Plus, Edit2, HelpCircle, Calculator } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { Product } from "@/hooks/useProducts";
 import { useCanAccessFinancialData } from "@/hooks/useUserRole";
+import { SupplierMultiSelect } from "@/components/SupplierMultiSelect";
+import { useProductSuppliers, useBulkUpdateProductSuppliers } from "@/hooks/useProductSuppliers";
 
 const productSchema = z.object({
   name: z.string().min(1, "Product name is required"),
@@ -56,8 +58,23 @@ const FieldTooltip = ({ description, example }: { description: string; example: 
 
 export function ProductForm({ product, onSuccess }: ProductFormProps) {
   const [open, setOpen] = useState(false);
+  const [selectedSupplierIds, setSelectedSupplierIds] = useState<string[]>([]);
+  const [primarySupplierId, setPrimarySupplierId] = useState<string | undefined>();
   const queryClient = useQueryClient();
   const canAccessFinancialData = useCanAccessFinancialData();
+  
+  // Fetch existing product suppliers when editing
+  const { data: existingProductSuppliers = [] } = useProductSuppliers(product?.id);
+  const bulkUpdateSuppliers = useBulkUpdateProductSuppliers();
+  
+  // Set initial supplier selection when editing
+  useEffect(() => {
+    if (product && existingProductSuppliers.length > 0) {
+      setSelectedSupplierIds(existingProductSuppliers.map(ps => ps.supplier_id));
+      const primary = existingProductSuppliers.find(ps => ps.is_primary);
+      setPrimarySupplierId(primary?.supplier_id || existingProductSuppliers[0]?.supplier_id);
+    }
+  }, [product, existingProductSuppliers]);
   
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -93,6 +110,11 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       requires_prescription: false,
     },
   });
+  
+  const handleSupplierChange = (ids: string[], primaryId?: string) => {
+    setSelectedSupplierIds(ids);
+    setPrimarySupplierId(primaryId);
+  };
 
   // Watch cost_price, markup_percentage, and unit_price for auto-calculation
   const costPrice = form.watch("cost_price");
@@ -136,19 +158,34 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       };
 
       if (product) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
           .update(productData)
-          .eq('id', product.id);
+          .eq('id', product.id)
+          .select()
+          .single();
         if (error) throw error;
+        return data;
       } else {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('products')
-          .insert(productData);
+          .insert(productData)
+          .select()
+          .single();
         if (error) throw error;
+        return data;
       }
     },
-    onSuccess: () => {
+    onSuccess: async (result) => {
+      // Update supplier relationships if any were selected
+      if (selectedSupplierIds.length > 0 && result?.id) {
+        await bulkUpdateSuppliers.mutateAsync({
+          productId: result.id,
+          supplierIds: selectedSupplierIds,
+          primarySupplierId,
+        });
+      }
+      
       queryClient.invalidateQueries({ queryKey: ['products'] });
       queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
       toast({ 
@@ -156,6 +193,8 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       });
       setOpen(false);
       form.reset();
+      setSelectedSupplierIds([]);
+      setPrimarySupplierId(undefined);
       onSuccess?.();
     },
     onError: (error) => {
@@ -273,6 +312,19 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                       <FormMessage />
                     </FormItem>
                   )}
+                />
+              </div>
+
+              {/* Supplier Selection */}
+              <div className="space-y-2">
+                <FormLabel className="flex items-center">
+                  Suppliers
+                  <FieldTooltip description="Suppliers who provide this product (can select multiple)" example="Pharma Distributors, MedSupply Co" />
+                </FormLabel>
+                <SupplierMultiSelect
+                  selectedIds={selectedSupplierIds}
+                  primarySupplierId={primarySupplierId}
+                  onSelectionChange={handleSupplierChange}
                 />
               </div>
 
