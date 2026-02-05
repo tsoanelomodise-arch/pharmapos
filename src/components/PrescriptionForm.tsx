@@ -393,7 +393,7 @@ export function PrescriptionForm({ prescription, onSuccess }: PrescriptionFormPr
                               {medicationSearchResults.map((product) => (
                                 <CommandItem
                                   key={product.id}
-                                  value={product.id}
+                                  value={`${product.name} ${product.generic_name || ''} ${product.barcode || ''}`}
                                    onSelect={() => {
                                      const newMed = {
                                        id: product.id,
