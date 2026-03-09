@@ -577,6 +577,9 @@ const Stock = () => {
             </CardContent>
           </Card>
         </TabsContent>
+        <TabsContent value="restock-history" className="space-y-6">
+          <RestockHistoryLog />
+        </TabsContent>
       </Tabs>
 
       <AlertDialog open={!!disposalProduct} onOpenChange={() => setDisposalProduct(null)}>
