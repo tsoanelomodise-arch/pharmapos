@@ -169,6 +169,7 @@ const Stock = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl md:text-3xl font-bold">Stock Control</h1>
         <div className="flex gap-2">
+          <RestockDialog />
           <StockReportDialog />
           <ProductForm />
         </div>
