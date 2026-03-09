@@ -44,6 +44,8 @@ const Stock = () => {
   const { data: allProductSuppliers = [] } = useAllProductSuppliers();
   const canAccessFinancialData = useCanAccessFinancialData();
   const disposeProductMutation = useDisposeProductMutation();
+  const restockMutation = useRestockMutation();
+  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const deleteSupplierMutation = useDeleteSupplierMutation();
 
   // Create a map of product ID to their suppliers
