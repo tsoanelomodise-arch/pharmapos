@@ -149,6 +149,123 @@ export function useUpdateStockMutation() {
   });
 }
 
+export function useRestockMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ productId, quantity, notes }: {
+      productId: string;
+      quantity: number;
+      notes?: string;
+    }) => {
+      const { data: product, error: fetchError } = await supabase
+        .from('products')
+        .select('stock_quantity')
+        .eq('id', productId)
+        .single();
+      
+      if (fetchError) throw fetchError;
+      
+      const newQuantity = product.stock_quantity + quantity;
+      
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({ stock_quantity: newQuantity })
+        .eq('id', productId);
+      
+      if (updateError) throw updateError;
+      
+      const { error: movementError } = await supabase
+        .from('stock_movements')
+        .insert({
+          product_id: productId,
+          movement_type: 'adjustment' as const,
+          quantity: quantity,
+          notes: notes || `Restock: ${quantity} units added`
+        });
+      
+      if (movementError) throw movementError;
+      
+      return { productId, newQuantity };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({ title: 'Product restocked successfully' });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error restocking product', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}
+
+export function useBulkRestockMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (items: { productId: string; quantity: number }[]) => {
+      const results = [];
+      for (const item of items) {
+        if (item.quantity <= 0) continue;
+        
+        const { data: product, error: fetchError } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.productId)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const newQuantity = product.stock_quantity + item.quantity;
+        
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ stock_quantity: newQuantity })
+          .eq('id', item.productId);
+        
+        if (updateError) throw updateError;
+        
+        const { error: movementError } = await supabase
+          .from('stock_movements')
+          .insert({
+            product_id: item.productId,
+            movement_type: 'adjustment' as const,
+            quantity: item.quantity,
+            notes: `Restock: ${item.quantity} units added`
+          });
+        
+        if (movementError) throw movementError;
+        
+        results.push({ productId: item.productId, newQuantity });
+      }
+      return results;
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({ 
+        title: 'Bulk restock completed',
+        description: `${data.length} products restocked successfully`
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error during bulk restock', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}
+
 export function useDisposeProductMutation() {
   const queryClient = useQueryClient();
   

@@ -5,7 +5,9 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, TrendingDown, AlertTriangle, Search, Truck, Trash2, Mail, Phone, User, Star, Users } from "lucide-react";
-import { useProducts, useLowStockProducts, useDisposeProductMutation } from "@/hooks/useProducts";
+import { useProducts, useLowStockProducts, useDisposeProductMutation, useRestockMutation } from "@/hooks/useProducts";
+import { RestockDialog } from "@/components/RestockDialog";
+import { RestockHistoryLog } from "@/components/RestockHistoryLog";
 import { useSuppliers, useDeleteSupplierMutation } from "@/hooks/useSuppliers";
 import { useSupplierProductCounts, useAllProductSuppliers } from "@/hooks/useProductSuppliers";
 import { ProductForm } from "@/components/ProductForm";
@@ -42,6 +44,8 @@ const Stock = () => {
   const { data: allProductSuppliers = [] } = useAllProductSuppliers();
   const canAccessFinancialData = useCanAccessFinancialData();
   const disposeProductMutation = useDisposeProductMutation();
+  const restockMutation = useRestockMutation();
+  const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const deleteSupplierMutation = useDeleteSupplierMutation();
 
   // Create a map of product ID to their suppliers
@@ -165,6 +169,7 @@ const Stock = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl md:text-3xl font-bold">Stock Control</h1>
         <div className="flex gap-2">
+          <RestockDialog />
           <StockReportDialog />
           <ProductForm />
         </div>
@@ -225,6 +230,7 @@ const Stock = () => {
           <TabsTrigger value="low-stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Low Stock</TabsTrigger>
           <TabsTrigger value="expiry" className="flex-1 md:flex-initial text-xs sm:text-sm">Expiry</TabsTrigger>
           <TabsTrigger value="suppliers" className="flex-1 md:flex-initial text-xs sm:text-sm">Suppliers</TabsTrigger>
+          <TabsTrigger value="restock-history" className="flex-1 md:flex-initial text-xs sm:text-sm">Restock History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-6">
@@ -404,14 +410,39 @@ const Stock = () => {
                 <div className="space-y-3">
                   {lowStockProducts.map(product => (
                     <div key={product.id} className={`p-3 border rounded-lg ${product.stock_quantity === 0 ? 'bg-destructive/5 border-destructive/30' : 'bg-orange-500/5 border-orange-500/20'}`}>
-                      <div className="flex justify-between items-center">
-                        <div>
+                      <div className="flex justify-between items-center gap-2">
+                        <div className="flex-1">
                           <p className="font-medium">{product.name}</p>
                           <p className="text-sm text-muted-foreground">Stock: {product.stock_quantity} / Min: {product.minimum_stock}</p>
                         </div>
-                        <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"}>
-                          {product.stock_quantity === 0 ? "Out of Stock" : "Low Stock"}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            type="number"
+                            min={1}
+                            placeholder="Qty"
+                            className="w-20 h-8"
+                            value={restockQuantities[product.id] || ""}
+                            onChange={(e) => setRestockQuantities(prev => ({ ...prev, [product.id]: parseInt(e.target.value) || 0 }))}
+                          />
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            disabled={!restockQuantities[product.id] || restockQuantities[product.id] <= 0 || restockMutation.isPending}
+                            onClick={() => {
+                              const qty = restockQuantities[product.id];
+                              if (qty > 0) {
+                                restockMutation.mutate({ productId: product.id, quantity: qty }, {
+                                  onSuccess: () => setRestockQuantities(prev => ({ ...prev, [product.id]: 0 }))
+                                });
+                              }
+                            }}
+                          >
+                            Restock
+                          </Button>
+                          <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"}>
+                            {product.stock_quantity === 0 ? "Out of Stock" : "Low Stock"}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -545,6 +576,9 @@ const Stock = () => {
               )}
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="restock-history" className="space-y-6">
+          <RestockHistoryLog />
         </TabsContent>
       </Tabs>
 
