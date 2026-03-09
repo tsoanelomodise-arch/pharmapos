@@ -230,6 +230,7 @@ const Stock = () => {
           <TabsTrigger value="low-stock" className="flex-1 md:flex-initial text-xs sm:text-sm">Low Stock</TabsTrigger>
           <TabsTrigger value="expiry" className="flex-1 md:flex-initial text-xs sm:text-sm">Expiry</TabsTrigger>
           <TabsTrigger value="suppliers" className="flex-1 md:flex-initial text-xs sm:text-sm">Suppliers</TabsTrigger>
+          <TabsTrigger value="restock-history" className="flex-1 md:flex-initial text-xs sm:text-sm">Restock History</TabsTrigger>
         </TabsList>
 
         <TabsContent value="inventory" className="space-y-6">
