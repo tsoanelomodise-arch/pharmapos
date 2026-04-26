@@ -21,7 +21,7 @@ serve(async (req) => {
     // Get the authorization header
     const authHeader = req.headers.get("Authorization");
     console.log("Auth header present:", !!authHeader);
-    
+
     if (!authHeader) {
       console.log("No authorization header");
       return new Response(
@@ -30,41 +30,28 @@ serve(async (req) => {
       );
     }
 
-    // Extract and decode the JWT to get user ID
-    // The JWT is already verified by Supabase edge function infrastructure
-    const token = authHeader.replace("Bearer ", "");
-    
-    // Decode JWT payload (middle part)
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      console.log("Invalid JWT format");
-      return new Response(
-        JSON.stringify({ error: "Invalid token format" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    // Decode the payload (base64url)
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const currentUserId = payload.sub;
-    
-    if (!currentUserId) {
-      console.log("No user ID in token");
-      return new Response(
-        JSON.stringify({ error: "Invalid token - no user ID" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    console.log("Current user ID from JWT:", currentUserId);
-
-    // Create a Supabase client with the service role key for admin operations
+    // Create a Supabase admin client (service role) for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
+
+    // Verify the caller's JWT cryptographically via Supabase auth helper
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !callingUser) {
+      console.log("Auth verification failed:", authError?.message);
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const currentUserId = callingUser.id;
+    console.log("Verified user ID:", currentUserId);
 
     // Check if the current user has admin or owner role using admin client
     const { data: userRoleData, error: roleCheckError } = await supabaseAdmin
