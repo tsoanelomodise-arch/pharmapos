@@ -27,26 +27,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Decode JWT to get user ID (JWT is already verified by Supabase infrastructure)
+    // Verify caller JWT cryptographically using Supabase auth helper
     const token = authHeader.replace('Bearer ', '');
-    const parts = token.split('.');
-    if (parts.length !== 3) {
+    const { data: { user: callingUser }, error: authError } = await supabaseClient.auth.getUser(token);
+
+    if (authError || !callingUser) {
       return new Response(
-        JSON.stringify({ error: 'Invalid token format' }),
+        JSON.stringify({ error: 'Invalid or expired token' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
-    
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const callingUserId = payload.sub;
-    
-    if (!callingUserId) {
-      return new Response(
-        JSON.stringify({ error: 'Invalid token - no user ID' }),
-        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-    
+
+    const callingUserId = callingUser.id;
     console.log('Delete user requested by:', callingUserId);
 
     // Check if caller has admin or owner role

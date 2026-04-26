@@ -70,34 +70,32 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     if (printContent) {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        /**
-         * SECURITY NOTE: Using innerHTML here is currently safe because:
-         * 1. All data comes from the database (trusted source)
-         * 2. React automatically escapes JSX content
-         * 
-         * WARNING: If any user-controlled content is ever added to the receipt
-         * component without proper sanitization, this could create XSS vulnerabilities.
-         * Consider using DOMPurify or cloneNode() for future changes.
-         */
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Receipt #${saleData?.id.slice(-8)}</title>
-              <style>
-                body { font-family: 'Courier New', monospace; font-size: 12px; margin: 20px; }
-                .receipt { max-width: 300px; margin: 0 auto; }
-                .header { text-align: center; margin-bottom: 20px; }
-                .line { display: flex; justify-content: space-between; margin: 5px 0; }
-                .separator { border-top: 1px dashed #000; margin: 10px 0; }
-                .total { font-weight: bold; font-size: 14px; }
-              </style>
-            </head>
-            <body>
-              ${printContent.innerHTML}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
+        // Build the print document via DOM APIs and clone the rendered tree
+        // instead of serialising/re-parsing HTML strings. This avoids XSS risk
+        // if any future dynamic, unescaped content is added to the receipt.
+        const doc = printWindow.document;
+        doc.open();
+        doc.write('<!DOCTYPE html>');
+        doc.close();
+
+        const titleEl = doc.createElement('title');
+        titleEl.textContent = `Receipt #${saleData?.id.slice(-8) ?? ''}`;
+        doc.head.appendChild(titleEl);
+
+        const styleEl = doc.createElement('style');
+        styleEl.textContent = `
+          body { font-family: 'Courier New', monospace; font-size: 12px; margin: 20px; }
+          .receipt { max-width: 300px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 20px; }
+          .line { display: flex; justify-content: space-between; margin: 5px 0; }
+          .separator { border-top: 1px dashed #000; margin: 10px 0; }
+          .total { font-weight: bold; font-size: 14px; }
+        `;
+        doc.head.appendChild(styleEl);
+
+        const clone = printContent.cloneNode(true);
+        doc.body.appendChild(doc.importNode(clone, true));
+
         printWindow.print();
       }
     }

@@ -45,146 +45,54 @@ export function MedicineLabelDialog({ prescription }: MedicineLabelDialogProps) 
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    /**
-     * SECURITY NOTE: Using innerHTML here is currently safe because:
-     * 1. All data comes from the database (trusted source)
-     * 2. React automatically escapes JSX content
-     * 
-     * WARNING: If any user-controlled content is ever added to the label
-     * component without proper sanitization, this could create XSS vulnerabilities.
-     * Consider using DOMPurify or cloneNode() for future changes.
-     */
-    const labelContent = document.getElementById('medicine-label-content')?.innerHTML;
-    
-    printWindow.document.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Medicine Labels</title>
-          <style>
-            @media print {
-              @page {
-                size: 4in 3in;
-                margin: 0.15in;
-              }
-              body {
-                margin: 0;
-                padding: 0;
-              }
-              .label-container {
-                page-break-inside: avoid;
-                page-break-after: always;
-              }
-              .label-container:last-child {
-                page-break-after: avoid;
-              }
-            }
-            
-            * {
-              box-sizing: border-box;
-            }
-            
-            body {
-              font-family: Arial, sans-serif;
-              margin: 0;
-              padding: 0;
-            }
-            
-            .label-container {
-              width: 4in;
-              height: 3in;
-              border: 2px solid #000;
-              border-radius: 8px;
-              padding: 0.25in;
-              display: flex;
-              flex-direction: column;
-              justify-content: space-between;
-              margin-bottom: 0.2in;
-            }
-            
-            .label-header {
-              display: grid;
-              grid-template-columns: 60% 40%;
-              gap: 0.1in;
-              margin-bottom: 0.1in;
-            }
-            
-            .label-field {
-              border-bottom: 1.5px solid #000;
-              padding-bottom: 0.02in;
-              margin-bottom: 0.02in;
-            }
-            
-            .label-field-label {
-              font-size: 9pt;
-              font-weight: bold;
-              text-transform: uppercase;
-              letter-spacing: 0.3px;
-              line-height: 1.1;
-            }
-            
-            .label-field-value {
-              font-size: 9pt;
-              margin-top: 0.02in;
-              line-height: 1.1;
-            }
-            
-            .medication-section {
-              margin-bottom: 0.1in;
-            }
-            
-            .medication-section .label-field-label {
-              font-size: 9pt;
-            }
-            
-            .dosage-grid {
-              display: grid;
-              grid-template-columns: 48% 48%;
-              gap: 0.08in;
-              margin-top: 0.08in;
-              margin-bottom: 0.08in;
-            }
-            
-            .dosage-item {
-              display: flex;
-              align-items: center;
-              font-size: 8pt;
-              line-height: 1.2;
-              margin-bottom: 0.03in;
-            }
-            
-            .dosage-line {
-              border-bottom: 1.5px solid #000;
-              width: 0.35in;
-              display: inline-block;
-              margin-right: 0.03in;
-            }
-            
-            .doctor-section {
-              margin-top: 0.08in;
-            }
-            
-            .doctor-field {
-              display: flex;
-              align-items: center;
-              font-size: 8pt;
-              line-height: 1.1;
-            }
-            
-            .doctor-line {
-              flex: 1;
-              border-bottom: 1.5px solid #000;
-              margin-left: 0.03in;
-            }
-          </style>
-        </head>
-        <body>
-          ${labelContent}
-        </body>
-      </html>
-    `);
-    
-    printWindow.document.close();
+    const labelContent = document.getElementById('medicine-label-content');
+    if (!labelContent) return;
+
+    // Build the print document via DOM APIs and clone the rendered tree
+    // instead of serialising/re-parsing HTML strings. This avoids XSS risk
+    // if dynamic, unescaped content is ever added to the labels.
+    const doc = printWindow.document;
+    doc.open();
+    doc.write('<!DOCTYPE html>');
+    doc.close();
+
+    const titleEl = doc.createElement('title');
+    titleEl.textContent = 'Medicine Labels';
+    doc.head.appendChild(titleEl);
+
+    const styleEl = doc.createElement('style');
+    styleEl.textContent = `
+      @media print {
+        @page { size: 4in 3in; margin: 0.15in; }
+        body { margin: 0; padding: 0; }
+        .label-container { page-break-inside: avoid; page-break-after: always; }
+        .label-container:last-child { page-break-after: avoid; }
+      }
+      * { box-sizing: border-box; }
+      body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+      .label-container {
+        width: 4in; height: 3in; border: 2px solid #000; border-radius: 8px;
+        padding: 0.25in; display: flex; flex-direction: column;
+        justify-content: space-between; margin-bottom: 0.2in;
+      }
+      .label-header { display: grid; grid-template-columns: 60% 40%; gap: 0.1in; margin-bottom: 0.1in; }
+      .label-field { border-bottom: 1.5px solid #000; padding-bottom: 0.02in; margin-bottom: 0.02in; }
+      .label-field-label { font-size: 9pt; font-weight: bold; text-transform: uppercase; letter-spacing: 0.3px; line-height: 1.1; }
+      .label-field-value { font-size: 9pt; margin-top: 0.02in; line-height: 1.1; }
+      .medication-section { margin-bottom: 0.1in; }
+      .medication-section .label-field-label { font-size: 9pt; }
+      .dosage-grid { display: grid; grid-template-columns: 48% 48%; gap: 0.08in; margin-top: 0.08in; margin-bottom: 0.08in; }
+      .dosage-item { display: flex; align-items: center; font-size: 8pt; line-height: 1.2; margin-bottom: 0.03in; }
+      .dosage-line { border-bottom: 1.5px solid #000; width: 0.35in; display: inline-block; margin-right: 0.03in; }
+      .doctor-section { margin-top: 0.08in; }
+      .doctor-field { display: flex; align-items: center; font-size: 8pt; line-height: 1.1; }
+      .doctor-line { flex: 1; border-bottom: 1.5px solid #000; margin-left: 0.03in; }
+    `;
+    doc.head.appendChild(styleEl);
+
+    const clone = labelContent.cloneNode(true);
+    doc.body.appendChild(doc.importNode(clone, true));
+
     setTimeout(() => {
       printWindow.print();
     }, 250);

@@ -24,35 +24,27 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Decode JWT to get user ID
-    const token = authHeader.replace("Bearer ", "");
-    const parts = token.split(".");
-    if (parts.length !== 3) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token format" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-    const currentUserId = payload.sub;
-
-    if (!currentUserId) {
-      return new Response(
-        JSON.stringify({ error: "Invalid token - no user ID" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    console.log("List users requested by:", currentUserId);
-
-    // Create admin client
+    // Create admin client (service role) for privileged operations
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey, {
       auth: {
         autoRefreshToken: false,
         persistSession: false,
       },
     });
+
+    // Verify caller JWT cryptographically using Supabase auth helper
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: callingUser }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !callingUser) {
+      return new Response(
+        JSON.stringify({ error: "Invalid or expired token" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const currentUserId = callingUser.id;
+    console.log("List users requested by:", currentUserId);
 
     // Check if current user has admin or owner role
     const { data: userRoleData, error: roleCheckError } = await supabaseAdmin

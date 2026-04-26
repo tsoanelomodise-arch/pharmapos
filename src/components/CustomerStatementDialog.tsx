@@ -52,38 +52,36 @@ export function CustomerStatementDialog({ customer }: CustomerStatementDialogPro
     if (printContent) {
       const printWindow = window.open('', '_blank');
       if (printWindow) {
-        /**
-         * SECURITY NOTE: Using innerHTML here is currently safe because:
-         * 1. All data comes from the database (trusted source)
-         * 2. React automatically escapes JSX content
-         * 
-         * WARNING: If any user-controlled content is ever added to the statement
-         * component without proper sanitization, this could create XSS vulnerabilities.
-         * Consider using DOMPurify or cloneNode() for future changes.
-         */
-        printWindow.document.write(`
-          <html>
-            <head>
-              <title>Statement - ${customer.name}</title>
-              <style>
-                body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
-                .statement { max-width: 800px; margin: 0 auto; }
-                .header { text-align: center; margin-bottom: 30px; }
-                .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
-                .line { display: flex; justify-content: space-between; margin: 5px 0; }
-                .separator { border-top: 1px solid #000; margin: 15px 0; }
-                .total { font-weight: bold; font-size: 14px; }
-                table { width: 100%; border-collapse: collapse; margin: 20px 0; }
-                th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
-                th { background-color: #f5f5f5; font-weight: bold; }
-              </style>
-            </head>
-            <body>
-              ${printContent.innerHTML}
-            </body>
-          </html>
-        `);
-        printWindow.document.close();
+        // Build the print document via DOM APIs and clone the rendered tree
+        // instead of serialising/re-parsing HTML strings. This avoids XSS risk
+        // if dynamic, unescaped content is ever added to the statement.
+        const doc = printWindow.document;
+        doc.open();
+        doc.write('<!DOCTYPE html>');
+        doc.close();
+
+        const titleEl = doc.createElement('title');
+        titleEl.textContent = `Statement - ${customer.name}`;
+        doc.head.appendChild(titleEl);
+
+        const styleEl = doc.createElement('style');
+        styleEl.textContent = `
+          body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; }
+          .statement { max-width: 800px; margin: 0 auto; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+          .line { display: flex; justify-content: space-between; margin: 5px 0; }
+          .separator { border-top: 1px solid #000; margin: 15px 0; }
+          .total { font-weight: bold; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+          th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+          th { background-color: #f5f5f5; font-weight: bold; }
+        `;
+        doc.head.appendChild(styleEl);
+
+        const clone = printContent.cloneNode(true);
+        doc.body.appendChild(doc.importNode(clone, true));
+
         printWindow.print();
       }
     }
