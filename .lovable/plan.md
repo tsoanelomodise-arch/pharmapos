@@ -1,86 +1,63 @@
-# System-Wide Audit Trail
-
 ## Goal
-Add a tamper-resistant, timestamped audit log of system activity, accessible read-only at **Reports → Audit Trail**. Owners and admins can view; nobody (not even via the app) can edit or delete entries.
 
-## What gets logged
-Whenever a user performs a meaningful action, an `audit_logs` row is inserted automatically via a Postgres trigger. Tracked tables and actions:
+Let admins/owners control access to **subpages** (e.g. Transactions, Suppliers, Audit Trail, System Updates, Database Status) in the Module Permissions screen — not just top-level modules.
 
-- **sales** — created, edited, deleted (POS transactions)
-- **sale_items** — edited, deleted (line-item corrections)
-- **prescriptions** — created, dispensed, deleted
-- **products** — created, edited, deleted, stock changes
-- **customers** — created, edited, deleted
-- **doctors** — created, edited, deleted
-- **suppliers** — created, edited, deleted
-- **user_roles** — role granted, revoked
-- **user_module_permissions** — module granted, revoked
-- **business_settings** — updated
-- **profiles** — updated (excluding self-only profile field edits)
+## Approach
 
-Each entry stores: timestamp, actor (user id + name + role at the time), action (INSERT/UPDATE/DELETE), entity type, entity id, a short human-readable summary, and a JSON diff of changed fields.
+Introduce a new set of granular subpage modules in the existing `app_module` enum and gate each subpage route + sidebar sub-item on its own module. Then surface them in `ModulePermissionsManager` grouped under their parent module for clarity.
 
-## Audit Trail page (`/reports/audit-trail`)
-- Reports submenu item "Audit Trail" (Owner/Admin only).
-- Table columns: When • Who (name + role) • Action • Entity • Summary • Details (expandable JSON diff).
-- Filters: date range (Today / 7 / 30 / Custom — matches the project's standard date filter pattern), actor, entity type, action type, free-text search on summary.
-- Pagination (20/page) and CSV export of the filtered view.
-- Strictly read-only — no edit/delete UI.
+### Subpages to make individually permissionable
 
-## Access rules
-- Page route protected by an Owner/Admin role check (separate from module permissions, since this is a security-sensitive surface).
-- Sidebar entry hidden for everyone else.
+| Parent module | New submodule | Route |
+|---|---|---|
+| pos | `transactions` | `/pos/transactions` |
+| stock | `suppliers` | `/stock?tab=suppliers` |
+| reports | `audit_trail` | `/reports/audit-trail` (replaces current role-only gate) |
+| help | `system_updates` | `/help/updates` |
+| help | `database_status` | `/help/database` |
 
-## System Updates
-Append a new entry to `src/pages/SystemUpdates.tsx` (new feature).
+(`stock_movement`, `orders`, `edit_transactions`, `medical_aid`, `settings` already exist as separate modules — left unchanged.)
 
----
+### Changes
 
-## Technical details
+1. **Migration** — add the new values to the `app_module` enum: `transactions`, `suppliers`, `audit_trail`, `system_updates`, `database_status`. Update `get_user_modules()` so owners receive them automatically.
 
-### Database
-New migration:
+2. **`src/hooks/useModulePermissions.ts`** — extend the `AppModule` TypeScript union to include the new values.
 
-1. `audit_logs` table:
-   - `id`, `created_at`
-   - `actor_user_id uuid` (nullable for system actions)
-   - `actor_name text`, `actor_role app_role` — snapshotted at write time
-   - `action text` (`INSERT` / `UPDATE` / `DELETE`)
-   - `entity_type text` (e.g. `sales`, `prescriptions`)
-   - `entity_id uuid`
-   - `summary text` — short human-readable line
-   - `changes jsonb` — `{ before, after, diff_keys[] }`
+3. **`src/App.tsx`** — change the `module=` prop on:
+   - `/pos/transactions` → `transactions`
+   - `/reports/audit-trail` → `audit_trail`
+   - `/help/updates` → `system_updates`
+   - `/help/database` → `database_status`
+   
+   Parent module access (e.g. `pos`, `reports`, `help`) is no longer required for the subpage; users granted only the subpage can still reach it directly.
 
-2. GRANTs:
-   - `GRANT SELECT ON public.audit_logs TO authenticated;`
-   - `GRANT ALL ON public.audit_logs TO service_role;`
-   - **No INSERT/UPDATE/DELETE to anon or authenticated** — only the trigger (SECURITY DEFINER) writes.
+4. **`src/components/AppSidebar.tsx`** —
+   - Replace role-based gate on Audit Trail with `module: "audit_trail"`.
+   - Add `module` to Transactions sub-item (`transactions`) and Suppliers sub-item (`suppliers`).
+   - Sub-item filtering already honours `subItem.module`, so no logic change beyond the data.
+   - Remove the now-unused `requiredRoles`/`useUserRole` plumbing here.
 
-3. RLS:
-   - Enable RLS.
-   - SELECT policy: `has_role(auth.uid(),'admin') OR has_role(auth.uid(),'owner')`.
-   - No INSERT/UPDATE/DELETE policies → blocked from the API entirely.
+5. **`src/components/ModulePermissionsManager.tsx`** — extend `ALL_MODULES` with the new entries and group/label them as subpages (e.g. "Transactions (POS subpage)", "Suppliers (Stock subpage)", "Audit Trail (Reports subpage)", "System Updates (Help subpage)", "Database Status (Help subpage)") so admins can tick them per user.
 
-4. Trigger function `public.log_audit_event()` (SECURITY DEFINER):
-   - Resolves actor from `auth.uid()`, looks up name from `profiles` and primary role from `user_roles`.
-   - Builds summary per table (e.g. `"Edited sale #1A2B3C: total R120.00 → R150.00"`).
-   - Computes diff of changed columns for UPDATE.
-   - Inserts into `audit_logs`. Never raises — failures are swallowed via `EXCEPTION WHEN OTHERS` so audit issues can't break user actions.
+6. **`src/components/ModuleProtectedRoute.tsx` & `src/components/SmartRedirect.tsx`** — add route mappings for the new modules so redirects work when a user has only a subpage permission.
 
-5. Attach `AFTER INSERT/UPDATE/DELETE` triggers on the tables listed above.
+7. **`src/pages/Help.tsx`** — if it links to System Updates / Database Status, those cards should hide when the user lacks the corresponding submodule (small conditional render).
 
-### Frontend
-- New page `src/pages/AuditTrail.tsx` (lazy-loaded).
-- New hook `src/hooks/useAuditLogs.ts` (react-query, filter params).
-- Route in `src/App.tsx`: `/reports/audit-trail`, wrapped in a small `RoleProtectedRoute` (admin/owner) or inline guard.
-- Sidebar update in `src/components/AppSidebar.tsx`: add a third sub-item under Reports, conditionally rendered when the user's role is admin/owner.
-- CSV export reuses the project's existing pattern (client-side blob).
+8. **`src/pages/SystemUpdates.tsx`** — append a v1.4.1 entry: "Admins/owners can now grant per-subpage access (Transactions, Suppliers, Audit Trail, System Updates, Database Status) from Module Permissions."
 
-### Files touched
-- `supabase/migrations/<timestamp>_audit_trail.sql` (new)
-- `src/pages/AuditTrail.tsx` (new)
-- `src/hooks/useAuditLogs.ts` (new)
-- `src/App.tsx` (route)
-- `src/components/AppSidebar.tsx` (submenu entry)
-- `src/pages/SystemUpdates.tsx` (changelog entry)
-- `src/pages/Help.tsx` + `src/utils/generateHelpPdf.ts` (brief Audit Trail section)
+### Backwards compatibility
+
+Existing users keep their current parent-module permissions. To avoid silently losing access to subpages they previously could see, the migration will **backfill** the new submodule permissions for every non-owner user who already has the parent module:
+
+- everyone with `pos` → also gets `transactions`
+- everyone with `stock` → also gets `suppliers`
+- everyone with `reports` → also gets `audit_trail` (admins/owners only — skip pharmacist/manager so we don't widen audit log access)
+- everyone with `help` → also gets `system_updates` and `database_status`
+
+Owners are unaffected — `get_user_modules` returns the full list for them.
+
+### Out of scope
+
+- No change to RLS on underlying tables; this is UI/navigation gating only.
+- `stock_movement`, `edit_transactions`, `medical_aid`, `settings`, `orders` already work this way and are not touched.
