@@ -10,6 +10,7 @@ import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
@@ -43,6 +44,8 @@ const POS = () => {
   const { data: customerResults = [] } = useCustomerSearch(customerSearchTerm);
   const { data: businessSettings } = useBusinessSettings();
   const createSaleMutation = useCreateSaleMutation();
+  const { data: role } = useUserRole();
+  const canViewTransactions = role === 'admin' || role === 'owner';
 
   // Pre-populate cart from prescription
   useEffect(() => {
@@ -366,6 +369,7 @@ const POS = () => {
           </Card>
 
           {/* Recent Transactions */}
+          {canViewTransactions && (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle>Recent Transactions</CardTitle>
@@ -419,6 +423,7 @@ const POS = () => {
               </div>
             </CardContent>
           </Card>
+          )}
         </div>
 
         {/* Payment & Checkout */}
