@@ -6,7 +6,20 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Search, FileText, AlertTriangle, CheckCircle, User } from "lucide-react";
-import { usePendingPrescriptions, usePrescriptions, useRecentPatients } from "@/hooks/usePrescriptions";
+import { Trash2 } from "lucide-react";
+import { usePendingPrescriptions, usePrescriptions, useRecentPatients, useDeletePrescription } from "@/hooks/usePrescriptions";
+import { useUserRole } from "@/hooks/useUserRole";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useCustomerSearch } from "@/hooks/useCustomers";
 import { useNavigate } from "react-router-dom";
 import { PrescriptionForm } from "@/components/PrescriptionForm";
@@ -23,6 +36,9 @@ const Dispensing = () => {
   const { data: allPrescriptions = [] } = usePrescriptions();
   const { data: patientResults = [] } = useCustomerSearch(patientSearch);
   const { data: recentPatients = [] } = useRecentPatients();
+  const { data: role } = useUserRole();
+  const canDeletePrescriptions = role === 'admin' || role === 'owner';
+  const deletePrescription = useDeletePrescription();
 
   const handleProcessPrescription = (prescription: any) => {
     navigate('/pos', { state: { prescription } });
@@ -115,6 +131,37 @@ const Dispensing = () => {
                           Process
                         </Button>
                         <PrescriptionForm prescription={prescription} />
+                        {canDeletePrescriptions && (
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete prescription?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This will permanently delete Rx #{prescription.id.slice(-8)} for{" "}
+                                  {prescription.customers?.name || 'this patient'}. This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => deletePrescription.mutate(prescription.id)}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        )}
                       </div>
                     </div>
                   </div>

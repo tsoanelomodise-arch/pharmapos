@@ -249,3 +249,32 @@ export function useProcessPrescription() {
     }
   });
 }
+
+export function useDeletePrescription() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (prescriptionId: string) => {
+      const { error } = await supabase
+        .from('prescriptions')
+        .delete()
+        .eq('id', prescriptionId);
+      if (error) throw error;
+      return prescriptionId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['prescriptions'] });
+      queryClient.invalidateQueries({ queryKey: ['pending-prescriptions'] });
+      toast({
+        title: "Prescription Deleted",
+        description: "The prescription has been removed from the queue.",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to delete prescription.",
+        variant: "destructive",
+      });
+    },
+  });
+}
