@@ -83,7 +83,7 @@ const App = () => (
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/pos/transactions" element={
-                          <ModuleProtectedRoute module="pos">
+                          <ModuleProtectedRoute module="transactions">
                             <Transactions />
                           </ModuleProtectedRoute>
                         } />
@@ -123,7 +123,7 @@ const App = () => (
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/reports/audit-trail" element={
-                          <ModuleProtectedRoute module="reports">
+                          <ModuleProtectedRoute module="audit_trail">
                             <AuditTrail />
                           </ModuleProtectedRoute>
                         } />
@@ -138,12 +138,12 @@ const App = () => (
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/help/updates" element={
-                          <ModuleProtectedRoute module="help">
+                          <ModuleProtectedRoute module="system_updates">
                             <SystemUpdates />
                           </ModuleProtectedRoute>
                         } />
                         <Route path="/help/database" element={
-                          <ModuleProtectedRoute module="help">
+                          <ModuleProtectedRoute module="database_status">
                             <DatabaseStatus />
                           </ModuleProtectedRoute>
                         } />

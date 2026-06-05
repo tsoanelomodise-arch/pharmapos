@@ -18,6 +18,11 @@ const moduleRouteMap: Record<AppModule, string> = {
   settings: '/management', // Settings is a tab within Management
   edit_transactions: '/pos/transactions', // Edit transactions is a data permission
   help: '/help',
+  transactions: '/pos/transactions',
+  suppliers: '/stock?tab=suppliers',
+  audit_trail: '/reports/audit-trail',
+  system_updates: '/help/updates',
+  database_status: '/help/database',
 };
 
 // Order of preference for default redirect

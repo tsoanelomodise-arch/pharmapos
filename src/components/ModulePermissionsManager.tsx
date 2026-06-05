@@ -22,6 +22,11 @@ const ALL_MODULES: { value: AppModule; label: string; description: string }[] = 
   { value: 'settings', label: 'Settings', description: 'Configure business settings and VAT' },
   { value: 'edit_transactions', label: 'Edit Transactions', description: 'Edit completed sales transactions' },
   { value: 'help', label: 'Help', description: 'Access help documentation' },
+  { value: 'transactions', label: 'Transactions (POS subpage)', description: 'View completed sales transactions history' },
+  { value: 'suppliers', label: 'Suppliers (Stock subpage)', description: 'View and manage suppliers' },
+  { value: 'audit_trail', label: 'Audit Trail (Reports subpage)', description: 'View system-wide audit log' },
+  { value: 'system_updates', label: 'System Updates (Help subpage)', description: 'View changelog of system updates' },
+  { value: 'database_status', label: 'Database Status (Help subpage)', description: 'View database connection status' },
 ];
 
 export function ModulePermissionsManager() {
