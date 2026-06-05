@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.3.1",
+    date: "2026-06-05",
+    type: "improvement",
+    title: "User Guide Refresh",
+    description: "Updated the Help & User Manual to reflect the latest role permissions and access rules.",
+    details: [
+      "Pharmacist row corrected to show financial data access",
+      "Documented Admin/Owner-only transaction edits and POS Recent Transactions visibility",
+      "Documented Admin/Owner-only prescription queue deletion"
+    ]
+  },
+  {
     version: "1.3.0",
     date: "2026-06-05",
     type: "improvement",
