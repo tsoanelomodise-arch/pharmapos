@@ -95,14 +95,15 @@ export default function Help() {
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="border rounded-lg p-4">
               <Badge className="mb-2">Pharmacist</Badge>
-              <p className="text-sm text-muted-foreground mb-2">Basic access level for day-to-day operations</p>
+              <p className="text-sm text-muted-foreground mb-2">Day-to-day dispensing and sales operations</p>
               <ul className="text-sm space-y-1">
                 <li>✓ Access to assigned modules only</li>
                 <li>✓ Dispense prescriptions</li>
                 <li>✓ Process sales (POS)</li>
-                <li>✓ View stock information</li>
-                <li>✗ View cost pricing/supplier data</li>
-                <li>✗ Management access</li>
+                <li>✓ View stock, cost pricing & supplier data</li>
+                <li>✗ View Recent Transactions / Transaction History edits</li>
+                <li>✗ Delete prescriptions from queue</li>
+                <li>✗ Management & user administration</li>
               </ul>
             </div>
 
@@ -114,7 +115,8 @@ export default function Help() {
                 <li>✓ Manage patients & doctors</li>
                 <li>✓ Create & manage user accounts</li>
                 <li>✓ Assign user roles</li>
-                <li>✗ View cost pricing/supplier data</li>
+                <li>✓ View & edit completed transactions</li>
+                <li>✓ Delete prescriptions from queue</li>
                 <li>✗ Set module permissions</li>
               </ul>
             </div>
@@ -140,6 +142,7 @@ export default function Help() {
                 <li>✓ Create & manage all users</li>
                 <li>✓ Set module permissions</li>
                 <li>✓ View all financial data</li>
+                <li>✓ Edit completed transactions & delete prescriptions</li>
                 <li>✓ Delete user accounts</li>
                 <li>✓ Full system configuration</li>
               </ul>
@@ -269,6 +272,7 @@ export default function Help() {
                     <li>• Filter by status: Pending, Dispensed, or All</li>
                     <li>• Search by patient name or doctor</li>
                     <li>• Stock quantities are automatically decremented when dispensed</li>
+                    <li>• Only Admin and Owner roles can delete prescription records from the queue</li>
                   </ul>
                 </div>
               </AccordionContent>
@@ -307,6 +311,12 @@ export default function Help() {
                     <li>• When dispensing prescriptions, medications auto-populate the cart</li>
                     <li>• Product details, prices, and quantities are pre-filled</li>
                     <li>• Review and adjust quantities before completing the sale</li>
+                  </ul>
+                  <h4 className="font-semibold mt-4">Transactions & Receipts:</h4>
+                  <ul className="space-y-1 text-sm">
+                    <li>• The "Recent Transactions" panel on POS is visible to Admin and Owner only</li>
+                    <li>• Transaction History is accessible via "View All" — Admin/Owner can edit completed transactions to correct errors</li>
+                    <li>• Other roles can still reprint their own receipts via the "Last Receipt" button</li>
                   </ul>
                 </div>
               </AccordionContent>
