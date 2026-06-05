@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.1",
+    date: "2026-06-05",
+    type: "feature",
+    title: "Per-Subpage Module Permissions",
+    description: "Admins and owners can now grant access to individual subpages from Module Permissions.",
+    details: [
+      "New togglable permissions: Transactions, Suppliers, Audit Trail, System Updates, Database Status",
+      "Sidebar sub-items hide automatically when the user lacks the subpage permission",
+      "Existing users were backfilled so they keep access to subpages they could previously reach"
+    ]
+  },
+  {
     version: "1.4.0",
     date: "2026-06-05",
     type: "feature",

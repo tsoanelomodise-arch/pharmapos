@@ -41,6 +41,11 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       settings: '/management', // Settings is a tab within Management
       edit_transactions: '/pos/transactions', // Edit transactions is a data permission
       help: '/help',
+      transactions: '/pos/transactions',
+      suppliers: '/stock?tab=suppliers',
+      audit_trail: '/reports/audit-trail',
+      system_updates: '/help/updates',
+      database_status: '/help/database',
     };
 
     const firstAccessible = userModules?.find(m => moduleRouteMap[m]);

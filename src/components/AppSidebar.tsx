@@ -18,14 +18,12 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useUserModules, AppModule } from "@/hooks/useModulePermissions";
-import { useUserRole, UserRole } from "@/hooks/useUserRole";
 
 interface SubItem {
   title: string;
   url: string;
   icon: any;
   module?: AppModule;
-  requiredRoles?: UserRole[];
 }
 
 interface NavigationItem {
@@ -46,7 +44,7 @@ const navigationItems: NavigationItem[] = [
     module: "pos",
     subItems: [
       { title: "Point of Sale", url: "/pos", icon: ShoppingCart },
-      { title: "Transactions", url: "/pos/transactions", icon: Receipt },
+      { title: "Transactions", url: "/pos/transactions", icon: Receipt, module: "transactions" },
     ]
   },
   { title: "Debtors", url: "/debtors", icon: Users, module: "debtors" },
@@ -66,7 +64,7 @@ const navigationItems: NavigationItem[] = [
     icon: Package, 
     module: "stock",
     subItems: [
-      { title: "Suppliers", url: "/stock?tab=suppliers", icon: Truck },
+      { title: "Suppliers", url: "/stock?tab=suppliers", icon: Truck, module: "suppliers" },
       { title: "Orders", url: "/orders", icon: ClipboardList, module: "orders" },
     ]
   },
@@ -78,7 +76,7 @@ const navigationItems: NavigationItem[] = [
     subItems: [
       { title: "Reports Dashboard", url: "/reports", icon: BarChart3 },
       { title: "Stock Movement", url: "/reports/stock-movement", icon: TrendingUp, module: "stock_movement" },
-      { title: "Audit Trail", url: "/reports/audit-trail", icon: ShieldCheck, requiredRoles: ["admin", "owner"] },
+      { title: "Audit Trail", url: "/reports/audit-trail", icon: ShieldCheck, module: "audit_trail" },
     ]
   },
   { title: "Admin", url: "/management", icon: Settings, module: "management" },
@@ -88,7 +86,6 @@ const navigationItems: NavigationItem[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const { data: userModules = [] } = useUserModules();
-  const { data: userRole } = useUserRole();
   const location = useLocation();
 
   // Filter navigation items based on user's module permissions
@@ -141,8 +138,7 @@ export function AppSidebar() {
                 if (item.subItems && item.subItems.length > 0) {
                   // Filter sub-items based on module permissions
                   const accessibleSubItems = item.subItems.filter(subItem => 
-                    (!subItem.module || userModules.includes(subItem.module)) &&
-                    (!subItem.requiredRoles || (userRole && subItem.requiredRoles.includes(userRole)))
+                    !subItem.module || userModules.includes(subItem.module)
                   );
                   
                   // Only show expandable menu if there are accessible sub-items

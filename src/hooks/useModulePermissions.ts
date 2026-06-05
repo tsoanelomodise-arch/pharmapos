@@ -18,7 +18,12 @@ export type AppModule =
   | 'medical_aid'
   | 'settings'
   | 'edit_transactions'
-  | 'stock_movement';
+  | 'stock_movement'
+  | 'transactions'
+  | 'suppliers'
+  | 'audit_trail'
+  | 'system_updates'
+  | 'database_status';
 
 export interface ModulePermission {
   id: string;
