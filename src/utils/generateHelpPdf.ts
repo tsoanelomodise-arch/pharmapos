@@ -131,13 +131,14 @@ export const generateHelpPdf = () => {
   addSpacer(5);
 
   addSubtitle('Pharmacist', 12);
-  addText('Basic access level for day-to-day operations');
+  addText('Day-to-day dispensing and sales operations');
   addListItem('Access to assigned modules only');
   addListItem('Dispense prescriptions');
   addListItem('Process sales (POS)');
-  addListItem('View stock information');
-  addListItem('No access to cost pricing/supplier data');
-  addListItem('No management access');
+  addListItem('View stock, cost pricing & supplier data');
+  addListItem('Cannot view Recent Transactions or edit Transaction History');
+  addListItem('Cannot delete prescriptions from queue');
+  addListItem('No management or user administration');
   addSpacer(5);
 
   addSubtitle('Admin', 12);
@@ -146,7 +147,8 @@ export const generateHelpPdf = () => {
   addListItem('Manage patients & doctors');
   addListItem('Create & manage user accounts');
   addListItem('Assign user roles');
-  addListItem('No access to cost pricing/supplier data');
+  addListItem('View & edit completed transactions');
+  addListItem('Delete prescriptions from queue');
   addListItem('Cannot set module permissions');
   addSpacer(5);
 
@@ -166,6 +168,7 @@ export const generateHelpPdf = () => {
   addListItem('Create & manage all users');
   addListItem('Set module permissions');
   addListItem('View all financial data');
+  addListItem('Edit completed transactions & delete prescriptions');
   addListItem('Delete user accounts');
   addListItem('Full system configuration');
 
