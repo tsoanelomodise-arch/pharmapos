@@ -124,8 +124,38 @@ export function useProcessPrescription() {
         throw new Error('No medications found in prescription');
       }
 
+      // Only medications linked to an actual product can become sale items
+      const billable = medications.filter(
+        (m) => m && typeof m.product_id === 'string' && m.product_id.length > 0
+      );
+
+      if (billable.length === 0) {
+        throw new Error(
+          'This prescription has no medications linked to inventory products. Edit it and select medications from stock before dispensing.'
+        );
+      }
+
+      // Verify all referenced products still exist
+      const productIds = Array.from(new Set(billable.map((m) => m.product_id)));
+      const { data: existingProducts, error: productsError } = await supabase
+        .from('products')
+        .select('id, stock_quantity')
+        .in('id', productIds);
+
+      if (productsError) throw productsError;
+
+      const productMap = new Map(
+        (existingProducts ?? []).map((p) => [p.id, p])
+      );
+      const missing = productIds.filter((id) => !productMap.has(id));
+      if (missing.length > 0) {
+        throw new Error(
+          'One or more prescribed products no longer exist in inventory. Edit the prescription and reselect the medications.'
+        );
+      }
+
       // Calculate totals
-      const subtotal = medications.reduce((sum, med) => sum + (med.quantity * med.unit_price), 0);
+      const subtotal = billable.reduce((sum, med) => sum + (med.quantity * med.unit_price), 0);
       const taxAmount = subtotal * 0.15;
       const totalAmount = subtotal + taxAmount;
 
@@ -149,7 +179,7 @@ export function useProcessPrescription() {
       if (saleError) throw saleError;
 
       // Create sale items from medications
-      const saleItems = medications.map(med => ({
+      const saleItems = billable.map(med => ({
         sale_id: sale.id,
         product_id: med.product_id,
         quantity: med.quantity,
@@ -164,13 +194,8 @@ export function useProcessPrescription() {
       if (itemsError) throw itemsError;
 
       // Update stock quantities and create stock movements
-      for (const med of medications) {
-        const { data: product } = await supabase
-          .from('products')
-          .select('stock_quantity')
-          .eq('id', med.product_id)
-          .single();
-        
+      for (const med of billable) {
+        const product = productMap.get(med.product_id);
         if (product) {
           await supabase
             .from('products')
