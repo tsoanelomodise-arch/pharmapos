@@ -16,6 +16,29 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.3.0",
+    date: "2026-06-05",
+    type: "improvement",
+    title: "Role-Based Access Refinements",
+    description: "Tightened access controls across POS, Transactions, and Prescription Queue.",
+    details: [
+      "Recent Transactions on POS hidden from Pharmacist role (admin/owner only)",
+      "Transaction History edits restricted to admin and owner roles",
+      "Prescription Queue records can now be deleted by admin and owner roles only"
+    ]
+  },
+  {
+    version: "1.2.1",
+    date: "2026-06-05",
+    type: "bugfix",
+    title: "Prescription Dispensing Foreign Key Fix",
+    description: "Resolved an error when dispensing prescriptions that referenced missing or unselected products.",
+    details: [
+      "Only billable medications with valid products are processed",
+      "Clear validation error when products are missing from inventory"
+    ]
+  },
+  {
     version: "1.2.0",
     date: "2024-12-02",
     type: "feature",
