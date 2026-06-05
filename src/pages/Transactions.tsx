@@ -9,7 +9,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon } from "lucide-react";
 import { useAllSalesWithDetails, SaleWithDetails } from "@/hooks/useSales";
-import { useUserModules } from "@/hooks/useModulePermissions";
+import { useUserRole } from "@/hooks/useUserRole";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
@@ -29,8 +29,8 @@ const Transactions = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  const { data: userModules } = useUserModules();
-  const canEditTransactions = userModules?.includes('edit_transactions');
+  const { data: role } = useUserRole();
+  const canEditTransactions = role === 'admin' || role === 'owner';
 
   // Calculate date filters based on preset
   const getDateFilter = () => {
