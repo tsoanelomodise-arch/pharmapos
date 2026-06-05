@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import { BookOpen, Users, ShieldCheck, LayoutDashboard, Pill, ShoppingCart, CreditCard, Package, FileText, Settings, Lock, Smartphone, Monitor, Download, History, Database } from "lucide-react";
 import { generateHelpPdf } from "@/utils/generateHelpPdf";
 import { Link } from "react-router-dom";
+import { useUserModules } from "@/hooks/useModulePermissions";
 
 export default function Help() {
+  const { data: userModules = [] } = useUserModules();
   const handleDownloadPdf = () => {
     generateHelpPdf();
   };
@@ -20,18 +22,22 @@ export default function Help() {
             <h1 className="text-2xl md:text-4xl font-bold">Help & User Manual</h1>
           </div>
           <div className="flex flex-col sm:flex-row gap-2">
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/help/updates">
-                <History className="h-4 w-4" />
-                System Updates
-              </Link>
-            </Button>
-            <Button asChild variant="outline" className="gap-2">
-              <Link to="/help/database">
-                <Database className="h-4 w-4" />
-                Database Status
-              </Link>
-            </Button>
+            {userModules.includes('system_updates') && (
+              <Button asChild variant="outline" className="gap-2">
+                <Link to="/help/updates">
+                  <History className="h-4 w-4" />
+                  System Updates
+                </Link>
+              </Button>
+            )}
+            {userModules.includes('database_status') && (
+              <Button asChild variant="outline" className="gap-2">
+                <Link to="/help/database">
+                  <Database className="h-4 w-4" />
+                  Database Status
+                </Link>
+              </Button>
+            )}
             <Button onClick={handleDownloadPdf} variant="outline" className="gap-2">
               <Download className="h-4 w-4" />
               Download PDF Manual
