@@ -722,6 +722,11 @@ export type Database = {
         | "settings"
         | "edit_transactions"
         | "stock_movement"
+        | "transactions"
+        | "suppliers"
+        | "audit_trail"
+        | "system_updates"
+        | "database_status"
       app_role: "pharmacist" | "admin" | "manager" | "owner"
       payment_method: "cash" | "card" | "credit" | "insurance"
       product_category:
@@ -874,6 +879,11 @@ export const Constants = {
         "settings",
         "edit_transactions",
         "stock_movement",
+        "transactions",
+        "suppliers",
+        "audit_trail",
+        "system_updates",
+        "database_status",
       ],
       app_role: ["pharmacist", "admin", "manager", "owner"],
       payment_method: ["cash", "card", "credit", "insurance"],
