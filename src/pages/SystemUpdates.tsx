@@ -16,6 +16,20 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.0",
+    date: "2026-06-05",
+    type: "feature",
+    title: "System-Wide Audit Trail",
+    description: "Added a tamper-resistant, timestamped audit trail under Reports for tracking every change in the system.",
+    details: [
+      "New page at Reports → Audit Trail (Admin and Owner only)",
+      "Automatically logs creates, edits and deletes across sales, prescriptions, stock, patients, doctors, suppliers, users and settings",
+      "Captures who, when, what changed, and a JSON diff of before/after values",
+      "Filters by date range, entity, action, user, and free-text search",
+      "CSV export of filtered results; entries cannot be edited or deleted"
+    ]
+  },
+  {
     version: "1.3.1",
     date: "2026-06-05",
     type: "improvement",

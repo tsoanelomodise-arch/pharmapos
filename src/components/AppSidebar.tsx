@@ -1,4 +1,4 @@
-import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList, UserPlus, Stethoscope, TrendingUp } from "lucide-react";
+import { Pill, ShoppingCart, Package, BarChart3, Users, Receipt, Settings, BookOpen, Truck, ChevronDown, ClipboardList, UserPlus, Stethoscope, TrendingUp, ShieldCheck } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 import pharmaposLogo from "@/assets/pharmapos-logo.png";
 
@@ -18,12 +18,14 @@ import {
 } from "@/components/ui/sidebar";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useUserModules, AppModule } from "@/hooks/useModulePermissions";
+import { useUserRole, UserRole } from "@/hooks/useUserRole";
 
 interface SubItem {
   title: string;
   url: string;
   icon: any;
   module?: AppModule;
+  requiredRoles?: UserRole[];
 }
 
 interface NavigationItem {
@@ -76,6 +78,7 @@ const navigationItems: NavigationItem[] = [
     subItems: [
       { title: "Reports Dashboard", url: "/reports", icon: BarChart3 },
       { title: "Stock Movement", url: "/reports/stock-movement", icon: TrendingUp, module: "stock_movement" },
+      { title: "Audit Trail", url: "/reports/audit-trail", icon: ShieldCheck, requiredRoles: ["admin", "owner"] },
     ]
   },
   { title: "Admin", url: "/management", icon: Settings, module: "management" },
@@ -85,6 +88,7 @@ const navigationItems: NavigationItem[] = [
 export function AppSidebar() {
   const { state } = useSidebar();
   const { data: userModules = [] } = useUserModules();
+  const { data: userRole } = useUserRole();
   const location = useLocation();
 
   // Filter navigation items based on user's module permissions
@@ -108,7 +112,8 @@ export function AppSidebar() {
 
   const isReportsActive = location.pathname === "/reports";
   const isStockMovementActive = location.pathname === "/reports/stock-movement";
-  const isReportsSectionActive = isReportsActive || isStockMovementActive;
+  const isAuditTrailActive = location.pathname === "/reports/audit-trail";
+  const isReportsSectionActive = isReportsActive || isStockMovementActive || isAuditTrailActive;
 
   return (
     <Sidebar collapsible="icon">
@@ -136,7 +141,8 @@ export function AppSidebar() {
                 if (item.subItems && item.subItems.length > 0) {
                   // Filter sub-items based on module permissions
                   const accessibleSubItems = item.subItems.filter(subItem => 
-                    !subItem.module || userModules.includes(subItem.module)
+                    (!subItem.module || userModules.includes(subItem.module)) &&
+                    (!subItem.requiredRoles || (userRole && subItem.requiredRoles.includes(userRole)))
                   );
                   
                   // Only show expandable menu if there are accessible sub-items
@@ -218,6 +224,8 @@ export function AppSidebar() {
                                   isSubActive = isReportsActive && !isStockMovementActive;
                                 } else if (subItem.url === "/reports/stock-movement") {
                                   isSubActive = isStockMovementActive;
+                                } else if (subItem.url === "/reports/audit-trail") {
+                                  isSubActive = isAuditTrailActive;
                                 }
                                 
                                 return (
