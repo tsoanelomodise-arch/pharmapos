@@ -14,6 +14,45 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_logs: {
+        Row: {
+          action: string
+          actor_name: string | null
+          actor_role: Database["public"]["Enums"]["app_role"] | null
+          actor_user_id: string | null
+          changes: Json | null
+          created_at: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          summary: string | null
+        }
+        Insert: {
+          action: string
+          actor_name?: string | null
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          actor_user_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          summary?: string | null
+        }
+        Update: {
+          action?: string
+          actor_name?: string | null
+          actor_role?: Database["public"]["Enums"]["app_role"] | null
+          actor_user_id?: string | null
+          changes?: Json | null
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          summary?: string | null
+        }
+        Relationships: []
+      }
       business_settings: {
         Row: {
           address: string | null
