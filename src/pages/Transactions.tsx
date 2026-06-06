@@ -7,11 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon } from "lucide-react";
-import { useAllSalesWithDetails, SaleWithDetails } from "@/hooks/useSales";
+import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2 } from "lucide-react";
+import { useAllSalesWithDetails, SaleWithDetails, useDeleteSaleMutation } from "@/hooks/useSales";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { format, subDays, startOfDay, endOfDay } from "date-fns";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -26,11 +36,14 @@ const Transactions = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
+  const [deletingSale, setDeletingSale] = useState<SaleWithDetails | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
   const { data: role } = useUserRole();
   const canEditTransactions = role === 'admin' || role === 'owner';
+  const canDeleteTransactions = role === 'admin' || role === 'owner';
+  const deleteSale = useDeleteSaleMutation();
 
   // Calculate date filters based on preset
   const getDateFilter = () => {
@@ -338,6 +351,16 @@ const Transactions = () => {
                             >
                               <Receipt className="h-4 w-4" />
                             </Button>
+                            {canDeleteTransactions && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setDeletingSale(sale)}
+                                className="text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -390,6 +413,38 @@ const Transactions = () => {
         open={!!editingSale}
         onOpenChange={(open) => !open && setEditingSale(null)}
       />
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deletingSale} onOpenChange={(open) => !open && setDeletingSale(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this transaction?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deletingSale && (
+                <>
+                  Transaction <span className="font-mono">#{deletingSale.id.slice(-8).toUpperCase()}</span>{" "}
+                  for R{deletingSale.total_amount.toFixed(2)} will be permanently deleted.
+                  Stock for sold items will be restored. This cannot be undone.
+                </>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteSale.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteSale.isPending}
+              onClick={async () => {
+                if (!deletingSale) return;
+                await deleteSale.mutateAsync(deletingSale.id);
+                setDeletingSale(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleteSale.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
