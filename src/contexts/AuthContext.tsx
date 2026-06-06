@@ -46,7 +46,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error && error.message !== 'Session not found' && (error as any).status !== 403) {
+        console.warn('Sign out error:', error);
+      }
+    } catch (e) {
+      console.warn('Sign out threw:', e);
+    } finally {
+      // Force local cleanup regardless of server response
+      setUser(null);
+      setSession(null);
+      try {
+        Object.keys(localStorage)
+          .filter((k) => k.startsWith('sb-') && k.endsWith('-auth-token'))
+          .forEach((k) => localStorage.removeItem(k));
+      } catch {}
+      window.location.href = '/auth';
+    }
   };
 
   const value = {
