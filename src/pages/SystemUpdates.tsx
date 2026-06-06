@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.2",
+    date: "2026-06-06",
+    type: "feature",
+    title: "Delete Transactions (Admin/Owner)",
+    description: "Admins and owners can now permanently delete entries from Transaction History.",
+    details: [
+      "New delete button on each row in Transactions, restricted to Admin and Owner",
+      "Confirmation dialog before deletion",
+      "Stock for items in the deleted transaction is automatically restored, with a reversal entry recorded in stock movements"
+    ]
+  },
+  {
     version: "1.4.1",
     date: "2026-06-05",
     type: "feature",
