@@ -323,3 +323,76 @@ export function useUpdateSaleMutation() {
     }
   });
 }
+
+export function useDeleteSaleMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (saleId: string) => {
+      // Fetch sale items to restore stock
+      const { data: items, error: itemsFetchError } = await supabase
+        .from('sale_items')
+        .select('product_id, quantity')
+        .eq('sale_id', saleId);
+
+      if (itemsFetchError) throw itemsFetchError;
+
+      // Restore stock for each item
+      for (const item of items || []) {
+        const { data: product } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.product_id)
+          .single();
+
+        if (product) {
+          await supabase
+            .from('products')
+            .update({ stock_quantity: product.stock_quantity + item.quantity })
+            .eq('id', item.product_id);
+
+          await supabase
+            .from('stock_movements')
+            .insert({
+              product_id: item.product_id,
+              movement_type: 'adjustment',
+              quantity: item.quantity,
+              reference_id: saleId,
+              notes: `Reversal: deleted sale #${saleId.slice(-8).toUpperCase()}`,
+            });
+        }
+      }
+
+      // Delete sale items
+      const { error: deleteItemsError } = await supabase
+        .from('sale_items')
+        .delete()
+        .eq('sale_id', saleId);
+      if (deleteItemsError) throw deleteItemsError;
+
+      // Delete sale
+      const { error: deleteSaleError } = await supabase
+        .from('sales')
+        .delete()
+        .eq('id', saleId);
+      if (deleteSaleError) throw deleteSaleError;
+
+      return saleId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['todays-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['recent-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sales'] });
+      queryClient.invalidateQueries({ queryKey: ['all-sales-details'] });
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      toast({ title: 'Transaction deleted successfully' });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error deleting transaction',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
