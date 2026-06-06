@@ -86,6 +86,20 @@ serve(async (req) => {
       );
     }
 
+    // Enforce role-ceiling: admins cannot create owners/admins; only owners can.
+    const ALLOWED_ROLES_FOR_ADMIN = ["pharmacist", "manager"];
+    const ALLOWED_ROLES_FOR_OWNER = ["pharmacist", "manager", "admin", "owner"];
+    const permittedRoles =
+      userRole === "owner" ? ALLOWED_ROLES_FOR_OWNER : ALLOWED_ROLES_FOR_ADMIN;
+
+    if (!permittedRoles.includes(role)) {
+      console.log("Role assignment denied:", { userRole, requestedRole: role });
+      return new Response(
+        JSON.stringify({ error: "You cannot assign a role at or above your own" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     // Validate password length
     if (password.length < 6) {
       return new Response(
