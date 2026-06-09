@@ -325,3 +325,31 @@ export function useDisposeProductMutation() {
     }
   });
 }
+
+export function useDeleteProductMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (productId: string) => {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+      if (error) throw error;
+      return productId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({ title: 'Product deleted successfully' });
+    },
+    onError: (error) => {
+      toast({
+        title: 'Error deleting product',
+        description: error.message,
+        variant: 'destructive',
+      });
+    },
+  });
+}
