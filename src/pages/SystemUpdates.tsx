@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.3",
+    date: "2026-06-09",
+    type: "feature",
+    title: "Delete Inventory Items (Admin/Owner)",
+    description: "Admins and owners can now permanently delete products from the Stock inventory.",
+    details: [
+      "New delete button on each inventory row, restricted to Admin and Owner roles",
+      "Confirmation dialog before deletion to prevent accidents"
+    ]
+  },
+  {
     version: "1.4.2",
     date: "2026-06-06",
     type: "feature",
