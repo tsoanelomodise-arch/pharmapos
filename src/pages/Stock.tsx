@@ -5,7 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Package, TrendingDown, AlertTriangle, Search, Truck, Trash2, Mail, Phone, User, Star, Users } from "lucide-react";
-import { useProducts, useLowStockProducts, useDisposeProductMutation, useRestockMutation } from "@/hooks/useProducts";
+import { useProducts, useLowStockProducts, useDisposeProductMutation, useRestockMutation, useDeleteProductMutation } from "@/hooks/useProducts";
 import { RestockDialog } from "@/components/RestockDialog";
 import { RestockHistoryLog } from "@/components/RestockHistoryLog";
 import { useSuppliers, useDeleteSupplierMutation } from "@/hooks/useSuppliers";
@@ -15,7 +15,7 @@ import { SupplierForm } from "@/components/SupplierForm";
 import { StockReportDialog } from "@/components/StockReportDialog";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useCanAccessFinancialData } from "@/hooks/useUserRole";
+import { useCanAccessFinancialData, useUserRole } from "@/hooks/useUserRole";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
@@ -37,6 +37,7 @@ const Stock = () => {
   const [activeTab, setActiveTab] = useState(() => searchParams.get("tab") || "inventory");
   const [disposalProduct, setDisposalProduct] = useState<{ id: string; name: string; quantity: number } | null>(null);
   const [supplierToDelete, setSupplierToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [productToDelete, setProductToDelete] = useState<{ id: string; name: string } | null>(null);
   const { data: products = [], isLoading } = useProducts();
   const { data: lowStockProducts = [] } = useLowStockProducts();
   const { data: suppliers = [], isLoading: suppliersLoading } = useSuppliers();
@@ -47,6 +48,9 @@ const Stock = () => {
   const restockMutation = useRestockMutation();
   const [restockQuantities, setRestockQuantities] = useState<Record<string, number>>({});
   const deleteSupplierMutation = useDeleteSupplierMutation();
+  const deleteProductMutation = useDeleteProductMutation();
+  const { data: userRole } = useUserRole();
+  const canDeleteProducts = userRole === 'admin' || userRole === 'owner';
 
   // Create a map of product ID to their suppliers
   const productSuppliersMap = useMemo(() => {
@@ -343,7 +347,19 @@ const Stock = () => {
                             {product.stock_quantity === 0 ? "Out" : product.stock_quantity <= product.minimum_stock ? "Low" : "In Stock"}
                           </Badge>
                         </div>
-                        <div className="hidden md:block"><ProductForm product={product} /></div>
+                        <div className="hidden md:flex gap-2 items-center">
+                          <ProductForm product={product} />
+                          {canDeleteProducts && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setProductToDelete({ id: product.id, name: product.name })}
+                              aria-label={`Delete ${product.name}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-destructive" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -606,6 +622,31 @@ const Stock = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={() => { if (supplierToDelete) { deleteSupplierMutation.mutate(supplierToDelete.id); setSupplierToDelete(null); } }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!productToDelete} onOpenChange={() => setProductToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Inventory Item</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to permanently delete <strong>{productToDelete?.name}</strong>? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (productToDelete) {
+                  deleteProductMutation.mutate(productToDelete.id);
+                  setProductToDelete(null);
+                }
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
