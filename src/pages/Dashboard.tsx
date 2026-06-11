@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon, Calendar } from "lucide-react";
+import { Pill, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, Plus, CalendarIcon, Calendar, Boxes } from "lucide-react";
 import { useDashboardStats } from "@/hooks/useDashboardStats";
 import { useNavigate } from "react-router-dom";
 import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, CartesianGrid, Legend } from "recharts";
@@ -601,6 +601,61 @@ const Dashboard = memo(() => {
                     />
                   </BarChart>
                 </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Inventory Items Sold Chart */}
+          {(hasAccess('reports') || hasAccess('stock')) && (
+            <Card className="overflow-hidden lg:col-span-2">
+              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <CardTitle className="flex items-center gap-2">
+                    <Boxes className="h-5 w-5 text-primary" />
+                    Inventory Items Sold
+                  </CardTitle>
+                  <Badge variant="secondary" className="text-xs">
+                    {stats?.totalItemsSold || 0} units · {getPeriodLabel()}
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="pt-6">
+                {stats?.inventoryItemsSold && stats.inventoryItemsSold.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={320}>
+                    <BarChart
+                      data={stats.inventoryItemsSold}
+                      layout="vertical"
+                      margin={{ left: 20, right: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                      <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} allowDecimals={false} />
+                      <YAxis
+                        type="category"
+                        dataKey="name"
+                        stroke="#6b7280"
+                        style={{ fontSize: '12px' }}
+                        width={140}
+                        tick={{ fontSize: 12 }}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: 'white',
+                          border: '1px solid #e5e7eb',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                        }}
+                        formatter={(value: number) => [`${value} units`, 'Sold']}
+                      />
+                      <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Boxes className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                    <p className="text-sm text-muted-foreground">No inventory items sold in this period</p>
+                    <p className="text-xs text-muted-foreground">Try selecting a different date range</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           )}
