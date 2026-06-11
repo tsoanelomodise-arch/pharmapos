@@ -82,7 +82,7 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         // Inventory items sold within selected date range
         supabase
           .from('sale_items')
-          .select('quantity, products(name), sales!inner(created_at)')
+          .select('quantity, unit_price, total_price, products(name), sales!inner(created_at)')
           .gte('sales.created_at', startDateTime)
           .lte('sales.created_at', endDateTime)
       ]);
