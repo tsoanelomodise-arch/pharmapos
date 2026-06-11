@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.4",
+    date: "2026-06-11",
+    type: "feature",
+    title: "Inventory Items Sold Chart on Dashboard",
+    description: "New dashboard chart shows units sold per inventory item and updates based on the selected date range.",
+    details: [
+      "Horizontal bar chart of the top 10 items sold in the selected period",
+      "Total units sold badge reflects the active date filter (Today, Last 7/30 Days, Custom)"
+    ]
+  },
+  {
     version: "1.4.3",
     date: "2026-06-09",
     type: "feature",
