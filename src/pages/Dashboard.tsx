@@ -644,7 +644,14 @@ const Dashboard = memo(() => {
                           borderRadius: '8px',
                           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                         }}
-                        formatter={(value: number) => [`${value} units`, 'Sold']}
+                        formatter={(value: number, _name: string, props: any) => {
+                          const amount = props?.payload?.amount || 0;
+                          return [
+                            <div key="qty" className="text-right">{value} units</div>,
+                            <div key="amt" className="text-right">R{Number(amount).toFixed(2)}</div>,
+                            'Sold'
+                          ];
+                        }}
                       />
                       <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
                     </BarChart>
