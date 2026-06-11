@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.5",
+    date: "2026-06-11",
+    type: "improvement",
+    title: "Inventory Items Sold Revenue Display",
+    description: "The Inventory Items Sold chart now displays total sales revenue alongside units sold.",
+    details: [
+      "Badge shows total revenue (R) for items in the selected period",
+      "Tooltip on each bar shows both quantity and sales amount"
+    ]
+  },
+  {
     version: "1.4.4",
     date: "2026-06-11",
     type: "feature",
