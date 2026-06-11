@@ -615,7 +615,7 @@ const Dashboard = memo(() => {
                     Inventory Items Sold
                   </CardTitle>
                   <Badge variant="secondary" className="text-xs">
-                    {stats?.totalItemsSold || 0} units · {getPeriodLabel()}
+                    {stats?.totalItemsSold || 0} units · R{stats?.totalItemsAmount?.toFixed(2) || '0.00'} · {getPeriodLabel()}
                   </Badge>
                 </div>
               </CardHeader>
