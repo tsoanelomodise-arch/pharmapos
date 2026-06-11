@@ -29,7 +29,8 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         debtorsResult,
         expiringResult,
         weekSalesResult,
-        topProductsResult
+        topProductsResult,
+        itemsSoldResult
       ] = await Promise.all([
         // Prescriptions count for selected period
         supabase
@@ -76,7 +77,14 @@ export function useDashboardStats(params?: DashboardStatsParams) {
           .from('sale_items')
           .select('product_id, quantity, products(name)')
           .limit(5)
-          .order('quantity', { ascending: false })
+          .order('quantity', { ascending: false }),
+
+        // Inventory items sold within selected date range
+        supabase
+          .from('sale_items')
+          .select('quantity, products(name), sales!inner(created_at)')
+          .gte('sales.created_at', startDateTime)
+          .lte('sales.created_at', endDateTime)
       ]);
 
       // Process results
@@ -142,6 +150,18 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         { name: 'Disprin', sales: 65 }
       ];
 
+      // Aggregate inventory items sold by product
+      const itemsSoldMap = new Map<string, number>();
+      (itemsSoldResult.data as any[] | null)?.forEach((row) => {
+        const name = row.products?.name || 'Unknown';
+        itemsSoldMap.set(name, (itemsSoldMap.get(name) || 0) + (row.quantity || 0));
+      });
+      const inventoryItemsSold = Array.from(itemsSoldMap.entries())
+        .map(([name, quantity]) => ({ name, quantity }))
+        .sort((a, b) => b.quantity - a.quantity)
+        .slice(0, 10);
+      const totalItemsSold = inventoryItemsSold.reduce((s, i) => s + i.quantity, 0);
+
       return {
         prescriptionsCount,
         salesTotal,
@@ -152,7 +172,9 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         expiringItems: expiringCount,
         salesTrend: finalSalesTrend,
         categoryData,
-        topProducts: topProductsData
+        topProducts: topProductsData,
+        inventoryItemsSold,
+        totalItemsSold,
       };
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
