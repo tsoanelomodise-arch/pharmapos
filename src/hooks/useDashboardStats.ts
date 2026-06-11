@@ -152,15 +152,24 @@ export function useDashboardStats(params?: DashboardStatsParams) {
 
       // Aggregate inventory items sold by product
       const itemsSoldMap = new Map<string, number>();
+      const itemsAmountMap = new Map<string, number>();
       (itemsSoldResult.data as any[] | null)?.forEach((row) => {
         const name = row.products?.name || 'Unknown';
-        itemsSoldMap.set(name, (itemsSoldMap.get(name) || 0) + (row.quantity || 0));
+        const qty = row.quantity || 0;
+        const amount = Number(row.total_price) || (Number(row.unit_price) * qty) || 0;
+        itemsSoldMap.set(name, (itemsSoldMap.get(name) || 0) + qty);
+        itemsAmountMap.set(name, (itemsAmountMap.get(name) || 0) + amount);
       });
       const inventoryItemsSold = Array.from(itemsSoldMap.entries())
-        .map(([name, quantity]) => ({ name, quantity }))
+        .map(([name, quantity]) => ({
+          name,
+          quantity,
+          amount: itemsAmountMap.get(name) || 0,
+        }))
         .sort((a, b) => b.quantity - a.quantity)
         .slice(0, 10);
       const totalItemsSold = inventoryItemsSold.reduce((s, i) => s + i.quantity, 0);
+      const totalItemsAmount = inventoryItemsSold.reduce((s, i) => s + i.amount, 0);
 
       return {
         prescriptionsCount,
@@ -175,6 +184,7 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         topProducts: topProductsData,
         inventoryItemsSold,
         totalItemsSold,
+        totalItemsAmount,
       };
     },
     staleTime: 2 * 60 * 1000, // Cache for 2 minutes
