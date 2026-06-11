@@ -638,19 +638,18 @@ const Dashboard = memo(() => {
                         tick={{ fontSize: 12 }}
                       />
                       <Tooltip
-                        contentStyle={{
-                          backgroundColor: 'white',
-                          border: '1px solid #e5e7eb',
-                          borderRadius: '8px',
-                          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                        }}
-                        formatter={(value: number, _name: string, props: any) => {
-                          const amount = props?.payload?.amount || 0;
-                          return [
-                            <div key="qty" className="text-right">{value} units</div>,
-                            <div key="amt" className="text-right">R{Number(amount).toFixed(2)}</div>,
-                            'Sold'
-                          ];
+                        content={({ active, payload }) => {
+                          if (active && payload && payload.length) {
+                            const data = payload[0].payload;
+                            return (
+                              <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-md">
+                                <p className="font-medium text-sm">{data.name}</p>
+                                <p className="text-sm text-gray-600">{data.quantity} units</p>
+                                <p className="text-sm text-gray-600">R{Number(data.amount).toFixed(2)}</p>
+                              </div>
+                            );
+                          }
+                          return null;
                         }}
                       />
                       <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
