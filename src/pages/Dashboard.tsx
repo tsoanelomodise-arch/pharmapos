@@ -199,66 +199,120 @@ const Dashboard = memo(() => {
         </CardContent>
       </Card>
 
-      {/* Inventory Items Sold */}
-      {(hasAccess('reports') || hasAccess('stock')) && (
-        <Card className="overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-            <div className="flex items-center justify-between flex-wrap gap-2">
+      {/* Inventory Items Sold & Sales Trend */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {(hasAccess('reports') || hasAccess('stock')) && (
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <CardTitle className="flex items-center gap-2">
+                  <Boxes className="h-5 w-5 text-primary" />
+                  Inventory Items Sold
+                </CardTitle>
+                <Badge variant="secondary" className="text-xs">
+                  {stats?.totalItemsSold || 0} units · R{stats?.totalItemsAmount?.toFixed(2) || '0.00'} · {getPeriodLabel()}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-6">
+              {stats?.inventoryItemsSold && stats.inventoryItemsSold.length > 0 ? (
+                <ResponsiveContainer width="100%" height={320}>
+                  <BarChart
+                    data={stats.inventoryItemsSold}
+                    layout="vertical"
+                    margin={{ left: 20, right: 20 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
+                    <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} allowDecimals={false} />
+                    <YAxis
+                      type="category"
+                      dataKey="name"
+                      stroke="#6b7280"
+                      style={{ fontSize: '12px' }}
+                      width={140}
+                      tick={{ fontSize: 12 }}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload;
+                          return (
+                            <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-md">
+                              <p className="font-medium text-sm">{data.name}</p>
+                              <p className="text-sm text-gray-600">{data.quantity} units</p>
+                              <p className="text-sm text-gray-600">R{Number(data.amount).toFixed(2)}</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <Boxes className="h-10 w-10 text-muted-foreground/50 mb-2" />
+                  <p className="text-sm text-muted-foreground">No inventory items sold in this period</p>
+                  <p className="text-xs text-muted-foreground">Try selecting a different date range</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Sales Trend (Last 7 Days) */}
+        {(hasAccess('reports') || hasAccess('pos')) && (
+          <Card className="overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
               <CardTitle className="flex items-center gap-2">
-                <Boxes className="h-5 w-5 text-primary" />
-                Inventory Items Sold
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Sales Trend (Last 7 Days)
               </CardTitle>
-              <Badge variant="secondary" className="text-xs">
-                {stats?.totalItemsSold || 0} units · R{stats?.totalItemsAmount?.toFixed(2) || '0.00'} · {getPeriodLabel()}
-              </Badge>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-6">
-            {stats?.inventoryItemsSold && stats.inventoryItemsSold.length > 0 ? (
+            </CardHeader>
+            <CardContent className="pt-6">
               <ResponsiveContainer width="100%" height={320}>
-                <BarChart
-                  data={stats.inventoryItemsSold}
-                  layout="vertical"
-                  margin={{ left: 20, right: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                  <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} allowDecimals={false} />
-                  <YAxis
-                    type="category"
-                    dataKey="name"
+                <AreaChart data={stats?.salesTrend || []}>
+                  <defs>
+                    <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#3BB3B0" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#3BB3B0" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+                  <XAxis 
+                    dataKey="date" 
                     stroke="#6b7280"
                     style={{ fontSize: '12px' }}
-                    width={140}
-                    tick={{ fontSize: 12 }}
                   />
-                  <Tooltip
-                    content={({ active, payload }) => {
-                      if (active && payload && payload.length) {
-                        const data = payload[0].payload;
-                        return (
-                          <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-md">
-                            <p className="font-medium text-sm">{data.name}</p>
-                            <p className="text-sm text-gray-600">{data.quantity} units</p>
-                            <p className="text-sm text-gray-600">R{Number(data.amount).toFixed(2)}</p>
-                          </div>
-                        );
-                      }
-                      return null;
+                  <YAxis 
+                    stroke="#6b7280"
+                    style={{ fontSize: '12px' }}
+                    tickFormatter={(value) => `R${value}`}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      backgroundColor: 'white', 
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
                     }}
+                    formatter={(value: number) => [`R${value.toFixed(2)}`, 'Sales']}
                   />
-                  <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
-                </BarChart>
+                  <Area 
+                    type="monotone" 
+                    dataKey="amount" 
+                    stroke="#3BB3B0" 
+                    strokeWidth={2}
+                    fillOpacity={1} 
+                    fill="url(#colorAmount)" 
+                  />
+                </AreaChart>
               </ResponsiveContainer>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <Boxes className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                <p className="text-sm text-muted-foreground">No inventory items sold in this period</p>
-                <p className="text-xs text-muted-foreground">Try selecting a different date range</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
       {/* Key Metrics */}
       {showMetricCards && (
@@ -527,58 +581,6 @@ const Dashboard = memo(() => {
       {/* Charts Section */}
       {showCharts && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Sales Trend Chart */}
-          {(hasAccess('reports') || hasAccess('pos')) && (
-            <Card className="overflow-hidden">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-primary" />
-                  Sales Trend (Last 7 Days)
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <ResponsiveContainer width="100%" height={250}>
-                  <AreaChart data={stats?.salesTrend || []}>
-                    <defs>
-                      <linearGradient id="colorAmount" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#3BB3B0" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#3BB3B0" stopOpacity={0}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
-                    <XAxis 
-                      dataKey="date" 
-                      stroke="#6b7280"
-                      style={{ fontSize: '12px' }}
-                    />
-                    <YAxis 
-                      stroke="#6b7280"
-                      style={{ fontSize: '12px' }}
-                      tickFormatter={(value) => `R${value}`}
-                    />
-                    <Tooltip 
-                      contentStyle={{ 
-                        backgroundColor: 'white', 
-                        border: '1px solid #e5e7eb',
-                        borderRadius: '8px',
-                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
-                      }}
-                      formatter={(value: number) => [`R${value.toFixed(2)}`, 'Sales']}
-                    />
-                    <Area 
-                      type="monotone" 
-                      dataKey="amount" 
-                      stroke="#3BB3B0" 
-                      strokeWidth={2}
-                      fillOpacity={1} 
-                      fill="url(#colorAmount)" 
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          )}
-
           {/* Category Breakdown Chart */}
           {hasAccess('reports') && (
             <Card className="overflow-hidden">
