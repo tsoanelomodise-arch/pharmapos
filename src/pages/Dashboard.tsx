@@ -666,66 +666,6 @@ const Dashboard = memo(() => {
             </Card>
           )}
 
-          {/* Inventory Items Sold Chart */}
-          {(hasAccess('reports') || hasAccess('stock')) && (
-            <Card className="overflow-hidden lg:col-span-2">
-              <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 border-b">
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <CardTitle className="flex items-center gap-2">
-                    <Boxes className="h-5 w-5 text-primary" />
-                    Inventory Items Sold
-                  </CardTitle>
-                  <Badge variant="secondary" className="text-xs">
-                    {stats?.totalItemsSold || 0} units · R{stats?.totalItemsAmount?.toFixed(2) || '0.00'} · {getPeriodLabel()}
-                  </Badge>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-6">
-                {stats?.inventoryItemsSold && stats.inventoryItemsSold.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={320}>
-                    <BarChart
-                      data={stats.inventoryItemsSold}
-                      layout="vertical"
-                      margin={{ left: 20, right: 20 }}
-                    >
-                      <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                      <XAxis type="number" stroke="#6b7280" style={{ fontSize: '12px' }} allowDecimals={false} />
-                      <YAxis
-                        type="category"
-                        dataKey="name"
-                        stroke="#6b7280"
-                        style={{ fontSize: '12px' }}
-                        width={140}
-                        tick={{ fontSize: 12 }}
-                      />
-                      <Tooltip
-                        content={({ active, payload }) => {
-                          if (active && payload && payload.length) {
-                            const data = payload[0].payload;
-                            return (
-                              <div className="bg-white border border-gray-200 rounded-lg p-2 shadow-md">
-                                <p className="font-medium text-sm">{data.name}</p>
-                                <p className="text-sm text-gray-600">{data.quantity} units</p>
-                                <p className="text-sm text-gray-600">R{Number(data.amount).toFixed(2)}</p>
-                              </div>
-                            );
-                          }
-                          return null;
-                        }}
-                      />
-                      <Bar dataKey="quantity" fill="#3BB3B0" radius={[0, 8, 8, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <Boxes className="h-10 w-10 text-muted-foreground/50 mb-2" />
-                    <p className="text-sm text-muted-foreground">No inventory items sold in this period</p>
-                    <p className="text-xs text-muted-foreground">Try selecting a different date range</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          )}
         </div>
       )}
     </div>
