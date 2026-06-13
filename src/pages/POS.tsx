@@ -473,7 +473,7 @@ const POS = () => {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <User className="h-4 w-4" />
-                Customer (Optional)
+                Patient (Required)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
