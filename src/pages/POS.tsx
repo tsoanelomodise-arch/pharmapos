@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, User, X } from "lucide-react";
+import { ShoppingCart, Scan, CreditCard, Receipt, Trash2, Plus, Minus, User, X, RotateCcw } from "lucide-react";
 import { useProductSearch } from "@/hooks/useProducts";
 import { useCreateSaleMutation, useRecentSales } from "@/hooks/useSales";
 import { useCustomerSearch } from "@/hooks/useCustomers";
@@ -13,6 +13,7 @@ import { useBusinessSettings } from "@/hooks/useBusinessSettings";
 import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
+import { CreditTransactionDialog } from "@/components/CreditTransactionDialog";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
 import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -35,6 +36,7 @@ const POS = () => {
   const [cashPaid, setCashPaid] = useState<string>("");
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
+  const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
   const [activePrescription, setActivePrescription] = useState<any>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
@@ -46,6 +48,7 @@ const POS = () => {
   const createSaleMutation = useCreateSaleMutation();
   const { data: role } = useUserRole();
   const canViewTransactions = role === 'admin' || role === 'owner';
+  const canCreditTransactions = role === 'admin' || role === 'owner';
 
   // Pre-populate cart from prescription
   useEffect(() => {
@@ -410,6 +413,23 @@ const POS = () => {
                       >
                         <Receipt className="h-3 w-3" />
                       </Button>
+                      {canCreditTransactions
+                        && !sale.credit_note_for
+                        && sale.payment_status !== 'credited'
+                        && sale.total_amount >= 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          title="Credit transaction"
+                          className="text-amber-600 hover:text-amber-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCreditingSaleId(sale.id);
+                          }}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -663,6 +683,12 @@ const POS = () => {
           onOpenChange={setShowLastReceipt}
         />
       )}
+      {/* Credit Transaction Dialog */}
+      <CreditTransactionDialog
+        saleId={creditingSaleId}
+        open={!!creditingSaleId}
+        onOpenChange={(open) => !open && setCreditingSaleId(null)}
+      />
     </div>
   );
 };

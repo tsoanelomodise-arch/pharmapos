@@ -16,6 +16,20 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.6",
+    date: "2026-06-13",
+    type: "feature",
+    title: "Credit Transactions (Admin/Owner)",
+    description: "Admins and owners can credit completed transactions in full or per item from POS and Transaction History.",
+    details: [
+      "New credit button on each row, restricted to Admin and Owner",
+      "Choose specific items and quantities to credit; reason is required",
+      "Stock is automatically restored and a reversal recorded in stock movements",
+      "A linked credit note is created so all reports (revenue, items sold, payment methods, dashboard) net the refund correctly",
+      "Fully credited transactions are marked with a 'Credited' status"
+    ]
+  },
+  {
     version: "1.4.5",
     date: "2026-06-11",
     type: "improvement",
