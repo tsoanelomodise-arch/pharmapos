@@ -36,6 +36,9 @@ const POS = () => {
   const [cashPaid, setCashPaid] = useState<string>("");
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
+  const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
+  const { data: role } = useUserRole();
+  const canCreditTransactions = role === 'admin' || role === 'owner';
   const [activePrescription, setActivePrescription] = useState<any>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
@@ -411,6 +414,23 @@ const POS = () => {
                       >
                         <Receipt className="h-3 w-3" />
                       </Button>
+                      {canCreditTransactions
+                        && !sale.credit_note_for
+                        && sale.payment_status !== 'credited'
+                        && sale.total_amount >= 0 && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          title="Credit transaction"
+                          className="text-amber-600 hover:text-amber-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setCreditingSaleId(sale.id);
+                          }}
+                        >
+                          <RotateCcw className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </div>
                 ))}
