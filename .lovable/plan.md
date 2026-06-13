@@ -1,63 +1,92 @@
-## Goal
 
-Let admins/owners control access to **subpages** (e.g. Transactions, Suppliers, Audit Trail, System Updates, Database Status) in the Module Permissions screen — not just top-level modules.
+# Credit Transactions (Full & Partial)
 
-## Approach
+Add a "Credit" action so admins and owners can refund a completed sale — fully or per-item — with mandatory reason, automatic stock restoration, and a linked credit-note record that nets correctly into all reports.
 
-Introduce a new set of granular subpage modules in the existing `app_module` enum and gate each subpage route + sidebar sub-item on its own module. Then surface them in `ModulePermissionsManager` grouped under their parent module for clarity.
+## User-facing changes
 
-### Subpages to make individually permissionable
+1. **Transactions page** (`src/pages/Transactions.tsx`)
+   - New "Credit" button (icon: RotateCcw) in the row actions, visible only to `admin`/`owner`.
+   - Hidden when the sale is already fully credited; shows a "Credited" / "Partial credit" badge in the Status column.
+   - Clicking opens the new **CreditTransactionDialog**.
 
-| Parent module | New submodule | Route |
-|---|---|---|
-| pos | `transactions` | `/pos/transactions` |
-| stock | `suppliers` | `/stock?tab=suppliers` |
-| reports | `audit_trail` | `/reports/audit-trail` (replaces current role-only gate) |
-| help | `system_updates` | `/help/updates` |
-| help | `database_status` | `/help/database` |
+2. **POS page** (`src/pages/POS.tsx`)
+   - Recent-sales list/section gets the same "Credit" button (admin/owner only) opening the same dialog.
 
-(`stock_movement`, `orders`, `edit_transactions`, `medical_aid`, `settings` already exist as separate modules — left unchanged.)
+3. **CreditTransactionDialog** (new, `src/components/CreditTransactionDialog.tsx`)
+   - Lists each sale line item with: original qty, already-credited qty (if any), and an input for "Qty to credit" (0…remaining).
+   - "Credit all" shortcut sets every row to its remaining qty.
+   - Required **Reason** textarea (e.g. damaged, customer return, wrong item).
+   - Read-only summary: items selected, refund subtotal, VAT reversed, total refund (negative R value).
+   - Confirm button calls the credit edge function.
 
-### Changes
+4. **Status badge** updated to recognise `credited` (full) and a derived `partial` state (original `completed` + at least one linked credit note).
 
-1. **Migration** — add the new values to the `app_module` enum: `transactions`, `suppliers`, `audit_trail`, `system_updates`, `database_status`. Update `get_user_modules()` so owners receive them automatically.
+## Data model
 
-2. **`src/hooks/useModulePermissions.ts`** — extend the `AppModule` TypeScript union to include the new values.
+Migration adds to `public.sales`:
+- `credit_note_for uuid` — references the original sale this row credits (null for normal sales).
+- `credit_reason text` — populated on credit-note rows and copied as a note on the original when fully credited.
+- Index on `credit_note_for`.
 
-3. **`src/App.tsx`** — change the `module=` prop on:
-   - `/pos/transactions` → `transactions`
-   - `/reports/audit-trail` → `audit_trail`
-   - `/help/updates` → `system_updates`
-   - `/help/database` → `database_status`
-   
-   Parent module access (e.g. `pos`, `reports`, `help`) is no longer required for the subpage; users granted only the subpage can still reach it directly.
+A **credit note** is a regular row in `sales` with:
+- `total_amount`, `tax_amount`, `discount_amount` stored as **negative** values.
+- `payment_status = 'completed'` so it nets into existing report aggregations.
+- `payment_method` copied from the original.
+- `credit_note_for = original.id`, `credit_reason` set.
+- Matching negative `sale_items` rows (negative `quantity`, negative `total_price`).
 
-4. **`src/components/AppSidebar.tsx`** —
-   - Replace role-based gate on Audit Trail with `module: "audit_trail"`.
-   - Add `module` to Transactions sub-item (`transactions`) and Suppliers sub-item (`suppliers`).
-   - Sub-item filtering already honours `subItem.module`, so no logic change beyond the data.
-   - Remove the now-unused `requiredRoles`/`useUserRole` plumbing here.
+The original sale is updated:
+- If every item is now fully credited → `payment_status = 'credited'` (drops out of completed-sales reports).
+- Otherwise the original stays `completed`; the negative credit-note row offsets it in totals.
 
-5. **`src/components/ModulePermissionsManager.tsx`** — extend `ALL_MODULES` with the new entries and group/label them as subpages (e.g. "Transactions (POS subpage)", "Suppliers (Stock subpage)", "Audit Trail (Reports subpage)", "System Updates (Help subpage)", "Database Status (Help subpage)") so admins can tick them per user.
+Stock: for each credited line, `products.stock_quantity` is incremented and a `stock_movements` row is inserted with `movement_type = 'return'`, positive quantity, `reference_id = creditNoteId`, note = `Credit: <reason>`.
 
-6. **`src/components/ModuleProtectedRoute.tsx` & `src/components/SmartRedirect.tsx`** — add route mappings for the new modules so redirects work when a user has only a subpage permission.
+The existing `log_audit_event` trigger on `sales`/`sale_items` automatically records the credit in the audit trail.
 
-7. **`src/pages/Help.tsx`** — if it links to System Updates / Database Status, those cards should hide when the user lacks the corresponding submodule (small conditional render).
+## Edge function
 
-8. **`src/pages/SystemUpdates.tsx`** — append a v1.4.1 entry: "Admins/owners can now grant per-subpage access (Transactions, Suppliers, Audit Trail, System Updates, Database Status) from Module Permissions."
+`supabase/functions/credit-sale/index.ts` (new). Performs the work server-side because it touches multiple tables and must be atomic-ish under one trusted actor.
 
-### Backwards compatibility
+- Validates the caller's JWT and confirms the role is `admin` or `owner` via `user_roles`.
+- Input (Zod): `saleId`, `reason` (min 3 chars), `items: [{ saleItemId, quantity }]` with `quantity > 0` and `≤ remaining`.
+- Loads the original sale + items, computes already-credited quantities by summing linked credit-note `sale_items`, rejects over-credit.
+- Recomputes negative subtotal, VAT (using the original sale's effective rate: `tax_amount / (total - tax)`), and total.
+- Inserts the credit-note `sales` row, then its negative `sale_items`, then increments stock and writes `stock_movements`.
+- Marks the original `credited` if fully refunded.
+- Returns the new credit note id; CORS handled.
 
-Existing users keep their current parent-module permissions. To avoid silently losing access to subpages they previously could see, the migration will **backfill** the new submodule permissions for every non-owner user who already has the parent module:
+Frontend calls it via `supabase.functions.invoke('credit-sale', ...)`.
 
-- everyone with `pos` → also gets `transactions`
-- everyone with `stock` → also gets `suppliers`
-- everyone with `reports` → also gets `audit_trail` (admins/owners only — skip pharmacist/manager so we don't widen audit log access)
-- everyone with `help` → also gets `system_updates` and `database_status`
+## Reports & dashboard impact
 
-Owners are unaffected — `get_user_modules` returns the full list for them.
+All existing aggregations already filter `payment_status = 'completed'`, so:
+- Full credits: original flips to `credited` → removed from revenue, transaction counts, top-products, sales-by-category, sales trend.
+- Partial credits: original stays in; the negative credit-note row (also `completed`, negative totals, negative item quantities) nets it down. Items-sold counts, revenue, payment-method splits, average transaction value, and the dashboard "Inventory Items Sold" chart all reflect the net automatically.
 
-### Out of scope
+No report files need code changes. The credit-note `sales` row carries the same `created_at` (defaults to now), so credits show up in the period they happen, which is the standard accounting approach.
 
-- No change to RLS on underlying tables; this is UI/navigation gating only.
-- `stock_movement`, `edit_transactions`, `medical_aid`, `settings`, `orders` already work this way and are not touched.
+## Permissions
+
+- Frontend gate: `role === 'admin' || role === 'owner'` (same check pattern as delete).
+- Backend gate: edge function re-validates role from `user_roles` — never trust the client.
+
+## Changelog
+
+Prepend a new `1.4.6` entry to `src/pages/SystemUpdates.tsx` describing the credit feature.
+
+## Files touched
+
+- New: `supabase/functions/credit-sale/index.ts`
+- New: `src/components/CreditTransactionDialog.tsx`
+- New: `src/hooks/useCreditSale.ts` (thin wrapper around `functions.invoke` + query invalidation)
+- Edit: `src/pages/Transactions.tsx` (action button, status badge for credited/partial)
+- Edit: `src/pages/POS.tsx` (action in recent-sales area)
+- Edit: `src/hooks/useSales.ts` (extend `SaleWithDetails` with `credit_note_for`, `credit_reason`, and a `credited_items_count` derived in the query so the dialog/table can show remaining quantities)
+- Edit: `src/pages/SystemUpdates.tsx`
+- Migration: add `credit_note_for`, `credit_reason`, index on `sales`.
+
+## Out of scope
+
+- Re-printing a credit-note receipt (can reuse existing `ReceiptDialog` later if needed).
+- Cash-drawer reconciliation for cash credits (UI shows the refund amount; physical cash handling is manual).
