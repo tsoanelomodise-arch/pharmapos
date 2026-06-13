@@ -14,7 +14,6 @@ import { useUserRole } from "@/hooks/useUserRole";
 import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { CreditTransactionDialog } from "@/components/CreditTransactionDialog";
-import { useUserRole } from "@/hooks/useUserRole";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
 import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
