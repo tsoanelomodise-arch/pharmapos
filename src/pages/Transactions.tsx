@@ -7,11 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2 } from "lucide-react";
+import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2, RotateCcw } from "lucide-react";
 import { useAllSalesWithDetails, SaleWithDetails, useDeleteSaleMutation } from "@/hooks/useSales";
 import { useUserRole } from "@/hooks/useUserRole";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { EditTransactionDialog } from "@/components/EditTransactionDialog";
+import { CreditTransactionDialog } from "@/components/CreditTransactionDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,12 +38,14 @@ const Transactions = () => {
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleWithDetails | null>(null);
+  const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
   const { data: role } = useUserRole();
   const canEditTransactions = role === 'admin' || role === 'owner';
   const canDeleteTransactions = role === 'admin' || role === 'owner';
+  const canCreditTransactions = role === 'admin' || role === 'owner';
   const deleteSale = useDeleteSaleMutation();
 
   // Calculate date filters based on preset
@@ -108,6 +111,9 @@ const Transactions = () => {
   };
 
   const getStatusBadge = (status: string) => {
+    if (status === 'credited') {
+      return <Badge variant="destructive">Credited</Badge>;
+    }
     return (
       <Badge variant={status === "completed" ? "default" : "outline"}>
         {status}
@@ -351,6 +357,20 @@ const Transactions = () => {
                             >
                               <Receipt className="h-4 w-4" />
                             </Button>
+                            {canCreditTransactions
+                              && !sale.credit_note_for
+                              && sale.payment_status !== 'credited'
+                              && sale.total_amount >= 0 && (
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                title="Credit transaction"
+                                onClick={() => setCreditingSaleId(sale.id)}
+                                className="text-amber-600 hover:text-amber-700"
+                              >
+                                <RotateCcw className="h-4 w-4" />
+                              </Button>
+                            )}
                             {canDeleteTransactions && (
                               <Button
                                 size="sm"
@@ -412,6 +432,13 @@ const Transactions = () => {
         sale={editingSale}
         open={!!editingSale}
         onOpenChange={(open) => !open && setEditingSale(null)}
+      />
+
+      {/* Credit Transaction Dialog */}
+      <CreditTransactionDialog
+        saleId={creditingSaleId}
+        open={!!creditingSaleId}
+        onOpenChange={(open) => !open && setCreditingSaleId(null)}
       />
 
       {/* Delete Confirmation */}
