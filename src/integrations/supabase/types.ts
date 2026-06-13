@@ -457,6 +457,8 @@ export type Database = {
           cash_paid: number | null
           change_given: number | null
           created_at: string
+          credit_note_for: string | null
+          credit_reason: string | null
           customer_id: string | null
           discount_amount: number | null
           id: string
@@ -473,6 +475,8 @@ export type Database = {
           cash_paid?: number | null
           change_given?: number | null
           created_at?: string
+          credit_note_for?: string | null
+          credit_reason?: string | null
           customer_id?: string | null
           discount_amount?: number | null
           id?: string
@@ -489,6 +493,8 @@ export type Database = {
           cash_paid?: number | null
           change_given?: number | null
           created_at?: string
+          credit_note_for?: string | null
+          credit_reason?: string | null
           customer_id?: string | null
           discount_amount?: number | null
           id?: string
@@ -502,6 +508,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "sales_credit_note_for_fkey"
+            columns: ["credit_note_for"]
+            isOneToOne: false
+            referencedRelation: "sales"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "sales_customer_id_fkey"
             columns: ["customer_id"]
