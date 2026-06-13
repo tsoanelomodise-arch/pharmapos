@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.7",
+    date: "2026-06-13",
+    type: "improvement",
+    title: "Mandatory Patient Capture in POS",
+    description: "POS sales now require selecting an existing patient or registering a new one (name and phone) before payment can be processed.",
+    details: [
+      "Payment is blocked until a patient is selected for walk-in POS sales",
+      "Selected patient must have both a name and a phone number on record",
+      "Quick Patient Registration now requires a phone number",
+      "Prescription dispensing is unaffected — the prescription's patient is used automatically"
+    ]
+  },
+  {
     version: "1.4.6",
     date: "2026-06-13",
     type: "feature",

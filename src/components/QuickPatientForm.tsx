@@ -13,7 +13,7 @@ import { UserPlus } from "lucide-react";
 
 const quickPatientSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  phone: z.string().optional(),
+  phone: z.string().trim().min(1, "Phone is required"),
   email: z.string().email("Invalid email").optional().or(z.literal("")),
 });
 
@@ -114,7 +114,7 @@ export function QuickPatientForm({ onSuccess, triggerClassName }: QuickPatientFo
               name="phone"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Phone</FormLabel>
+                  <FormLabel>Phone *</FormLabel>
                   <FormControl>
                     <Input placeholder="Phone number" {...field} />
                   </FormControl>
