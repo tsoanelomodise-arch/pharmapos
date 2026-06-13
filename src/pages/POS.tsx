@@ -37,8 +37,6 @@ const POS = () => {
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
   const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
-  const { data: role } = useUserRole();
-  const canCreditTransactions = role === 'admin' || role === 'owner';
   const [activePrescription, setActivePrescription] = useState<any>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
@@ -50,6 +48,7 @@ const POS = () => {
   const createSaleMutation = useCreateSaleMutation();
   const { data: role } = useUserRole();
   const canViewTransactions = role === 'admin' || role === 'owner';
+  const canCreditTransactions = role === 'admin' || role === 'owner';
 
   // Pre-populate cart from prescription
   useEffect(() => {
