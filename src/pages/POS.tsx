@@ -191,6 +191,26 @@ const POS = () => {
   const processPayment = async () => {
     if (cartItems.length === 0) return;
 
+    // Enforce patient capture for POS sales (prescription dispensing already has a patient)
+    if (!activePrescription) {
+      if (!selectedCustomer) {
+        toast({
+          title: "Patient required",
+          description: "Please select an existing patient or register a new one before completing the sale.",
+          variant: "destructive",
+        });
+        return;
+      }
+      if (!selectedCustomer.name?.trim() || !selectedCustomer.phone?.trim()) {
+        toast({
+          title: "Patient details incomplete",
+          description: "The selected patient must have both a name and a phone number.",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
     // Validate cash payment
     if (paymentMethod === 'cash') {
       if (!cashPaid || cashAmount < total) {
