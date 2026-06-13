@@ -683,6 +683,12 @@ const POS = () => {
           onOpenChange={setShowLastReceipt}
         />
       )}
+      {/* Credit Transaction Dialog */}
+      <CreditTransactionDialog
+        saleId={creditingSaleId}
+        open={!!creditingSaleId}
+        onOpenChange={(open) => !open && setCreditingSaleId(null)}
+      />
     </div>
   );
 };
