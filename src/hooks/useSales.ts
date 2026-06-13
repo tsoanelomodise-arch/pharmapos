@@ -16,6 +16,8 @@ export interface Sale {
   change_given?: number;
   created_at: string;
   updated_at: string;
+  credit_note_for?: string | null;
+  credit_reason?: string | null;
 }
 
 export interface SaleItem {
