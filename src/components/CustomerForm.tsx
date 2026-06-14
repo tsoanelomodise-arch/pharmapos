@@ -144,9 +144,12 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
         principal_member_name: data.medical_aid?.principal_member_name || null,
       } : null;
 
+      const trimmedName = data.name.trim();
+      const trimmedPhone = data.phone?.trim() || null;
+
       const customerData = {
-        name: data.name,
-        phone: data.phone || null,
+        name: trimmedName,
+        phone: trimmedPhone,
         email: data.email || null,
         address: data.address || null,
         date_of_birth: data.date_of_birth || null,
@@ -162,6 +165,24 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
           .eq('id', customer.id);
         if (error) throw error;
       } else {
+        // Check for duplicate by name + phone before creating
+        if (trimmedPhone) {
+          const { data: existing, error: checkError } = await supabase
+            .from('customers')
+            .select('id, name, phone')
+            .ilike('name', trimmedName)
+            .eq('phone', trimmedPhone)
+            .maybeSingle();
+
+          if (checkError) throw checkError;
+
+          if (existing) {
+            const err = new Error(`A patient named "${existing.name}" with this phone number already exists.`);
+            (err as any).isDuplicate = true;
+            throw err;
+          }
+        }
+
         const { error } = await supabase
           .from('customers')
           .insert(customerData);
@@ -178,12 +199,20 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
       form.reset();
       onSuccess?.();
     },
-    onError: (error) => {
-      toast({
-        title: `Error ${customer ? 'updating' : 'creating'} customer`,
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.isDuplicate) {
+        toast({
+          title: "Duplicate patient detected",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: `Error ${customer ? 'updating' : 'creating'} customer`,
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
