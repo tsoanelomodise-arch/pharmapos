@@ -165,19 +165,18 @@ export function CustomerForm({ customer, onSuccess }: CustomerFormProps) {
           .eq('id', customer.id);
         if (error) throw error;
       } else {
-        // Check for duplicate by name + phone before creating
+        // Check for duplicate by phone only before creating
         if (trimmedPhone) {
           const { data: existing, error: checkError } = await supabase
             .from('customers')
             .select('id, name, phone')
-            .ilike('name', trimmedName)
             .eq('phone', trimmedPhone)
             .maybeSingle();
 
           if (checkError) throw checkError;
 
           if (existing) {
-            const err = new Error(`A patient named "${existing.name}" with this phone number already exists.`);
+            const err = new Error(`A patient ("${existing.name}") with this phone number already exists.`);
             (err as any).isDuplicate = true;
             throw err;
           }
