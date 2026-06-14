@@ -89,12 +89,20 @@ export function QuickPatientForm({ onSuccess, triggerClassName }: QuickPatientFo
       form.reset();
       onSuccess?.(newCustomer);
     },
-    onError: (error) => {
-      toast({
-        title: "Error registering patient",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.isDuplicate) {
+        toast({
+          title: "Duplicate patient detected",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error registering patient",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 
