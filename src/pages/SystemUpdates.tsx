@@ -20,11 +20,11 @@ const updates: UpdateEntry[] = [
     date: "2026-06-14",
     type: "feature",
     title: "Duplicate Patient Detection",
-    description: "The system now checks for existing patients with the same name and phone number before creating a new record.",
+    description: "The system now enforces unique patient phone numbers to prevent duplicate patient records.",
     details: [
-      "Warns the user immediately if a matching patient already exists",
-      "Prevents accidental duplicate registrations in both Quick Patient and full Customer forms",
-      "Blocks the save and shows the existing patient's name in the notification"
+      "Database-level unique constraint on patient phone numbers",
+      "Both Quick Patient and full Customer forms check for an existing phone before saving",
+      "Save is blocked and the existing patient's name is shown in the notification"
     ]
   },
   {
