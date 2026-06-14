@@ -39,9 +39,31 @@ export function QuickPatientForm({ onSuccess, triggerClassName }: QuickPatientFo
 
   const mutation = useMutation({
     mutationFn: async (data: QuickPatientFormData) => {
+      const trimmedName = data.name.trim();
+      const trimmedPhone = data.phone?.trim() || null;
+
+      // Check for duplicate by name + phone
+      if (trimmedPhone) {
+        const { data: existing, error: checkError } = await supabase
+          .from('customers')
+          .select('id, name, phone')
+          .ilike('name', trimmedName)
+          .eq('phone', trimmedPhone)
+          .maybeSingle();
+
+        if (checkError) throw checkError;
+
+        if (existing) {
+          const err = new Error(`A patient named "${existing.name}" with this phone number already exists.`);
+          (err as any).isDuplicate = true;
+          (err as any).existingPatient = existing;
+          throw err;
+        }
+      }
+
       const customerData = {
-        name: data.name,
-        phone: data.phone || null,
+        name: trimmedName,
+        phone: trimmedPhone,
         email: data.email || null,
         credit_limit: 0,
         current_balance: 0,
@@ -67,12 +89,20 @@ export function QuickPatientForm({ onSuccess, triggerClassName }: QuickPatientFo
       form.reset();
       onSuccess?.(newCustomer);
     },
-    onError: (error) => {
-      toast({
-        title: "Error registering patient",
-        description: error.message,
-        variant: "destructive",
-      });
+    onError: (error: any) => {
+      if (error.isDuplicate) {
+        toast({
+          title: "Duplicate patient detected",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Error registering patient",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     },
   });
 

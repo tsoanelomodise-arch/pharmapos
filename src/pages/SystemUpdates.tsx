@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.8",
+    date: "2026-06-14",
+    type: "feature",
+    title: "Duplicate Patient Detection",
+    description: "The system now checks for existing patients with the same name and phone number before creating a new record.",
+    details: [
+      "Warns the user immediately if a matching patient already exists",
+      "Prevents accidental duplicate registrations in both Quick Patient and full Customer forms",
+      "Blocks the save and shows the existing patient's name in the notification"
+    ]
+  },
+  {
     version: "1.4.7",
     date: "2026-06-13",
     type: "improvement",
