@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.4.9",
+    date: "2026-06-15",
+    type: "improvement",
+    title: "Optional Patient on POS Sales",
+    description: "Patient selection on POS sales is now optional. Walk-in sales can be completed without selecting or registering a patient.",
+    details: [
+      "POS Patient section relabeled to 'Patient (Optional)'",
+      "Payment is no longer blocked when no patient is selected",
+      "Prescription dispensing still uses the prescription's patient automatically"
+    ]
+  },
+  {
     version: "1.4.8",
     date: "2026-06-14",
     type: "feature",
