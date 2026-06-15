@@ -191,25 +191,7 @@ const POS = () => {
   const processPayment = async () => {
     if (cartItems.length === 0) return;
 
-    // Enforce patient capture for POS sales (prescription dispensing already has a patient)
-    if (!activePrescription) {
-      if (!selectedCustomer) {
-        toast({
-          title: "Patient required",
-          description: "Please select an existing patient or register a new one before completing the sale.",
-          variant: "destructive",
-        });
-        return;
-      }
-      if (!selectedCustomer.name?.trim() || !selectedCustomer.phone?.trim()) {
-        toast({
-          title: "Patient details incomplete",
-          description: "The selected patient must have both a name and a phone number.",
-          variant: "destructive",
-        });
-        return;
-      }
-    }
+    // Patient selection is optional for POS sales
 
     // Validate cash payment
     if (paymentMethod === 'cash') {
@@ -303,7 +285,7 @@ const POS = () => {
             <CardHeader className="pb-3">
               <CardTitle className="flex items-center gap-2 text-base">
                 <User className="h-4 w-4" />
-                Patient (Required)
+                Patient (Optional)
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
