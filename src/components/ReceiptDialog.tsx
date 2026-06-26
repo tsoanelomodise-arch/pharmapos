@@ -148,62 +148,139 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     if (!saleData) return;
     try {
       const { jsPDF } = await import("jspdf");
-      const doc = new jsPDF({ unit: "mm", format: [80, 297] });
-      const left = 4;
-      let y = 6;
-      const lineH = 4;
       const pageW = 80;
+      const left = 4;
+      const right = pageW - left;
+      const innerW = pageW - left * 2;
+      const lineH = 4;
+      const bottomMargin = 6;
 
-      const writeCentered = (text: string, size = 9, bold = false) => {
+      // Estimate page height generously; we'll trim after by rendering on a fixed long page.
+      const doc = new jsPDF({ unit: "mm", format: [pageW, 400] });
+      const pageH = 400;
+      let y = 6;
+
+      const ensureSpace = (needed = lineH) => {
+        if (y + needed > pageH - bottomMargin) {
+          doc.addPage([pageW, pageH], "portrait");
+          y = 6;
+        }
+      };
+      const setFont = (size: number, bold = false, italic = false) => {
         doc.setFontSize(size);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        doc.text(text, pageW / 2, y, { align: "center" });
+        const style = bold && italic ? "bolditalic" : bold ? "bold" : italic ? "italic" : "normal";
+        doc.setFont("helvetica", style);
+      };
+      const centered = (text: string, size = 9, bold = false) => {
+        setFont(size, bold);
+        const lines = doc.splitTextToSize(text, innerW);
+        lines.forEach((l: string) => { ensureSpace(); doc.text(l, pageW / 2, y, { align: "center" }); y += lineH; });
+      };
+      const left_ = (text: string, size = 8, bold = false, italic = false) => {
+        setFont(size, bold, italic);
+        const lines = doc.splitTextToSize(text, innerW);
+        lines.forEach((l: string) => { ensureSpace(); doc.text(l, left, y); y += lineH; });
+      };
+      const row = (l: string, r: string, size = 8, bold = false) => {
+        setFont(size, bold);
+        const rW = doc.getTextWidth(r);
+        const lLines = doc.splitTextToSize(l, innerW - rW - 2);
+        ensureSpace();
+        doc.text(lLines[0], left, y);
+        doc.text(r, right, y, { align: "right" });
         y += lineH;
+        for (let i = 1; i < lLines.length; i++) { ensureSpace(); doc.text(lLines[i], left, y); y += lineH; }
       };
-      const writeLine = (text: string, size = 8, bold = false) => {
-        doc.setFontSize(size);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        const wrapped = doc.splitTextToSize(text, pageW - left * 2);
-        wrapped.forEach((w: string) => { doc.text(w, left, y); y += lineH; });
+      const hr = (dashed = false) => {
+        ensureSpace(2);
+        if (dashed) doc.setLineDashPattern([0.6, 0.6], 0); else doc.setLineDashPattern([], 0);
+        doc.setLineWidth(0.2);
+        doc.line(left, y, right, y);
+        y += 2.5;
+        doc.setLineDashPattern([], 0);
       };
-      const writeRow = (l: string, r: string, size = 8, bold = false) => {
-        doc.setFontSize(size);
-        doc.setFont("helvetica", bold ? "bold" : "normal");
-        doc.text(l, left, y);
-        doc.text(r, pageW - left, y, { align: "right" });
-        y += lineH;
-      };
-      const hr = () => { doc.setLineDashPattern([0.5, 0.5], 0); doc.line(left, y, pageW - left, y); y += 2; };
+      const gap = (n = 1) => { y += n; };
 
-      writeCentered(businessSettings?.pharmacy_name || "PHARMACY POS", 11, true);
-      if (businessSettings?.address) businessSettings.address.split("\n").forEach((l: string) => writeCentered(l, 7));
-      if (businessSettings?.phone) writeCentered(`Tel: ${businessSettings.phone}`, 7);
-      y += 1;
-      writeCentered(new Date(saleData.created_at).toLocaleString(), 7);
-      writeCentered(`Transaction #${saleData.id.slice(-8)}`, 7);
-      y += 1; hr();
+      // Header
+      centered(businessSettings?.pharmacy_name || "PHARMACY POS", 12, true);
+      if (businessSettings?.address) businessSettings.address.split("\n").forEach((l: string) => centered(l, 7));
+      if (businessSettings?.phone) centered(`Tel: ${businessSettings.phone}`, 7);
+      if (businessSettings?.vat_number) centered(`VAT No: ${businessSettings.vat_number}`, 7);
+      gap(1);
+      centered(new Date(saleData.created_at).toLocaleString(), 8);
+      centered(`Transaction #${saleData.id.slice(-8)}`, 8);
+      gap(1); hr();
 
+      // Customer
       if (saleData.customers) {
-        writeLine(`Patient: ${saleData.customers.name}`, 8);
-        if (saleData.customers.phone) writeLine(`Phone: ${saleData.customers.phone}`, 8);
-        hr();
+        left_("Patient:", 8, true);
+        left_(saleData.customers.name, 8);
+        if (saleData.customers.phone) left_(saleData.customers.phone, 8);
+        gap(1); hr();
       }
 
+      // Items
+      left_("Items:", 9, true);
       (saleData.sale_items ?? []).forEach((it: any) => {
-        writeLine(it.products?.name ?? "Item", 8, true);
-        writeRow(`  ${it.quantity} x R${Number(it.unit_price).toFixed(2)}`, `R${Number(it.total_price).toFixed(2)}`, 8);
+        const credited = creditedByProduct?.get(it.product_id) ?? 0;
+        left_(it.products?.name ?? "Unknown Item", 8, true);
+        const qtyLine = `  ${it.quantity} x R${Number(it.unit_price).toFixed(2)}${credited > 0 ? `  [Credited ${credited}]` : ""}`;
+        row(qtyLine, `R${Number(it.total_price).toFixed(2)}`, 8);
       });
       hr();
 
-      if (saleData.discount_amount) writeRow("Discount", `-R${Number(saleData.discount_amount).toFixed(2)}`);
-      if (saleData.tax_amount) writeRow("VAT", `R${Number(saleData.tax_amount).toFixed(2)}`);
-      writeRow("TOTAL", `R${Number(saleData.total_amount).toFixed(2)}`, 10, true);
-      writeRow("Payment", String(saleData.payment_method ?? "").toUpperCase());
-      if (saleData.cash_paid != null) writeRow("Paid", `R${Number(saleData.cash_paid).toFixed(2)}`);
-      if (saleData.change_given) writeRow("Change", `R${Number(saleData.change_given).toFixed(2)}`);
-      hr();
-      writeCentered(`Served by: ${saleData.processor_name}`, 7);
-      writeCentered("Thank you for your business!", 8);
+      // Totals
+      const vatRate = businessSettings?.vat_rate ?? 15;
+      if (businessSettings?.vat_inclusive) {
+        if (saleData.discount_amount > 0) row("Discount", `-R${Number(saleData.discount_amount).toFixed(2)}`);
+        row("TOTAL (VAT Incl.)", `R${Number(saleData.total_amount).toFixed(2)}`, 10, true);
+        setFont(7);
+        const note = `Includes R${Number(saleData.tax_amount).toFixed(2)} VAT (${vatRate}%)`;
+        ensureSpace(); doc.text(note, right, y, { align: "right" }); y += lineH;
+      } else {
+        const subtotal = Number(saleData.total_amount) - Number(saleData.tax_amount) + Number(saleData.discount_amount);
+        row("Subtotal", `R${subtotal.toFixed(2)}`);
+        if (saleData.discount_amount > 0) row("Discount", `-R${Number(saleData.discount_amount).toFixed(2)}`);
+        row(`VAT (${vatRate}%)`, `R${Number(saleData.tax_amount).toFixed(2)}`);
+        hr();
+        row("TOTAL", `R${Number(saleData.total_amount).toFixed(2)}`, 10, true);
+      }
+      gap(1);
+
+      // Payment info
+      row("Payment Method", String(saleData.payment_method ?? "").toUpperCase(), 8, true);
+      if (saleData.payment_method === "cash" && saleData.cash_paid != null) {
+        row("Cash Paid", `R${Number(saleData.cash_paid).toFixed(2)}`);
+        if (saleData.change_given) row("Change Given", `R${Number(saleData.change_given).toFixed(2)}`, 8, true);
+      }
+      row("Status", String(saleData.payment_status ?? "").toUpperCase(), 8, true);
+      row("Processed By", String(saleData.processor_name ?? "N/A"));
+
+      if (saleData.notes) {
+        gap(1);
+        left_(`Notes: ${saleData.notes}`, 7, false, true);
+      }
+
+      // Credit notes
+      if (creditNotes && creditNotes.length > 0) {
+        gap(1); hr();
+        left_("Credit Notes", 9, true);
+        creditNotes.forEach((cn: any) => {
+          hr(true);
+          row(new Date(cn.created_at).toLocaleString(), `R${Number(cn.total_amount).toFixed(2)}`, 7, true);
+          (cn.sale_items ?? []).forEach((si: any) => {
+            row(`  ${Math.abs(si.quantity)} x ${si.products?.name ?? "Item"}`, `R${Number(si.total_price).toFixed(2)}`, 7);
+          });
+          if (cn.credit_reason) left_(`Reason: ${cn.credit_reason}`, 7, false, true);
+        });
+        hr(true);
+      }
+
+      // Footer
+      gap(2); hr();
+      centered(`Served by: ${saleData.processor_name}`, 7);
+      centered("Thank you for your business!", 8, true);
+      centered("Please keep this receipt for your records", 7);
 
       doc.save(`receipt-${saleData.id.slice(-8)}.pdf`);
       toast({ title: "Receipt downloaded", description: "PDF saved successfully." });
