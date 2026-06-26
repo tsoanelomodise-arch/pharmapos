@@ -222,7 +222,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
                     <p className="text-muted-foreground">
                       {item.quantity} × R{item.unit_price.toFixed(2)}
                       {alreadyCredited > 0 && (
-                        <Badge variant="outline" className="ml-2 text-[10px]">
+                        <Badge variant="destructive" className="ml-2 text-[10px] px-1.5 py-0">
                           Credited {alreadyCredited}
                         </Badge>
                       )}
