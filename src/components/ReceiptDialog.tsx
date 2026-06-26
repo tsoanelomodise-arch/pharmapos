@@ -144,8 +144,73 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     }
   };
 
-  const handleDownload = () => {
-    toast({ title: "Download started", description: "Receipt PDF is being generated..." });
+  const handleDownload = async () => {
+    if (!saleData) return;
+    try {
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: [80, 297] });
+      const left = 4;
+      let y = 6;
+      const lineH = 4;
+      const pageW = 80;
+
+      const writeCentered = (text: string, size = 9, bold = false) => {
+        doc.setFontSize(size);
+        doc.setFont("helvetica", bold ? "bold" : "normal");
+        doc.text(text, pageW / 2, y, { align: "center" });
+        y += lineH;
+      };
+      const writeLine = (text: string, size = 8, bold = false) => {
+        doc.setFontSize(size);
+        doc.setFont("helvetica", bold ? "bold" : "normal");
+        const wrapped = doc.splitTextToSize(text, pageW - left * 2);
+        wrapped.forEach((w: string) => { doc.text(w, left, y); y += lineH; });
+      };
+      const writeRow = (l: string, r: string, size = 8, bold = false) => {
+        doc.setFontSize(size);
+        doc.setFont("helvetica", bold ? "bold" : "normal");
+        doc.text(l, left, y);
+        doc.text(r, pageW - left, y, { align: "right" });
+        y += lineH;
+      };
+      const hr = () => { doc.setLineDashPattern([0.5, 0.5], 0); doc.line(left, y, pageW - left, y); y += 2; };
+
+      writeCentered(businessSettings?.pharmacy_name || "PHARMACY POS", 11, true);
+      if (businessSettings?.address) businessSettings.address.split("\n").forEach((l: string) => writeCentered(l, 7));
+      if (businessSettings?.phone) writeCentered(`Tel: ${businessSettings.phone}`, 7);
+      y += 1;
+      writeCentered(new Date(saleData.created_at).toLocaleString(), 7);
+      writeCentered(`Transaction #${saleData.id.slice(-8)}`, 7);
+      y += 1; hr();
+
+      if (saleData.customers) {
+        writeLine(`Patient: ${saleData.customers.name}`, 8);
+        if (saleData.customers.phone) writeLine(`Phone: ${saleData.customers.phone}`, 8);
+        hr();
+      }
+
+      (saleData.sale_items ?? []).forEach((it: any) => {
+        writeLine(it.products?.name ?? "Item", 8, true);
+        writeRow(`  ${it.quantity} x R${Number(it.unit_price).toFixed(2)}`, `R${Number(it.total_price).toFixed(2)}`, 8);
+      });
+      hr();
+
+      if (saleData.discount_amount) writeRow("Discount", `-R${Number(saleData.discount_amount).toFixed(2)}`);
+      if (saleData.tax_amount) writeRow("VAT", `R${Number(saleData.tax_amount).toFixed(2)}`);
+      writeRow("TOTAL", `R${Number(saleData.total_amount).toFixed(2)}`, 10, true);
+      writeRow("Payment", String(saleData.payment_method ?? "").toUpperCase());
+      if (saleData.amount_paid != null) writeRow("Paid", `R${Number(saleData.amount_paid).toFixed(2)}`);
+      if (saleData.change_amount) writeRow("Change", `R${Number(saleData.change_amount).toFixed(2)}`);
+      hr();
+      writeCentered(`Served by: ${saleData.processor_name}`, 7);
+      writeCentered("Thank you for your business!", 8);
+
+      doc.save(`receipt-${saleData.id.slice(-8)}.pdf`);
+      toast({ title: "Receipt downloaded", description: "PDF saved successfully." });
+    } catch (err: any) {
+      console.error("Receipt download failed", err);
+      toast({ title: "Download failed", description: err?.message ?? "Could not generate PDF", variant: "destructive" });
+    }
   };
 
   if (isLoading) {
