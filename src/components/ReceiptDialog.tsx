@@ -94,6 +94,20 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     },
   });
 
+  const { data: creditNotes } = useQuery({
+    queryKey: ['sale-receipt-credit-notes', saleId],
+    enabled: open && !!saleId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, created_at, credit_reason, total_amount, sale_items(quantity, unit_price, total_price, products(name))')
+        .eq('credit_note_for', saleId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const handlePrint = () => {
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
@@ -308,6 +322,42 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
             <div className="notes">
               <p className="text-xs text-muted-foreground">Notes: {saleData.notes}</p>
             </div>
+          )}
+
+          {creditNotes && creditNotes.length > 0 && (
+            <>
+              <Separator />
+              <div className="credit-notes space-y-2">
+                <h3 className="font-medium text-destructive">Credit Notes</h3>
+                {creditNotes.map((cn: any) => (
+                  <div key={cn.id} className="text-xs border border-dashed border-destructive/40 rounded p-2 space-y-1">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {new Date(cn.created_at).toLocaleString()}
+                      </span>
+                      <span className="font-medium text-destructive">
+                        R{Number(cn.total_amount).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="space-y-0.5">
+                      {(cn.sale_items ?? []).map((si: any, idx: number) => (
+                        <div key={idx} className="flex justify-between">
+                          <span>
+                            {Math.abs(si.quantity)} × {si.products?.name ?? 'Item'}
+                          </span>
+                          <span>R{Number(si.total_price).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                    {cn.credit_reason && (
+                      <p className="italic text-muted-foreground">
+                        Reason: {cn.credit_reason}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="footer text-center text-xs text-muted-foreground">

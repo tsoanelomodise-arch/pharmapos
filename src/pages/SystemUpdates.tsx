@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.1",
+    date: "2026-06-26",
+    type: "improvement",
+    title: "Credit History on Receipts",
+    description: "Receipts now show a Credit Notes section listing each refunded item, quantity, amount, timestamp, and reason.",
+    details: [
+      "New 'Credit Notes' block appears under the receipt totals when credits exist",
+      "Each entry shows date/time, line items credited, refund amount, and the captured reason",
+      "Updates live after a new per-line credit is processed"
+    ]
+  },
+  {
     version: "1.5.0",
     date: "2026-06-26",
     type: "feature",
