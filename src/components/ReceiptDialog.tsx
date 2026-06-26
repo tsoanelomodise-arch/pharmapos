@@ -199,8 +199,8 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
       if (saleData.tax_amount) writeRow("VAT", `R${Number(saleData.tax_amount).toFixed(2)}`);
       writeRow("TOTAL", `R${Number(saleData.total_amount).toFixed(2)}`, 10, true);
       writeRow("Payment", String(saleData.payment_method ?? "").toUpperCase());
-      if (saleData.amount_paid != null) writeRow("Paid", `R${Number(saleData.amount_paid).toFixed(2)}`);
-      if (saleData.change_amount) writeRow("Change", `R${Number(saleData.change_amount).toFixed(2)}`);
+      if (saleData.cash_paid != null) writeRow("Paid", `R${Number(saleData.cash_paid).toFixed(2)}`);
+      if (saleData.change_given) writeRow("Change", `R${Number(saleData.change_given).toFixed(2)}`);
       hr();
       writeCentered(`Served by: ${saleData.processor_name}`, 7);
       writeCentered("Thank you for your business!", 8);
