@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.0",
+    date: "2026-06-26",
+    type: "feature",
+    title: "Credit Single Line Items from Receipt",
+    description: "Admins and owners can refund an individual product (with partial quantity) directly from the Receipt dialog.",
+    details: [
+      "New per-line 'Credit' button appears on each item row in the Receipt dialog",
+      "Choose quantity (up to remaining un-credited qty) and enter a reason",
+      "Stock is restored and a linked credit note is created automatically",
+      "Bulk multi-item credits remain available via Transactions → Credit"
+    ]
+  },
+  {
     version: "1.4.9",
     date: "2026-06-15",
     type: "improvement",
