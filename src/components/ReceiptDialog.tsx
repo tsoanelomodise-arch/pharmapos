@@ -94,6 +94,20 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
     },
   });
 
+  const { data: creditNotes } = useQuery({
+    queryKey: ['sale-receipt-credit-notes', saleId],
+    enabled: open && !!saleId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, created_at, credit_reason, total_amount, sale_items(quantity, unit_price, total_price, products(name))')
+        .eq('credit_note_for', saleId)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
   const handlePrint = () => {
     const printContent = document.getElementById('receipt-content');
     if (printContent) {
