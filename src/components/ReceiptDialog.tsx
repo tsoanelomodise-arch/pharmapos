@@ -1,11 +1,19 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Receipt, Printer, Download } from "lucide-react";
+import { Receipt, Printer, Download, RotateCcw, Loader2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { useBusinessSettings } from "@/hooks/useBusinessSettings";
+import { useUserRole } from "@/hooks/useUserRole";
+import { useCreditSaleMutation } from "@/hooks/useCreditSale";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 interface ReceiptDialogProps {
   saleId: string;
@@ -15,6 +23,8 @@ interface ReceiptDialogProps {
 
 export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps) {
   const { data: businessSettings } = useBusinessSettings();
+  const { data: role } = useUserRole();
+  const canCredit = role === 'admin' || role === 'owner';
   const { data: saleData, isLoading } = useQuery({
     queryKey: ['sale-receipt', saleId],
     queryFn: async () => {
@@ -63,6 +73,25 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
       return { ...sale, processor_name: processorName };
     },
     enabled: open && !!saleId
+  });
+
+  const { data: creditedByProduct } = useQuery({
+    queryKey: ['sale-receipt-credited', saleId],
+    enabled: open && !!saleId && canCredit,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('sales')
+        .select('id, sale_items(product_id, quantity)')
+        .eq('credit_note_for', saleId);
+      if (error) throw error;
+      const map = new Map<string, number>();
+      for (const cn of (data ?? []) as any[]) {
+        for (const si of cn.sale_items ?? []) {
+          map.set(si.product_id, (map.get(si.product_id) ?? 0) + Math.abs(si.quantity));
+        }
+      }
+      return map;
+    },
   });
 
   const handlePrint = () => {
@@ -164,19 +193,42 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
 
           <div className="items space-y-2">
             <h3 className="font-medium">Items:</h3>
-            {saleData.sale_items?.map((item: any) => (
-              <div key={item.id} className="line text-sm">
-                <div className="flex-1">
-                  <p className="font-medium">{item.products?.name || 'Unknown Item'}</p>
-                  <p className="text-muted-foreground">
-                    {item.quantity} × R{item.unit_price.toFixed(2)}
-                  </p>
+            {saleData.sale_items?.map((item: any) => {
+              const alreadyCredited = creditedByProduct?.get(item.product_id) ?? 0;
+              const remaining = item.quantity - alreadyCredited;
+              const showCredit =
+                canCredit &&
+                !saleData.credit_note_for &&
+                saleData.payment_status !== 'credited' &&
+                remaining > 0;
+              return (
+                <div key={item.id} className="line text-sm flex items-start gap-2">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium">{item.products?.name || 'Unknown Item'}</p>
+                    <p className="text-muted-foreground">
+                      {item.quantity} × R{item.unit_price.toFixed(2)}
+                      {alreadyCredited > 0 && (
+                        <Badge variant="outline" className="ml-2 text-[10px]">
+                          Credited {alreadyCredited}
+                        </Badge>
+                      )}
+                    </p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p>R{item.total_price.toFixed(2)}</p>
+                    {showCredit && (
+                      <CreditLineButton
+                        saleId={saleData.id}
+                        saleItemId={item.id}
+                        name={item.products?.name || 'Item'}
+                        unitPrice={Number(item.unit_price)}
+                        remaining={remaining}
+                      />
+                    )}
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p>R{item.total_price.toFixed(2)}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <Separator />
@@ -279,5 +331,96 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+interface CreditLineButtonProps {
+  saleId: string;
+  saleItemId: string;
+  name: string;
+  unitPrice: number;
+  remaining: number;
+}
+
+function CreditLineButton({ saleId, saleItemId, name, unitPrice, remaining }: CreditLineButtonProps) {
+  const [open, setOpen] = useState(false);
+  const [qty, setQty] = useState(1);
+  const [reason, setReason] = useState("");
+  const credit = useCreditSaleMutation();
+
+  const canSubmit = qty > 0 && qty <= remaining && reason.trim().length >= 3 && !credit.isPending;
+
+  const handleConfirm = () => {
+    credit.mutate(
+      { saleId, reason: reason.trim(), items: [{ saleItemId, quantity: qty }] },
+      {
+        onSuccess: () => {
+          setOpen(false);
+          setQty(1);
+          setReason("");
+        },
+      },
+    );
+  };
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button size="sm" variant="ghost" className="mt-1 h-7 px-2 text-xs text-destructive hover:text-destructive">
+          <RotateCcw className="mr-1 h-3 w-3" />
+          Credit
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-72 space-y-3">
+        <div>
+          <p className="font-medium text-sm truncate">{name}</p>
+          <p className="text-xs text-muted-foreground">
+            R{unitPrice.toFixed(2)} · Remaining {remaining}
+          </p>
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`qty-${saleItemId}`} className="text-xs">
+            Quantity (max {remaining})
+          </Label>
+          <Input
+            id={`qty-${saleItemId}`}
+            type="number"
+            min={1}
+            max={remaining}
+            value={qty}
+            onChange={(e) =>
+              setQty(Math.max(1, Math.min(remaining, Math.floor(Number(e.target.value) || 1))))
+            }
+          />
+        </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor={`reason-${saleItemId}`} className="text-xs">
+            Reason <span className="text-destructive">*</span>
+          </Label>
+          <Textarea
+            id={`reason-${saleItemId}`}
+            rows={2}
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. Wrong item dispensed"
+          />
+        </div>
+        <div className="flex justify-between text-xs">
+          <span className="text-muted-foreground">Refund</span>
+          <span className="font-medium text-destructive">
+            - R{(qty * unitPrice).toFixed(2)}
+          </span>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <Button size="sm" variant="outline" onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+          <Button size="sm" variant="destructive" disabled={!canSubmit} onClick={handleConfirm}>
+            {credit.isPending && <Loader2 className="mr-1 h-3 w-3 animate-spin" />}
+            Confirm Credit
+          </Button>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }

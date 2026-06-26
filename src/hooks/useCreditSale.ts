@@ -27,6 +27,8 @@ export function useCreditSaleMutation() {
       qc.invalidateQueries({ queryKey: ['products'] });
       qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       qc.invalidateQueries({ queryKey: ['reports-data'] });
+      qc.invalidateQueries({ queryKey: ['sale-receipt'] });
+      qc.invalidateQueries({ queryKey: ['credit-dialog'] });
       toast({
         title: data.fullyCredited ? 'Transaction fully credited' : 'Partial credit applied',
         description: `Refund: R${data.refundTotal.toFixed(2)}`,
