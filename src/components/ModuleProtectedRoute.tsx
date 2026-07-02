@@ -22,13 +22,16 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
     );
   }
 
-  // If user doesn't have access to this module, redirect to dashboard or first available module
+  // If user doesn't have access to this module, redirect to a route they DO own.
+  // Only include modules whose route is guarded by that same module — otherwise
+  // redirecting to a sub-permission (settings, medical_aid, etc.) causes an
+  // infinite loop because the destination route requires the parent module.
   if (!userModules?.includes(module)) {
-    // Find first accessible module to redirect to
-    const moduleRouteMap: Record<AppModule, string> = {
+    const primaryRouteMap: Partial<Record<AppModule, string>> = {
       dashboard: '/dashboard',
       dispensing: '/dispensing',
       pos: '/pos',
+      transactions: '/pos/transactions',
       debtors: '/debtors',
       patients: '/patients',
       doctors: '/doctors',
@@ -36,22 +39,28 @@ export function ModuleProtectedRoute({ children, module }: ModuleProtectedRouteP
       orders: '/orders',
       reports: '/reports',
       stock_movement: '/reports/stock-movement',
-      management: '/management',
-      medical_aid: '/patients', // Medical aid is a data permission, not a route
-      settings: '/management', // Settings is a tab within Management
-      edit_transactions: '/pos/transactions', // Edit transactions is a data permission
-      help: '/help',
-      transactions: '/pos/transactions',
-      suppliers: '/stock?tab=suppliers',
       audit_trail: '/reports/audit-trail',
+      management: '/management',
+      help: '/help',
       system_updates: '/help/updates',
       database_status: '/help/database',
     };
 
-    const firstAccessible = userModules?.find(m => moduleRouteMap[m]);
-    const redirectTo = firstAccessible ? moduleRouteMap[firstAccessible] : '/dashboard';
-    
-    return <Navigate to={redirectTo} replace />;
+    const firstAccessible = userModules?.find(m => primaryRouteMap[m]);
+    if (!firstAccessible) {
+      return (
+        <div className="min-h-[50vh] flex items-center justify-center p-6">
+          <div className="text-center max-w-md">
+            <h2 className="text-xl font-semibold mb-2">No accessible pages</h2>
+            <p className="text-muted-foreground">
+              Your account does not have access to any pages yet. Please contact an
+              administrator to grant module permissions.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return <Navigate to={primaryRouteMap[firstAccessible]!} replace />;
   }
 
   return <>{children}</>;

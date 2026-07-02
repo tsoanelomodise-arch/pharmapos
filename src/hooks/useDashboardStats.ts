@@ -72,12 +72,12 @@ export function useDashboardStats(params?: DashboardStatsParams) {
           .select('total_amount, created_at')
           .gte('created_at', `${sevenDaysAgoStr}T00:00:00`),
         
-        // Top selling products
+        // Top selling products (aggregated below)
         supabase
           .from('sale_items')
-          .select('product_id, quantity, products(name)')
-          .limit(5)
-          .order('quantity', { ascending: false }),
+          .select('product_id, quantity, products(name, category), sales!inner(created_at)')
+          .gte('sales.created_at', startDateTime)
+          .lte('sales.created_at', endDateTime),
 
         // Inventory items sold within selected date range
         supabase
@@ -118,37 +118,37 @@ export function useDashboardStats(params?: DashboardStatsParams) {
         });
       }
       
-      // Use sample data if no real sales data
-      const hasSalesData = salesTrend.some(day => day.amount > 0);
-      const finalSalesTrend = hasSalesData ? salesTrend : [
-        { date: 'Jan 10', amount: 4500 },
-        { date: 'Jan 11', amount: 5200 },
-        { date: 'Jan 12', amount: 4800 },
-        { date: 'Jan 13', amount: 6100 },
-        { date: 'Jan 14', amount: 5500 },
-        { date: 'Jan 15', amount: 7200 },
-        { date: 'Jan 16', amount: 6800 }
-      ];
-      
-      // Category data
-      const categoryData = [
-        { name: 'Prescription', value: 45, color: '#3BB3B0' },
-        { name: 'OTC', value: 30, color: '#F9C74F' },
-        { name: 'Supplements', value: 15, color: '#90BE6D' },
-        { name: 'Personal Care', value: 10, color: '#F8961E' }
-      ];
-      
-      // Top products
-      const topProductsData = topProductsResult.data?.map(item => ({
-        name: item.products?.name || 'Unknown',
-        sales: item.quantity || 0
-      })) || [
-        { name: 'Panado 500mg', sales: 145 },
-        { name: 'Allergex 10mg', sales: 98 },
-        { name: 'Bioplus Vitamin C', sales: 87 },
-        { name: 'Corenza C', sales: 76 },
-        { name: 'Disprin', sales: 65 }
-      ];
+      const finalSalesTrend = salesTrend;
+
+      // Aggregate top products by product_id (sum quantities across sale_items)
+      const topAggMap = new Map<string, { name: string; sales: number }>();
+      const categoryQtyMap = new Map<string, number>();
+      (topProductsResult.data as any[] | null)?.forEach((row) => {
+        const name = row.products?.name || 'Unknown';
+        const qty = row.quantity || 0;
+        const key = row.product_id || name;
+        const existing = topAggMap.get(key);
+        if (existing) existing.sales += qty;
+        else topAggMap.set(key, { name, sales: qty });
+        const category = row.products?.category || 'Uncategorized';
+        categoryQtyMap.set(category, (categoryQtyMap.get(category) || 0) + qty);
+      });
+      const topProductsData = Array.from(topAggMap.values())
+        .sort((a, b) => b.sales - a.sales)
+        .slice(0, 5);
+
+      // Real category breakdown as percentages
+      const categoryPalette = ['#3BB3B0', '#F9C74F', '#90BE6D', '#F8961E', '#577590', '#F94144', '#43AA8B', '#9D4EDD'];
+      const totalCategoryQty = Array.from(categoryQtyMap.values()).reduce((s, v) => s + v, 0);
+      const categoryData = totalCategoryQty > 0
+        ? Array.from(categoryQtyMap.entries())
+            .sort((a, b) => b[1] - a[1])
+            .map(([name, qty], idx) => ({
+              name,
+              value: Math.round((qty / totalCategoryQty) * 100),
+              color: categoryPalette[idx % categoryPalette.length],
+            }))
+        : [];
 
       // Aggregate inventory items sold by product
       const itemsSoldMap = new Map<string, number>();

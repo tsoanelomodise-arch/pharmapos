@@ -54,9 +54,22 @@ export function SmartRedirect() {
     );
   }
 
-  // Find the first accessible module in preferred order
+  // Find the first accessible module in preferred order. Only primary modules
+  // (whose route is guarded by that same module) are safe redirect targets —
+  // sub-permissions like `settings` would loop.
   const firstAccessible = preferredOrder.find(m => userModules?.includes(m));
-  const redirectTo = firstAccessible ? moduleRouteMap[firstAccessible] : '/dashboard';
-
-  return <Navigate to={redirectTo} replace />;
+  if (!firstAccessible) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6">
+        <div className="text-center max-w-md">
+          <h2 className="text-xl font-semibold mb-2">No accessible pages</h2>
+          <p className="text-muted-foreground">
+            Your account does not have access to any pages yet. Please contact an
+            administrator to grant module permissions.
+          </p>
+        </div>
+      </div>
+    );
+  }
+  return <Navigate to={moduleRouteMap[firstAccessible]} replace />;
 }
