@@ -1,7 +1,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Receipt, Printer, Download, RotateCcw, Loader2 } from "lucide-react";
+import { Receipt, Printer, Download, RotateCcw, Loader2, MessageSquare } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
@@ -25,6 +25,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
   const { data: businessSettings } = useBusinessSettings();
   const { data: role } = useUserRole();
   const canCredit = role === 'admin' || role === 'owner';
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const { data: saleData, isLoading } = useQuery({
     queryKey: ['sale-receipt', saleId],
     queryFn: async () => {
@@ -107,6 +108,37 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
       return data ?? [];
     },
   });
+
+  const handleSendWhatsApp = async () => {
+    if (!saleData?.customers?.phone) {
+      toast({
+        title: "No phone number",
+        description: "This customer doesn't have a phone number on file.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setIsSendingWhatsApp(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-whatsapp-receipt", {
+        body: { sale_id: saleData.id },
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || "Failed to send receipt");
+      toast({
+        title: "Receipt sent",
+        description: `WhatsApp receipt sent to ${saleData.customers.phone}`,
+      });
+    } catch (err: any) {
+      toast({
+        title: "Send failed",
+        description: err?.message || "Could not send WhatsApp receipt",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSendingWhatsApp(false);
+    }
+  };
 
   const handlePrint = () => {
     const printContent = document.getElementById('receipt-content');
@@ -520,6 +552,21 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
             <Download className="mr-2 h-4 w-4" />
             Download
           </Button>
+          {saleData.customers?.phone && (
+            <Button
+              variant="outline"
+              onClick={handleSendWhatsApp}
+              disabled={isSendingWhatsApp}
+              className="flex-1 min-w-[100px]"
+            >
+              {isSendingWhatsApp ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <MessageSquare className="mr-2 h-4 w-4" />
+              )}
+              WhatsApp
+            </Button>
+          )}
         </div>
       </DialogContent>
     </Dialog>
