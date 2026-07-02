@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.2",
+    date: "2026-07-02",
+    type: "bugfix",
+    title: "Real Dashboard Data & Permission Redirect Fix",
+    description: "Dashboard now shows only real sales data, and users with sub-permissions no longer hit an infinite redirect loop.",
+    details: [
+      "Removed demo fallbacks from Sales by Category, Sales Trend, and Top Selling Products",
+      "Category breakdown and top products are now aggregated from real sale_items in the selected date range",
+      "Users with only sub-permissions (Settings, Medical Aid, Edit Transactions, Suppliers) now see a clear 'No accessible pages' message instead of looping",
+      "Redirects only target modules whose route is guarded by that same module"
+    ]
+  },
+  {
     version: "1.5.1",
     date: "2026-06-26",
     type: "improvement",
