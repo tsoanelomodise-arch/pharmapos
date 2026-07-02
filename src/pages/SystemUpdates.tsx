@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.3",
+    date: "2026-07-02",
+    type: "feature",
+    title: "WhatsApp Receipt Sharing",
+    description: "Send formatted receipt summaries directly to customers via WhatsApp from the Receipt dialog.",
+    details: [
+      "New 'WhatsApp' button appears in the Receipt dialog when the customer has a phone number",
+      "Receipt is formatted as a concise text message with pharmacy name, items, totals, and payment details",
+      "Phone numbers are automatically normalized to international E.164 format",
+      "Requires Twilio connection and a configured WhatsApp sender number"
+    ]
+  },
+  {
     version: "1.5.2",
     date: "2026-07-02",
     type: "bugfix",
