@@ -25,6 +25,7 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
   const { data: businessSettings } = useBusinessSettings();
   const { data: role } = useUserRole();
   const canCredit = role === 'admin' || role === 'owner';
+  const [isSendingWhatsApp, setIsSendingWhatsApp] = useState(false);
   const { data: saleData, isLoading } = useQuery({
     queryKey: ['sale-receipt', saleId],
     queryFn: async () => {
