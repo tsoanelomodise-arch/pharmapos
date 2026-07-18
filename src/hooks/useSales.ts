@@ -137,32 +137,13 @@ export function useAllSalesWithDetails(filters?: {
       if (error) throw error;
       
       // Transform data to include items_count
-      let results = (data || []).map((sale: any) => ({
+      const results = (data || []).map((sale: any) => ({
         ...sale,
         customer: sale.customers,
         items_count: sale.sale_items?.length || 0,
         customers: undefined,
         sale_items: undefined,
       })) as SaleWithDetails[];
-
-      // Client-side search: transaction # (last 8 of id) or customer name/phone
-      if (filters?.searchTerm) {
-        const term = filters.searchTerm.replace(/^#/, '').trim().toLowerCase();
-        if (term) {
-          results = results.filter((s) => {
-            const idStr = (s.id || '').toLowerCase();
-            const shortId = idStr.slice(-8);
-            const name = (s.customer?.name || '').toLowerCase();
-            const phone = (s.customer?.phone || '').toLowerCase();
-            return (
-              idStr.includes(term) ||
-              shortId.includes(term) ||
-              name.includes(term) ||
-              phone.includes(term)
-            );
-          });
-        }
-      }
 
       return results;
     }
