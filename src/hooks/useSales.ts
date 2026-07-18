@@ -133,7 +133,10 @@ export function useAllSalesWithDetails(filters?: {
       }
 
       if (filters?.searchTerm) {
-        query = query.ilike('id', `%${filters.searchTerm}%`);
+        const term = filters.searchTerm.replace(/^#/, '').trim();
+        if (term) {
+          query = query.or(`id.ilike.%${term}%,customers.name.ilike.%${term}%`);
+        }
       }
       
       const { data, error } = await query;
