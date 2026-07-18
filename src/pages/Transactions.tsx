@@ -214,7 +214,7 @@ const Transactions = () => {
               <div className="flex-1 flex items-center gap-2">
                 <Search className="h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by transaction ID..."
+                  placeholder="Search by transaction # or customer..."
                   value={searchTerm}
                   onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
                   className="max-w-xs"
