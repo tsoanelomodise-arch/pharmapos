@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +35,15 @@ const Transactions = () => {
   const [customEndDate, setCustomEndDate] = useState<Date | undefined>();
   const [paymentMethod, setPaymentMethod] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setCurrentPage(1);
+    }, 250);
+    return () => clearTimeout(t);
+  }, [searchTerm]);
   const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null);
   const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleWithDetails | null>(null);
@@ -82,12 +91,29 @@ const Transactions = () => {
 
   const dateFilter = getDateFilter();
   
-  const { data: sales = [], isLoading } = useAllSalesWithDetails({
+  const { data: allSales = [], isLoading } = useAllSalesWithDetails({
     paymentMethod: paymentMethod !== "all" ? paymentMethod : undefined,
     startDate: dateFilter.startDate,
     endDate: dateFilter.endDate,
-    searchTerm: searchTerm || undefined,
   });
+
+  // Client-side filter (memoized) so typing doesn't refetch from the server
+  const sales = useMemo(() => {
+    const term = debouncedSearch.replace(/^#/, "").trim().toLowerCase();
+    if (!term) return allSales;
+    return allSales.filter((s) => {
+      const idStr = (s.id || "").toLowerCase();
+      const shortId = idStr.slice(-8);
+      const name = (s.customer?.name || "").toLowerCase();
+      const phone = (s.customer?.phone || "").toLowerCase();
+      return (
+        idStr.includes(term) ||
+        shortId.includes(term) ||
+        name.includes(term) ||
+        phone.includes(term)
+      );
+    });
+  }, [allSales, debouncedSearch]);
 
   // Pagination
   const totalPages = Math.ceil(sales.length / itemsPerPage);
@@ -216,7 +242,7 @@ const Transactions = () => {
                 <Input
                   placeholder="Search by transaction # or customer..."
                   value={searchTerm}
-                  onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                   className="max-w-xs"
                 />
               </div>
