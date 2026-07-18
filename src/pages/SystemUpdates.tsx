@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.4",
+    date: "2026-07-02",
+    type: "improvement",
+    title: "Transaction Number Search",
+    description: "The Transaction History search now finds sales by transaction number or customer name.",
+    details: [
+      "Search accepts transaction numbers with or without the # prefix",
+      "Customer names are also matched by the same search box",
+      "Search placeholder updated to reflect the new options"
+    ]
+  },
+  {
     version: "1.5.3",
     date: "2026-07-02",
     type: "feature",
