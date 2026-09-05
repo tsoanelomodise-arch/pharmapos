@@ -3,7 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PackagePlus } from "lucide-react";
+import { PackagePlus, Search } from "lucide-react";
 import { useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
 
 export function RestockDialog() {
