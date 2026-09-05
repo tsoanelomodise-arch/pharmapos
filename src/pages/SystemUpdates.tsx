@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.9",
+    date: "2026-09-05",
+    type: "improvement",
+    title: "First-Letter Restock Filtering",
+    description: "The Restock dialog now shortlists items based on the first letter typed in the search field.",
+    details: [
+      "Typing a letter immediately shows products whose name, generic name, or barcode starts with that letter",
+      "Search input is automatically focused when the dialog opens",
+      "Filtering is memoized for smoother typing on large stock lists"
+    ]
+  },
+  {
     version: "1.5.8",
     date: "2026-09-05",
     type: "improvement",
