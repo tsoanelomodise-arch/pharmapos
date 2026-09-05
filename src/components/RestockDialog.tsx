@@ -18,9 +18,9 @@ export function RestockDialog() {
   const filteredProducts = useMemo(() => {
     if (!normalizedTerm) return lowStockProducts;
     return lowStockProducts.filter(product =>
-      product.name.toLowerCase().includes(normalizedTerm) ||
-      (product.generic_name && product.generic_name.toLowerCase().includes(normalizedTerm)) ||
-      (product.barcode && product.barcode.includes(normalizedTerm))
+      product.name.toLowerCase().startsWith(normalizedTerm) ||
+      (product.generic_name && product.generic_name.toLowerCase().startsWith(normalizedTerm)) ||
+      (product.barcode && product.barcode.startsWith(normalizedTerm))
     );
   }, [lowStockProducts, normalizedTerm]);
 
