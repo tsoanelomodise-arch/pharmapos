@@ -8,10 +8,21 @@ import { useLowStockProducts, useBulkRestockMutation, useRestockMutation } from 
 
 export function RestockDialog() {
   const [open, setOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const { data: lowStockProducts = [] } = useLowStockProducts();
   const bulkRestockMutation = useBulkRestockMutation();
   const restockMutation = useRestockMutation();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+
+  const filteredProducts = lowStockProducts.filter(product => {
+    const term = searchTerm.toLowerCase().trim();
+    if (!term) return true;
+    return (
+      product.name.toLowerCase().includes(term) ||
+      (product.generic_name && product.generic_name.toLowerCase().includes(term)) ||
+      (product.barcode && product.barcode.includes(term))
+    );
+  });
 
   const handleQuantityChange = (productId: string, value: string) => {
     const qty = parseInt(value) || 0;
