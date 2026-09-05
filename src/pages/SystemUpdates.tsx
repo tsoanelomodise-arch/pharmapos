@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.6",
+    date: "2026-09-05",
+    type: "bugfix",
+    title: "Restock Modal Heading Layout",
+    description: "Fixed overlapping between the Restock dialog heading and its search field.",
+    details: [
+      "Added vertical spacing below the dialog title",
+      "Improved line-height and padding for the heading"
+    ]
+  },
+  {
     version: "1.5.5",
     date: "2026-09-05",
     type: "improvement",

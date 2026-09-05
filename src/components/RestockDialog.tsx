@@ -66,8 +66,8 @@ export function RestockDialog() {
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Restock Low & Out-of-Stock Items</DialogTitle>
+        <DialogHeader className="pb-2">
+          <DialogTitle className="text-xl leading-tight">Restock Low & Out-of-Stock Items</DialogTitle>
         </DialogHeader>
 
         {lowStockProducts.length === 0 ? (
@@ -75,7 +75,7 @@ export function RestockDialog() {
             All products are well stocked!
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-4 pt-2">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
