@@ -93,34 +93,40 @@ export function RestockDialog() {
               <div></div>
             </div>
             <div className="space-y-2 max-h-[400px] overflow-y-auto">
-              {lowStockProducts.map(product => (
-                <div key={product.id} className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 items-center text-sm p-2 border rounded-lg">
-                  <div>
-                    <p className="font-medium truncate">{product.name}</p>
-                    <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs mt-1">
-                      {product.stock_quantity === 0 ? "Out" : "Low"}
-                    </Badge>
-                  </div>
-                  <div>{product.stock_quantity}</div>
-                  <div>{product.minimum_stock}</div>
-                  <Input
-                    type="number"
-                    min={0}
-                    value={quantities[product.id] || ""}
-                    onChange={(e) => handleQuantityChange(product.id, e.target.value)}
-                    placeholder="0"
-                    className="h-8"
-                  />
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    disabled={!quantities[product.id] || quantities[product.id] <= 0 || restockMutation.isPending}
-                    onClick={() => handleRestockSingle(product.id)}
-                  >
-                    Restock
-                  </Button>
+              {filteredProducts.length === 0 ? (
+                <div className="text-center py-6 text-sm text-muted-foreground">
+                  No products match "{searchTerm}".
                 </div>
-              ))}
+              ) : (
+                filteredProducts.map(product => (
+                  <div key={product.id} className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 items-center text-sm p-2 border rounded-lg">
+                    <div>
+                      <p className="font-medium truncate">{product.name}</p>
+                      <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs mt-1">
+                        {product.stock_quantity === 0 ? "Out" : "Low"}
+                      </Badge>
+                    </div>
+                    <div>{product.stock_quantity}</div>
+                    <div>{product.minimum_stock}</div>
+                    <Input
+                      type="number"
+                      min={0}
+                      value={quantities[product.id] || ""}
+                      onChange={(e) => handleQuantityChange(product.id, e.target.value)}
+                      placeholder="0"
+                      className="h-8"
+                    />
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      disabled={!quantities[product.id] || quantities[product.id] <= 0 || restockMutation.isPending}
+                      onClick={() => handleRestockSingle(product.id)}
+                    >
+                      Restock
+                    </Button>
+                  </div>
+                ))
+              )}
             </div>
             <div className="flex justify-end pt-2 border-t">
               <Button
