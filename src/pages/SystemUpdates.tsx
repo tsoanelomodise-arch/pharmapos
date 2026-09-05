@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.7",
+    date: "2026-09-05",
+    type: "bugfix",
+    title: "Edit Transactions Permission Now Works",
+    description: "Staff granted the 'Edit Transactions' permission can now edit completed transactions.",
+    details: [
+      "Transaction History edit action respects the Edit Transactions permission",
+      "Database rules updated to allow permitted staff to save changes"
+    ]
+  },
+  {
+
     version: "1.5.6",
     date: "2026-09-05",
     type: "bugfix",
