@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.5",
+    date: "2026-09-05",
+    type: "improvement",
+    title: "Restock Modal Search",
+    description: "The Restock dialog now includes a live search to quickly find low or out-of-stock products.",
+    details: [
+      "Search matches product name, generic name, and barcode",
+      "Results filter instantly as you type",
+      "Search term is cleared when the dialog is closed"
+    ]
+  },
+  {
     version: "1.5.4",
     date: "2026-07-02",
     type: "improvement",
