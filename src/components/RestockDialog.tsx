@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,15 +14,15 @@ export function RestockDialog() {
   const restockMutation = useRestockMutation();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const filteredProducts = lowStockProducts.filter(product => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return true;
-    return (
-      product.name.toLowerCase().includes(term) ||
-      (product.generic_name && product.generic_name.toLowerCase().includes(term)) ||
-      (product.barcode && product.barcode.includes(term))
+  const normalizedTerm = searchTerm.toLowerCase().trim();
+  const filteredProducts = useMemo(() => {
+    if (!normalizedTerm) return lowStockProducts;
+    return lowStockProducts.filter(product =>
+      product.name.toLowerCase().includes(normalizedTerm) ||
+      (product.generic_name && product.generic_name.toLowerCase().includes(normalizedTerm)) ||
+      (product.barcode && product.barcode.includes(normalizedTerm))
     );
-  });
+  }, [lowStockProducts, normalizedTerm]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const qty = parseInt(value) || 0;
@@ -79,6 +79,7 @@ export function RestockDialog() {
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <Input
+                autoFocus
                 placeholder="Search by product name, barcode, or generic name..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
