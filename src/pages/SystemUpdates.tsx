@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.5.8",
+    date: "2026-09-05",
+    type: "improvement",
+    title: "Instant Restock Search",
+    description: "The Restock dialog now shortlists items from the very first letter typed.",
+    details: [
+      "Search input is automatically focused when the dialog opens",
+      "Filtering is memoized for smoother typing on large stock lists",
+      "Results update immediately with each keystroke"
+    ]
+  },
+  {
     version: "1.5.7",
     date: "2026-09-05",
     type: "bugfix",
