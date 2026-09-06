@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.1",
+    date: "2026-09-06",
+    type: "bugfix",
+    title: "Edit Transactions Permission Fully Enabled",
+    description: "Users granted the 'Edit Transactions' module permission can now edit all parts of a transaction, including removing line items.",
+    details: [
+      "Users with the Edit Transactions permission can now delete sale line items when correcting a transaction",
+      "Previously only admins, managers, and owners could remove line items, which could block a permitted user's edit",
+      "Verified the edit action in Transaction History and all related data rules respect the permission"
+    ]
+  },
+  {
     version: "1.6.0",
     date: "2026-09-06",
     type: "bugfix",
