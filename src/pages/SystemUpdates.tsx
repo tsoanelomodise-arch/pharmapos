@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.0",
+    date: "2026-09-06",
+    type: "bugfix",
+    title: "User Management List Restored",
+    description: "Fixed the user list failing to load in Management, so admins and owners can now see all users again.",
+    details: [
+      "Repaired a startup error in the list-users service function",
+      "All registered users now display with their roles in User Management"
+    ]
+  },
+  {
     version: "1.5.9",
     date: "2026-09-05",
     type: "improvement",

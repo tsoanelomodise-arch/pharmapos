@@ -72,10 +72,10 @@ Deno.serve(async (req) => {
     console.log("User has role:", userRoleData.role);
 
     // Fetch all users from auth.users using admin API
-    const { data: authUsers, error: authError } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: authUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
 
-    if (authError) {
-      console.error("Error listing auth users:", authError.message);
+    if (listError) {
+      console.error("Error listing auth users:", listError.message);
       return new Response(
         JSON.stringify({ error: "Failed to list users" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
