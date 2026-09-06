@@ -86,15 +86,6 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Optional cron secret to prevent public abuse
-    const cronHeader = req.headers.get('x-cron-secret')
-    if (CRON_SECRET && cronHeader !== CRON_SECRET) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-        status: 401,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      })
-    }
-
     const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     })
