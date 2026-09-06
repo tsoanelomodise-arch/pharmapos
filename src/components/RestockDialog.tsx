@@ -1,27 +1,45 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { PackagePlus, Search } from "lucide-react";
+import { PackagePlus, Search, FileText, Upload } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { useProducts, useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useProducts, useLowStockProducts, useDocumentedBulkRestockMutation } from "@/hooks/useProducts";
+import { useSuppliers } from "@/hooks/useSuppliers";
 import { useUserRole } from "@/hooks/useUserRole";
 
 export function RestockDialog() {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const { data: userRole } = useUserRole();
-  const canRestockAny = userRole === 'admin' || userRole === 'owner';
+  const canRestock = userRole === 'admin' || userRole === 'owner' || userRole === 'restock';
   const [showAll, setShowAll] = useState(false);
   const { data: lowStockProducts = [] } = useLowStockProducts();
   const { data: allProducts = [] } = useProducts();
-  const bulkRestockMutation = useBulkRestockMutation();
-  const restockMutation = useRestockMutation();
+  const { data: suppliers = [] } = useSuppliers();
+  const documentedRestockMutation = useDocumentedBulkRestockMutation();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
-  const baseProducts = canRestockAny && showAll ? allProducts : lowStockProducts;
+  const [supplierId, setSupplierId] = useState<string>("");
+  const [invoiceNumber, setInvoiceNumber] = useState("");
+  const [deliveryNoteNumber, setDeliveryNoteNumber] = useState("");
+  const [notes, setNotes] = useState("");
+  const [invoiceFile, setInvoiceFile] = useState<File | null>(null);
+  const [deliveryNoteFile, setDeliveryNoteFile] = useState<File | null>(null);
+  const invoiceInputRef = useRef<HTMLInputElement>(null);
+  const deliveryNoteInputRef = useRef<HTMLInputElement>(null);
+
+  const baseProducts = canRestock && showAll ? allProducts : lowStockProducts;
 
   const normalizedTerm = searchTerm.toLowerCase().trim();
   const filteredProducts = useMemo(() => {
@@ -32,6 +50,11 @@ export function RestockDialog() {
       (product.barcode && product.barcode.startsWith(normalizedTerm))
     );
   }, [baseProducts, normalizedTerm]);
+
+  const selectedSupplierName = useMemo(() => {
+    if (!supplierId) return "";
+    return suppliers.find(s => s.id === supplierId)?.name || "";
+  }, [supplierId, suppliers]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const qty = parseInt(value) || 0;
@@ -45,39 +68,55 @@ export function RestockDialog() {
     
     if (items.length === 0) return;
     
-    bulkRestockMutation.mutate(items, {
+    documentedRestockMutation.mutate({
+      items,
+      supplierId: supplierId || undefined,
+      supplierName: selectedSupplierName,
+      invoiceNumber: invoiceNumber || undefined,
+      deliveryNoteNumber: deliveryNoteNumber || undefined,
+      invoiceFile,
+      deliveryNoteFile,
+      notes: notes || undefined,
+    }, {
       onSuccess: () => {
         setQuantities({});
+        setSupplierId("");
+        setInvoiceNumber("");
+        setDeliveryNoteNumber("");
+        setNotes("");
+        setInvoiceFile(null);
+        setDeliveryNoteFile(null);
         setOpen(false);
-      }
-    });
-  };
-
-  const handleRestockSingle = (productId: string) => {
-    const qty = quantities[productId];
-    if (!qty || qty <= 0) return;
-    
-    restockMutation.mutate({ productId, quantity: qty }, {
-      onSuccess: () => {
-        setQuantities(prev => ({ ...prev, [productId]: 0 }));
       }
     });
   };
 
   const hasItems = Object.values(quantities).some(q => q > 0);
 
+  const resetState = () => {
+    setQuantities({});
+    setSearchTerm("");
+    setShowAll(false);
+    setSupplierId("");
+    setInvoiceNumber("");
+    setDeliveryNoteNumber("");
+    setNotes("");
+    setInvoiceFile(null);
+    setDeliveryNoteFile(null);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuantities({}); setSearchTerm(""); setShowAll(false); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetState(); }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <PackagePlus className="h-4 w-4 mr-2" />
           Restock
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-2xl">
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader className="pb-2">
           <DialogTitle className="text-xl leading-tight">
-            {canRestockAny && showAll ? "Restock Inventory Items" : "Restock Low & Out-of-Stock Items"}
+            {canRestock && showAll ? "Restock Inventory Items" : "Restock Low & Out-of-Stock Items"}
           </DialogTitle>
         </DialogHeader>
 
@@ -97,7 +136,7 @@ export function RestockDialog() {
                 className="pl-9"
               />
             </div>
-            {canRestockAny && (
+            {canRestock && (
               <div className="flex items-center gap-2">
                 <Switch id="show-all-products" checked={showAll} onCheckedChange={setShowAll} />
                 <Label htmlFor="show-all-products" className="text-sm text-muted-foreground">
@@ -105,6 +144,110 @@ export function RestockDialog() {
                 </Label>
               </div>
             )}
+
+            <div className="grid gap-4 border rounded-lg p-4 bg-muted/30">
+              <h3 className="text-sm font-medium flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Supplier &amp; Documents
+              </h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="restock-supplier">Supplier</Label>
+                  <Select value={supplierId} onValueChange={setSupplierId}>
+                    <SelectTrigger id="restock-supplier">
+                      <SelectValue placeholder="Select supplier (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">None</SelectItem>
+                      {suppliers.map(supplier => (
+                        <SelectItem key={supplier.id} value={supplier.id}>
+                          {supplier.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invoice-number">Invoice Number</Label>
+                  <Input
+                    id="invoice-number"
+                    placeholder="INV-0001"
+                    value={invoiceNumber}
+                    onChange={(e) => setInvoiceNumber(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="delivery-note-number">Delivery Note Number</Label>
+                  <Input
+                    id="delivery-note-number"
+                    placeholder="DN-0001"
+                    value={deliveryNoteNumber}
+                    onChange={(e) => setDeliveryNoteNumber(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="invoice-file">Invoice File</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={invoiceInputRef}
+                      id="invoice-file"
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="hidden"
+                      onChange={(e) => setInvoiceFile(e.target.files?.[0] || null)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => invoiceInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {invoiceFile ? "Change" : "Upload"}
+                    </Button>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {invoiceFile ? invoiceFile.name : "PDF or image"}
+                    </span>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="delivery-note-file">Delivery Note File</Label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      ref={deliveryNoteInputRef}
+                      id="delivery-note-file"
+                      type="file"
+                      accept=".pdf,image/*"
+                      className="hidden"
+                      onChange={(e) => setDeliveryNoteFile(e.target.files?.[0] || null)}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => deliveryNoteInputRef.current?.click()}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      {deliveryNoteFile ? "Change" : "Upload"}
+                    </Button>
+                    <span className="text-xs text-muted-foreground truncate max-w-[200px]">
+                      {deliveryNoteFile ? deliveryNoteFile.name : "PDF or image"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="restock-notes">Notes</Label>
+                <Textarea
+                  id="restock-notes"
+                  placeholder="Any additional details about this replenishment..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </div>
+
             <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
               <div>Product</div>
               <div>Stock</div>
@@ -112,10 +255,10 @@ export function RestockDialog() {
               <div>Restock Qty</div>
               <div></div>
             </div>
-            <div className="space-y-2 max-h-[400px] overflow-y-auto">
+            <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-6 text-sm text-muted-foreground">
-                  No products match "{searchTerm}".
+                  No products match &quot;{searchTerm}&quot;.
                 </div>
               ) : (
                 filteredProducts.map(product => (
@@ -139,8 +282,25 @@ export function RestockDialog() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      disabled={!quantities[product.id] || quantities[product.id] <= 0 || restockMutation.isPending}
-                      onClick={() => handleRestockSingle(product.id)}
+                      disabled={!quantities[product.id] || quantities[product.id] <= 0 || documentedRestockMutation.isPending}
+                      onClick={() => {
+                        const qty = quantities[product.id];
+                        if (!qty || qty <= 0) return;
+                        documentedRestockMutation.mutate({
+                          items: [{ productId: product.id, quantity: qty }],
+                          supplierId: supplierId || undefined,
+                          supplierName: selectedSupplierName,
+                          invoiceNumber: invoiceNumber || undefined,
+                          deliveryNoteNumber: deliveryNoteNumber || undefined,
+                          invoiceFile,
+                          deliveryNoteFile,
+                          notes: notes || undefined,
+                        }, {
+                          onSuccess: () => {
+                            setQuantities(prev => ({ ...prev, [product.id]: 0 }));
+                          }
+                        });
+                      }}
                     >
                       Restock
                     </Button>
@@ -151,9 +311,9 @@ export function RestockDialog() {
             <div className="flex justify-end pt-2 border-t">
               <Button
                 onClick={handleRestockAll}
-                disabled={!hasItems || bulkRestockMutation.isPending}
+                disabled={!hasItems || documentedRestockMutation.isPending}
               >
-                {bulkRestockMutation.isPending ? "Restocking..." : "Restock All"}
+                {documentedRestockMutation.isPending ? "Restocking..." : "Restock All"}
               </Button>
             </div>
           </div>
