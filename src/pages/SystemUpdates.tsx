@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.2",
+    date: "2026-09-06",
+    type: "feature",
+    title: "Admin Transaction Date Editing",
+    description: "Admins and owners can now correct the date and time of a transaction from the Edit Transaction dialog in Transaction History.",
+    details: [
+      "A Transaction Date & Time field appears in the Edit Transaction dialog for admin and owner roles only",
+      "Date changes are enforced at the database level — other roles, including users with the Edit Transactions permission, cannot change a transaction's date",
+      "Date changes are recorded in the system-wide Audit Trail"
+    ]
+  },
+  {
     version: "1.6.1",
     date: "2026-09-06",
     type: "bugfix",
