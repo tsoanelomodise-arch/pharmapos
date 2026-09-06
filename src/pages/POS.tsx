@@ -39,6 +39,7 @@ const POS = () => {
   const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
   const [activePrescription, setActivePrescription] = useState<any>(null);
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
+  const [customDate, setCustomDate] = useState<string>("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
   
   const { data: searchResults = [] } = useProductSearch(searchTerm);
@@ -49,6 +50,7 @@ const POS = () => {
   const { data: role } = useUserRole();
   const canViewTransactions = role === 'admin' || role === 'owner';
   const canCreditTransactions = role === 'admin' || role === 'owner';
+  const canBackdateTransactions = role === 'admin' || role === 'owner';
 
   // Pre-populate cart from prescription
   useEffect(() => {
@@ -220,6 +222,7 @@ const POS = () => {
       changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
       vatRate,
       vatInclusive,
+      createdAt: canBackdateTransactions && customDate ? new Date(customDate).toISOString() : undefined,
       notes: activePrescription 
         ? `Prescription dispensed - Dr. ${activePrescription.doctor_name}` 
         : selectedCustomer 
@@ -245,6 +248,7 @@ const POS = () => {
         setShowLastReceipt(true);
         clearCart();
         setCashPaid("");
+        setCustomDate("");
         setActivePrescription(null);
         setSelectedCustomer(null);
         setCustomerSearchTerm("");
@@ -637,6 +641,21 @@ const POS = () => {
                   </Button>
                 </div>
               </div>
+
+              {canBackdateTransactions && (
+                <div className="space-y-2">
+                  <Label htmlFor="custom-date">Transaction Date &amp; Time (optional)</Label>
+                  <Input
+                    id="custom-date"
+                    type="datetime-local"
+                    value={customDate}
+                    onChange={(e) => setCustomDate(e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Leave blank to use the current date and time.
+                  </p>
+                </div>
+              )}
 
               <Button 
                 className="w-full h-12 text-lg" 

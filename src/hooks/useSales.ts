@@ -164,7 +164,8 @@ export function useCreateSaleMutation() {
       changeGiven,
       vatRate = 15,
       vatInclusive = false,
-      notes 
+      notes,
+      createdAt,
     }: {
       customerId?: string;
       prescriptionId?: string;
@@ -176,6 +177,7 @@ export function useCreateSaleMutation() {
       vatRate?: number;
       vatInclusive?: boolean;
       notes?: string;
+      createdAt?: string;
     }) => {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("User not authenticated");
@@ -204,6 +206,7 @@ export function useCreateSaleMutation() {
           change_given: changeGiven,
           notes,
           processed_by: user.id,
+          ...(createdAt ? { created_at: createdAt } : {}),
         })
         .select()
         .single();
