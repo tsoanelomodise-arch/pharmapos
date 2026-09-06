@@ -123,7 +123,7 @@ export function RestockDialog() {
                     <div>
                       <p className="font-medium truncate">{product.name}</p>
                       <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs mt-1">
-                        {product.stock_quantity === 0 ? "Out" : "Low"}
+                        {product.stock_quantity === 0 ? "Out" : product.stock_quantity <= product.minimum_stock ? "Low" : "In stock"}
                       </Badge>
                     </div>
                     <div>{product.stock_quantity}</div>
