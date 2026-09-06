@@ -153,12 +153,12 @@ export function RestockDialog() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="restock-supplier">Supplier</Label>
-                  <Select value={supplierId} onValueChange={setSupplierId}>
+                  <Select value={supplierId || "none"} onValueChange={(v) => setSupplierId(v === "none" ? "" : v)}>
                     <SelectTrigger id="restock-supplier">
                       <SelectValue placeholder="Select supplier (optional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">None</SelectItem>
+                      <SelectItem value="none">None</SelectItem>
                       {suppliers.map(supplier => (
                         <SelectItem key={supplier.id} value={supplier.id}>
                           {supplier.name}
