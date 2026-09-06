@@ -4,8 +4,8 @@ Upgrade the existing low-stock restock flow so authorized users can replenish st
 
 ## What you'll see
 
-1. **Twice-weekly restock alert email** — every Monday and Thursday morning the system checks stock levels and emails the restocking admins a list of every item at or below its minimum, with current and minimum quantities and the preferred supplier. If nothing needs restocking, no email is sent. This is the kick-off of the restocking process.
-2. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically. Restock-role users, admins and owners receive the alert email.
+1. **Twice-weekly restock alert email** — every Monday and Thursday morning the system checks stock levels and emails **all system users** a list of every item at or below its minimum, with current and minimum quantities and the preferred supplier. If nothing needs restocking, no email is sent. This is the kick-off of the restocking process.
+2. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically.
 3. **Documented restocking** — when restocking from the low-stock list, users with the restock role (or admin/owner) can:
    - Enter the supplier invoice number and delivery note number
    - Upload the invoice and delivery note files (photo or PDF)
@@ -32,7 +32,7 @@ The system has no verified sending address yet. To send the alert emails, an ema
 
 ### Scheduled restock alert email
 - Email domain setup required first (custom domain `pharmapos.wonderlandstudio.co.za` available; no email domain is configured in the workspace yet)
-- New edge function `send-restock-alert`: queries products where `stock_quantity <= minimum_stock`, resolves recipients (users with `restock` role, admin, or owner via `user_roles` + `profiles.email`), sends one branded HTML email listing product, current stock, minimum, and primary supplier; exits without sending when the list is empty
+- New edge function `send-restock-alert`: queries products where `stock_quantity <= minimum_stock`, resolves recipients (all registered users via `profiles.email`), sends one branded HTML email per recipient listing product, current stock, minimum, and primary supplier; exits without sending when the list is empty
 - Scheduled with `pg_cron` + `pg_net` twice weekly (Mon and Thu, 06:00 UTC / 08:00 SAST) calling the function URL
 - New table `restock_alert_log` (sent_at, recipient count, item count) so sends are visible and repeat sends are avoidable; admin/owner read-only
 
