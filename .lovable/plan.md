@@ -30,6 +30,14 @@ The system has no verified sending address yet. To send the alert emails, an ema
 - New private bucket `restock-documents` for invoice/delivery note files
 - RLS on `storage.objects` so only the restock role, admin, and owner can upload/read
 
+### Scheduled restock alert email
+- Email domain setup required first (custom domain `pharmapos.wonderlandstudio.co.za` available; no email domain is configured in the workspace yet)
+- New edge function `send-restock-alert`: queries products where `stock_quantity <= minimum_stock`, resolves recipients (users with `restock` role, admin, or owner via `user_roles` + `profiles.email`), sends one branded HTML email listing product, current stock, minimum, and primary supplier; exits without sending when the list is empty
+- Scheduled with `pg_cron` + `pg_net` twice weekly (Mon and Thu, 06:00 UTC / 08:00 SAST) calling the function URL
+- New table `restock_alert_log` (sent_at, recipient count, item count) so sends are visible and repeat sends are avoidable; admin/owner read-only
+
+
+
 ### Frontend
 - `src/components/RestockDialog.tsx`: add supplier selector, invoice number, delivery note number, and two file-upload inputs; shown to restock-role users, admins, and owners
 - `src/hooks/useProducts.ts`: extend restock mutations to upload files and create the `restock_records` row alongside stock updates
