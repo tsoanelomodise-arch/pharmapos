@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.5",
+    date: "2026-09-06",
+    type: "improvement",
+    title: "PharmaPos Branding",
+    description: "The browser tab now uses the PharmaPos logo and full system name.",
+    details: [
+      "Browser favicon now uses the PharmaPos logo",
+      "Browser tab title shows \"PharmaPos — Pharmacy Management System\"",
+      "Removed third-party references from browser metadata"
+    ]
+  },
+  {
     version: "1.6.4",
     date: "2026-09-06",
     type: "feature",
