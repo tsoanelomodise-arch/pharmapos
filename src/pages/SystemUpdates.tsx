@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.4",
+    date: "2026-09-06",
+    type: "feature",
+    title: "Back-dated POS Transactions",
+    description: "Admins and owners can capture a new POS sale with a custom transaction date and time.",
+    details: [
+      "An optional Transaction Date & Time field appears in the POS checkout panel for admin and owner roles",
+      "Leaving it blank uses the current date and time",
+      "The database forces the current date and time for all other roles"
+    ]
+  },
+  {
     version: "1.6.3",
     date: "2026-09-06",
     type: "feature",
