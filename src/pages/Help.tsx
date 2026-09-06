@@ -475,7 +475,7 @@ export default function Help() {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
                     <li>Add new user: Click "Add User" and enter email, password, full name, and role</li>
-                    <li>Roles: Pharmacist, Admin, Cashier, Owner</li>
+                    <li>Roles: Pharmacist, Admin, Cashier, Restock, Owner</li>
                     <li>Update user account: Change username, email, or password</li>
                     <li>Change user roles: Click "Edit Role" on any user</li>
                     <li>Delete users when needed (cannot be undone)</li>
