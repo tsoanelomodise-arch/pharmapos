@@ -31,5 +31,5 @@ export function useCanAccessFinancialData() {
   const { data: role } = useUserRole();
   
   // All roles can access cost pricing and supplier data
-  return role && (['pharmacist', 'manager', 'admin', 'owner'] as UserRole[]).includes(role);
+  return role && (['pharmacist', 'manager', 'admin', 'owner', 'restock'] as UserRole[]).includes(role);
 }
