@@ -8,8 +8,10 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY')
-const RESEND_FROM_EMAIL = Deno.env.get('RESEND_FROM_EMAIL')
+const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY')
+const GOOGLE_MAIL_API_KEY = Deno.env.get('GOOGLE_MAIL_API_KEY')
+
+const GMAIL_GATEWAY = 'https://connector-gateway.lovable.dev/google_mail/gmail/v1'
 
 interface LowStockItem {
   id: string
@@ -17,11 +19,6 @@ interface LowStockItem {
   stock_quantity: number
   minimum_stock: number
   supplier_name: string | null
-}
-
-interface Profile {
-  id: string
-  email: string | null
 }
 
 function escapeHtml(text: string): string {
@@ -83,6 +80,88 @@ function buildEmailText(items: LowStockItem[]): string {
     )
     .join('\n')
   return header + rows + '\n\nReview and restock from Stock Control > Restock.'
+}
+
+function base64UrlEncode(str: string): string {
+  const bytes = new TextEncoder().encode(str)
+  let binary = ''
+  for (const b of bytes) binary += String.fromCharCode(b)
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
+}
+
+function mimeHeader(value: string): string {
+  if (/^[\x00-\x7F]*$/.test(value)) return value
+  return `=?UTF-8?B?${base64UrlEncode(value)}?=`
+}
+
+function createRawEmail(
+  from: string,
+  to: string,
+  bcc: string[],
+  subject: string,
+  textBody: string,
+  htmlBody: string
+): string {
+  const boundary = '----=_Part_' + Math.random().toString(36).substring(2)
+  const lines = [
+    `From: ${from}`,
+    `To: ${to}`,
+    `Bcc: ${bcc.join(', ')}`,
+    `Subject: ${mimeHeader(subject)}`,
+    'MIME-Version: 1.0',
+    `Content-Type: multipart/alternative; boundary="${boundary}"`,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/plain; charset="UTF-8"',
+    '',
+    textBody,
+    '',
+    `--${boundary}`,
+    'Content-Type: text/html; charset="UTF-8"',
+    '',
+    htmlBody,
+    '',
+    `--${boundary}--`,
+  ]
+  return base64UrlEncode(lines.join('\r\n'))
+}
+
+async function getGmailSenderEmail(): Promise<string> {
+  const response = await fetch(`${GMAIL_GATEWAY}/users/me/profile`, {
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'X-Connection-Api-Key': GOOGLE_MAIL_API_KEY!,
+    },
+  })
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Gmail profile fetch failed [${response.status}]: ${body}`)
+  }
+  const profile = await response.json()
+  return profile.emailAddress
+}
+
+async function sendGmailEmail(
+  from: string,
+  bcc: string[],
+  subject: string,
+  textBody: string,
+  htmlBody: string
+): Promise<void> {
+  const raw = createRawEmail(from, from, bcc, subject, textBody, htmlBody)
+  const response = await fetch(`${GMAIL_GATEWAY}/users/me/messages/send`, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+      'X-Connection-Api-Key': GOOGLE_MAIL_API_KEY!,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ raw }),
+  })
+  if (!response.ok) {
+    const body = await response.text()
+    throw new Error(`Gmail send failed [${response.status}]: ${body}`)
+  }
 }
 
 Deno.serve(async (req) => {
@@ -153,30 +232,16 @@ Deno.serve(async (req) => {
 
     let emailsSent = 0
     let emailStatus = 'skipped'
+    let note: string | undefined
 
-    if (recipients.length > 0 && RESEND_API_KEY && RESEND_FROM_EMAIL) {
-      const response = await fetch('https://api.resend.com/emails', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${RESEND_API_KEY}`,
-        },
-        body: JSON.stringify({
-          from: RESEND_FROM_EMAIL,
-          to: recipients,
-          subject: `PharmaPos Restock Alert — ${items.length} item${items.length === 1 ? '' : 's'} need attention`,
-          html: buildEmailHtml(items),
-          text: buildEmailText(items),
-        }),
-      })
-
-      if (!response.ok) {
-        const errorBody = await response.text()
-        throw new Error(`Resend returned ${response.status}: ${errorBody}`)
-      }
-
+    if (recipients.length > 0 && LOVABLE_API_KEY && GOOGLE_MAIL_API_KEY) {
+      const sender = await getGmailSenderEmail()
+      const subject = `PharmaPos Restock Alert — ${items.length} item${items.length === 1 ? '' : 's'} need attention`
+      await sendGmailEmail(sender, recipients, subject, buildEmailText(items), buildEmailHtml(items))
       emailsSent = recipients.length
       emailStatus = 'sent'
+    } else if (recipients.length > 0) {
+      note = 'Email not sent: Gmail connector is not linked or secrets are missing.'
     }
 
     // Log the alert run
@@ -196,9 +261,7 @@ Deno.serve(async (req) => {
         item_count: items.length,
         emails_sent: emailsSent,
         email_status: emailStatus,
-        note: !RESEND_API_KEY || !RESEND_FROM_EMAIL
-          ? 'Email not sent: RESEND_API_KEY and RESEND_FROM_EMAIL secrets are not configured.'
-          : undefined,
+        note,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )

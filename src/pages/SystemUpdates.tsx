@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.1",
+    date: "2026-09-06",
+    type: "improvement",
+    title: "Restock Alerts Sent via Gmail",
+    description: "Twice-weekly low-stock alert emails are now sent from the connected Gmail account instead of requiring a separate email service.",
+    details: [
+      "Linked the Gmail connector so restock alerts are sent from the pharmacy's verified Gmail address",
+      "The send-restock-alert job now delivers a low-stock summary to all system users with email addresses",
+      "Recipients are BCC'd so individual email addresses remain private",
+      "Removed the dependency on Resend configuration"
+    ]
+  },
+  {
     version: "1.7.0",
     date: "2026-09-06",
     type: "feature",
