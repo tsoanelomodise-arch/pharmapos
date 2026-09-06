@@ -66,6 +66,9 @@ export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransact
         paymentStatus,
         discountAmount: parseFloat(discountAmount) || 0,
         notes: notes || undefined,
+        ...(canEditDate && transactionDate
+          ? { createdAt: new Date(transactionDate).toISOString() }
+          : {}),
       },
       {
         onSuccess: () => {
