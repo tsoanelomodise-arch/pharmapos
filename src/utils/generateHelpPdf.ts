@@ -359,7 +359,7 @@ export const generateHelpPdf = () => {
   addSubtitle('Users Tab (Admin/Owner):', 12);
   addListItem('View all system users', '1.');
   addListItem('Add new user: Click "Add User" and enter email, password, full name, and role', '2.');
-  addListItem('Roles: Pharmacist, Admin, Cashier, Owner', '3.');
+  addListItem('Roles: Pharmacist, Admin, Cashier, Restock, Owner', '3.');
   addListItem('Update user account: Change username, email, or password', '4.');
   addListItem('Change user roles: Click "Edit Role" on any user', '5.');
   addListItem('Delete users when needed (cannot be undone)', '6.');
