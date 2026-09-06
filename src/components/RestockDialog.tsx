@@ -4,25 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PackagePlus, Search } from "lucide-react";
-import { useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useProducts, useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function RestockDialog() {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: userRole } = useUserRole();
+  const canRestockAny = userRole === 'admin' || userRole === 'owner';
+  const [showAll, setShowAll] = useState(false);
   const { data: lowStockProducts = [] } = useLowStockProducts();
+  const { data: allProducts = [] } = useProducts();
   const bulkRestockMutation = useBulkRestockMutation();
   const restockMutation = useRestockMutation();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
+  const baseProducts = canRestockAny && showAll ? allProducts : lowStockProducts;
+
   const normalizedTerm = searchTerm.toLowerCase().trim();
   const filteredProducts = useMemo(() => {
-    if (!normalizedTerm) return lowStockProducts;
-    return lowStockProducts.filter(product =>
+    if (!normalizedTerm) return baseProducts;
+    return baseProducts.filter(product =>
       product.name.toLowerCase().startsWith(normalizedTerm) ||
       (product.generic_name && product.generic_name.toLowerCase().startsWith(normalizedTerm)) ||
       (product.barcode && product.barcode.startsWith(normalizedTerm))
     );
-  }, [lowStockProducts, normalizedTerm]);
+  }, [baseProducts, normalizedTerm]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const qty = parseInt(value) || 0;
