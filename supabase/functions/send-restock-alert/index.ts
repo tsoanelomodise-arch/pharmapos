@@ -104,7 +104,7 @@ Deno.serve(async (req) => {
         name,
         stock_quantity,
         minimum_stock,
-        product_suppliers!inner(is_primary, suppliers(name))
+        product_suppliers(is_primary, suppliers(name))
       `
       )
       .order('name')
