@@ -151,6 +151,7 @@ export function UserForm() {
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="manager">Cashier</SelectItem>
                       <SelectItem value="owner">Owner</SelectItem>
+                      <SelectItem value="restock">Restock</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />

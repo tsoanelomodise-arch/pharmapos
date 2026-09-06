@@ -30,6 +30,7 @@ const roles = [
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Cashier" },
   { value: "owner", label: "Owner" },
+  { value: "restock", label: "Restock" },
 ];
 
 export function UserRoleDialog({ user }: UserRoleDialogProps) {
