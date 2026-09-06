@@ -407,6 +407,80 @@ export type Database = {
         }
         Relationships: []
       }
+      restock_alert_log: {
+        Row: {
+          created_by: string | null
+          id: string
+          item_count: number
+          recipient_count: number
+          sent_at: string
+        }
+        Insert: {
+          created_by?: string | null
+          id?: string
+          item_count?: number
+          recipient_count?: number
+          sent_at?: string
+        }
+        Update: {
+          created_by?: string | null
+          id?: string
+          item_count?: number
+          recipient_count?: number
+          sent_at?: string
+        }
+        Relationships: []
+      }
+      restock_records: {
+        Row: {
+          created_at: string
+          created_by: string
+          delivery_note_file_path: string | null
+          delivery_note_number: string | null
+          id: string
+          invoice_file_path: string | null
+          invoice_number: string | null
+          notes: string | null
+          supplier_id: string | null
+          supplier_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          delivery_note_file_path?: string | null
+          delivery_note_number?: string | null
+          id?: string
+          invoice_file_path?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          delivery_note_file_path?: string | null
+          delivery_note_number?: string | null
+          id?: string
+          invoice_file_path?: string | null
+          invoice_number?: string | null
+          notes?: string | null
+          supplier_id?: string | null
+          supplier_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "restock_records_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sale_items: {
         Row: {
           created_at: string
@@ -540,6 +614,7 @@ export type Database = {
           product_id: string
           quantity: number
           reference_id: string | null
+          restock_record_id: string | null
         }
         Insert: {
           created_at?: string
@@ -549,6 +624,7 @@ export type Database = {
           product_id: string
           quantity: number
           reference_id?: string | null
+          restock_record_id?: string | null
         }
         Update: {
           created_at?: string
@@ -558,6 +634,7 @@ export type Database = {
           product_id?: string
           quantity?: number
           reference_id?: string | null
+          restock_record_id?: string | null
         }
         Relationships: [
           {
@@ -565,6 +642,13 @@ export type Database = {
             columns: ["product_id"]
             isOneToOne: false
             referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_movements_restock_record_id_fkey"
+            columns: ["restock_record_id"]
+            isOneToOne: false
+            referencedRelation: "restock_records"
             referencedColumns: ["id"]
           },
         ]
