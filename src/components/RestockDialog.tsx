@@ -67,7 +67,7 @@ export function RestockDialog() {
   const hasItems = Object.values(quantities).some(q => q > 0);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuantities({}); setSearchTerm(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuantities({}); setSearchTerm(""); setShowAll(false); } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <PackagePlus className="h-4 w-4 mr-2" />
