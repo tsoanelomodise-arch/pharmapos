@@ -91,6 +91,18 @@ export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransact
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          {canEditDate && (
+            <div className="grid gap-2">
+              <Label htmlFor="transactionDate">Transaction Date & Time (Admin only)</Label>
+              <Input
+                id="transactionDate"
+                type="datetime-local"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="grid gap-2">
             <Label htmlFor="paymentMethod">Payment Method</Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
