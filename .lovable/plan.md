@@ -4,8 +4,8 @@ Upgrade the existing low-stock restock flow so authorized users can replenish st
 
 ## What you'll see
 
-1. **Twice-weekly restock alert email** — every Monday and Thursday morning the system checks stock levels and emails the restocking admins a list of every item at or below its minimum, with current and minimum quantities and the preferred supplier. If nothing needs restocking, no email is sent. This is the kick-off of the restocking process.
-2. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically. Restock-role users, admins and owners receive the alert email.
+1. **Twice-weekly restock alert email** — every Monday and Thursday morning the system checks stock levels and emails **all system users** a list of every item at or below its minimum, with current and minimum quantities and the preferred supplier. If nothing needs restocking, no email is sent. This is the kick-off of the restocking process.
+2. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically.
 3. **Documented restocking** — when restocking from the low-stock list, users with the restock role (or admin/owner) can:
    - Enter the supplier invoice number and delivery note number
    - Upload the invoice and delivery note files (photo or PDF)
