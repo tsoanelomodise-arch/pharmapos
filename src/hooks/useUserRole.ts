@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 
-export type UserRole = 'pharmacist' | 'admin' | 'manager' | 'owner';
+export type UserRole = 'pharmacist' | 'admin' | 'manager' | 'owner' | 'restock';
 
 export function useUserRole() {
   const { user } = useAuth();
@@ -31,5 +31,5 @@ export function useCanAccessFinancialData() {
   const { data: role } = useUserRole();
   
   // All roles can access cost pricing and supplier data
-  return role && (['pharmacist', 'manager', 'admin', 'owner'] as UserRole[]).includes(role);
+  return role && (['pharmacist', 'manager', 'admin', 'owner', 'restock'] as UserRole[]).includes(role);
 }

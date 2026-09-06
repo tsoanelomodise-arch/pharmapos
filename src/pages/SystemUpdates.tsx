@@ -16,6 +16,20 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.0",
+    date: "2026-09-06",
+    type: "feature",
+    title: "Remote Stock Replenishment with Supplier Documents",
+    description: "Restocking can now be performed remotely with full supplier documentation and an immutable audit trail.",
+    details: [
+      "New Restock user role can replenish stock and upload supplier documents",
+      "Restock dialog captures supplier, invoice number, delivery note number, and invoice/delivery-note files",
+      "Each replenishment creates an immutable restock record linked to stock movements",
+      "Restock History now shows supplier details, document downloads, and line-item quantities",
+      "Twice-weekly low-stock alert email job is scheduled (email delivery requires a configured email provider)"
+    ]
+  },
+  {
     version: "1.6.5",
     date: "2026-09-06",
     type: "improvement",

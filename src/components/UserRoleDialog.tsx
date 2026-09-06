@@ -30,6 +30,7 @@ const roles = [
   { value: "admin", label: "Admin" },
   { value: "manager", label: "Cashier" },
   { value: "owner", label: "Owner" },
+  { value: "restock", label: "Restock" },
 ];
 
 export function UserRoleDialog({ user }: UserRoleDialogProps) {
@@ -86,6 +87,7 @@ export function UserRoleDialog({ user }: UserRoleDialogProps) {
                 <li><strong>Admin:</strong> Full access to management features</li>
                 <li><strong>Cashier:</strong> Admin access plus financial data</li>
                 <li><strong>Owner:</strong> Full system access including user management</li>
+                <li><strong>Restock:</strong> Replenish stock and upload supplier documents</li>
               </ul>
             </div>
           </div>

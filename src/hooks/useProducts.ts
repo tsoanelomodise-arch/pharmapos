@@ -266,6 +266,131 @@ export function useBulkRestockMutation() {
   });
 }
 
+export interface DocumentedBulkRestockInput {
+  items: { productId: string; quantity: number }[];
+  supplierId?: string;
+  supplierName?: string;
+  invoiceNumber?: string;
+  deliveryNoteNumber?: string;
+  invoiceFile?: File | null;
+  deliveryNoteFile?: File | null;
+  notes?: string;
+}
+
+export function useDocumentedBulkRestockMutation() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({
+      items,
+      supplierId,
+      supplierName,
+      invoiceNumber,
+      deliveryNoteNumber,
+      invoiceFile,
+      deliveryNoteFile,
+      notes,
+    }: DocumentedBulkRestockInput) => {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error('You must be signed in to restock');
+      
+      let invoice_file_path: string | null = null;
+      let delivery_note_file_path: string | null = null;
+      
+      if (invoiceFile) {
+        const path = `${user.id}/${Date.now()}_invoice_${invoiceFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('restock-documents')
+          .upload(path, invoiceFile);
+        if (uploadError) throw uploadError;
+        invoice_file_path = path;
+      }
+      
+      if (deliveryNoteFile) {
+        const path = `${user.id}/${Date.now()}_deliverynote_${deliveryNoteFile.name}`;
+        const { error: uploadError } = await supabase.storage
+          .from('restock-documents')
+          .upload(path, deliveryNoteFile);
+        if (uploadError) throw uploadError;
+        delivery_note_file_path = path;
+      }
+      
+      const { data: record, error: recordError } = await supabase
+        .from('restock_records')
+        .insert({
+          supplier_id: supplierId || null,
+          supplier_name: supplierName || null,
+          invoice_number: invoiceNumber?.trim() || null,
+          delivery_note_number: deliveryNoteNumber?.trim() || null,
+          invoice_file_path,
+          delivery_note_file_path,
+          notes: notes?.trim() || null,
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      
+      if (recordError) throw recordError;
+      
+      const results = [];
+      for (const item of items) {
+        if (item.quantity <= 0) continue;
+        
+        const { data: product, error: fetchError } = await supabase
+          .from('products')
+          .select('stock_quantity')
+          .eq('id', item.productId)
+          .single();
+        
+        if (fetchError) throw fetchError;
+        
+        const newQuantity = product.stock_quantity + item.quantity;
+        
+        const { error: updateError } = await supabase
+          .from('products')
+          .update({ stock_quantity: newQuantity })
+          .eq('id', item.productId);
+        
+        if (updateError) throw updateError;
+        
+        const { error: movementError } = await supabase
+          .from('stock_movements')
+          .insert({
+            product_id: item.productId,
+            movement_type: 'adjustment' as const,
+            quantity: item.quantity,
+            notes: `Restock: ${item.quantity} units added`,
+            restock_record_id: record.id,
+          });
+        
+        if (movementError) throw movementError;
+        
+        results.push({ productId: item.productId, newQuantity });
+      }
+      
+      return { recordId: record.id, results };
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['products'] });
+      queryClient.invalidateQueries({ queryKey: ['low-stock-products'] });
+      queryClient.invalidateQueries({ queryKey: ['stock-movements'] });
+      queryClient.invalidateQueries({ queryKey: ['restock-records'] });
+      queryClient.invalidateQueries({ queryKey: ['dashboard-stats'] });
+      toast({ 
+        title: 'Restock recorded successfully',
+        description: `${data.results.length} products updated`
+      });
+    },
+    onError: (error) => {
+      toast({ 
+        title: 'Error recording restock', 
+        description: error.message,
+        variant: 'destructive' 
+      });
+    }
+  });
+}
+
 export function useDisposeProductMutation() {
   const queryClient = useQueryClient();
   
