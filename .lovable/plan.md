@@ -4,13 +4,19 @@ Upgrade the existing low-stock restock flow so authorized users can replenish st
 
 ## What you'll see
 
-1. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically.
-2. **Documented restocking** — when restocking from the low-stock list, users with the restock role (or admin/owner) can:
+1. **Twice-weekly restock alert email** — every Monday and Thursday morning the system checks stock levels and emails the restocking admins a list of every item at or below its minimum, with current and minimum quantities and the preferred supplier. If nothing needs restocking, no email is sent. This is the kick-off of the restocking process.
+2. **New "Restock" role** — a dedicated role (assignable in User Management) that allows a user to restock inventory remotely, even without admin rights. Admins and owners keep this ability automatically. Restock-role users, admins and owners receive the alert email.
+3. **Documented restocking** — when restocking from the low-stock list, users with the restock role (or admin/owner) can:
    - Enter the supplier invoice number and delivery note number
    - Upload the invoice and delivery note files (photo or PDF)
    - Stock updates immediately on submit, exactly as today, but now each restock is tied to its source documents
-3. **Restock history with documents** — the existing Restock History log shows the invoice/delivery note numbers and links to view or download the uploaded documents for each restock.
-4. **Audit trail** — document uploads and restocks appear in the Audit Trail as they do today.
+4. **Restock history with documents** — the existing Restock History log shows the invoice/delivery note numbers and links to view or download the uploaded documents for each restock.
+5. **Audit trail** — document uploads and restocks appear in the Audit Trail as they do today.
+
+## Before the email can send
+
+The system has no verified sending address yet. To send the alert emails, an email domain must be set up (your existing pharmapos.wonderlandstudio.co.za can be used). I'll prompt you for this during the build; everything else works without it.
+
 
 ## Technical details
 
