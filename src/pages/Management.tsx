@@ -520,7 +520,7 @@ export default function Management() {
                             {user.role ? (
                               <Badge variant={
                                 user.role === 'owner' ? 'default' :
-                                user.role === 'admin' || user.role === 'manager' ? 'secondary' :
+                                user.role === 'admin' || user.role === 'manager' || user.role === 'restock' ? 'secondary' :
                                 'outline'
                               }>
                                 {user.role === 'manager' ? 'Cashier' : user.role.charAt(0).toUpperCase() + user.role.slice(1)}

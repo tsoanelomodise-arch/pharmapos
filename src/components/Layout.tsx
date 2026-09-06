@@ -19,6 +19,7 @@ const roleDisplayNames: Record<string, string> = {
   admin: 'Admin',
   manager: 'Cashier',
   pharmacist: 'Pharmacist',
+  restock: 'Restock',
 };
 
 export const Layout = memo(function Layout({ children }: LayoutProps) {

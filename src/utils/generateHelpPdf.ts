@@ -162,6 +162,17 @@ export const generateHelpPdf = () => {
   addListItem('Cannot set module permissions');
   addSpacer(5);
 
+  addSubtitle('Restock', 12);
+  addText('Remote stock replenishment and supplier document capture');
+  addListItem('Access to assigned modules');
+  addListItem('Replenish stock from low-stock alerts');
+  addListItem('Capture supplier, invoice and delivery-note details');
+  addListItem('Upload invoice and delivery-note files');
+  addListItem('View restock history and download documents');
+  addListItem('No user management');
+  addListItem('Cannot set module permissions');
+  addSpacer(5);
+
   addSubtitle('Owner', 12);
   addText('Complete system control including permissions');
   addListItem('Full system access');
@@ -348,7 +359,7 @@ export const generateHelpPdf = () => {
   addSubtitle('Users Tab (Admin/Owner):', 12);
   addListItem('View all system users', '1.');
   addListItem('Add new user: Click "Add User" and enter email, password, full name, and role', '2.');
-  addListItem('Roles: Pharmacist, Admin, Cashier, Owner', '3.');
+  addListItem('Roles: Pharmacist, Admin, Cashier, Restock, Owner', '3.');
   addListItem('Update user account: Change username, email, or password', '4.');
   addListItem('Change user roles: Click "Edit Role" on any user', '5.');
   addListItem('Delete users when needed (cannot be undone)', '6.');

@@ -1,5 +1,10 @@
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { corsHeaders } from 'npm:@supabase/supabase-js@2/cors'
+
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -90,8 +95,8 @@ Deno.serve(async (req) => {
       auth: { persistSession: false },
     })
 
-    // Fetch low-stock products with primary supplier name
-    const { data: lowStockProducts, error: productsError } = await admin
+    // Fetch products with primary supplier name and filter low stock in code
+    const { data: products, error: productsError } = await admin
       .from('products')
       .select(
         `
@@ -102,24 +107,25 @@ Deno.serve(async (req) => {
         product_suppliers!inner(is_primary, suppliers(name))
       `
       )
-      .lte('stock_quantity', 'minimum_stock')
       .order('name')
 
     if (productsError) throw productsError
 
-    const items: LowStockItem[] = (lowStockProducts || []).map((p: any) => {
-      const primary = Array.isArray(p.product_suppliers)
-        ? p.product_suppliers.find((ps: any) => ps.is_primary)
-        : null
-      const supplierName = primary?.suppliers?.name ?? null
-      return {
-        id: p.id,
-        name: p.name,
-        stock_quantity: p.stock_quantity,
-        minimum_stock: p.minimum_stock,
-        supplier_name: supplierName,
-      }
-    })
+    const items: LowStockItem[] = (products || [])
+      .filter((p: any) => (p.stock_quantity || 0) <= (p.minimum_stock || 0))
+      .map((p: any) => {
+        const primary = Array.isArray(p.product_suppliers)
+          ? p.product_suppliers.find((ps: any) => ps.is_primary)
+          : null
+        const supplierName = primary?.suppliers?.name ?? null
+        return {
+          id: p.id,
+          name: p.name,
+          stock_quantity: p.stock_quantity,
+          minimum_stock: p.minimum_stock,
+          supplier_name: supplierName,
+        }
+      })
 
     if (items.length === 0) {
       return new Response(

@@ -98,7 +98,7 @@ export default function Help() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
             <div className="border rounded-lg p-4">
               <Badge className="mb-2">Pharmacist</Badge>
               <p className="text-sm text-muted-foreground mb-2">Day-to-day dispensing and sales operations</p>
@@ -135,6 +135,20 @@ export default function Help() {
                 <li>✓ View cost pricing</li>
                 <li>✓ View supplier data</li>
                 <li>✓ Financial reports access</li>
+                <li>✗ User management</li>
+                <li>✗ Set module permissions</li>
+              </ul>
+            </div>
+
+            <div className="border rounded-lg p-4">
+              <Badge variant="secondary" className="mb-2">Restock</Badge>
+              <p className="text-sm text-muted-foreground mb-2">Remote stock replenishment and supplier document capture</p>
+              <ul className="text-sm space-y-1">
+                <li>✓ Access to assigned modules</li>
+                <li>✓ Replenish stock from low-stock alerts</li>
+                <li>✓ Capture supplier, invoice and delivery-note details</li>
+                <li>✓ Upload invoice and delivery-note files</li>
+                <li>✓ View restock history and download documents</li>
                 <li>✗ User management</li>
                 <li>✗ Set module permissions</li>
               </ul>
@@ -461,7 +475,7 @@ export default function Help() {
                   <ol className="list-decimal list-inside space-y-1 text-sm">
                     <li>View all system users</li>
                     <li>Add new user: Click "Add User" and enter email, password, full name, and role</li>
-                    <li>Roles: Pharmacist, Admin, Cashier, Owner</li>
+                    <li>Roles: Pharmacist, Admin, Cashier, Restock, Owner</li>
                     <li>Update user account: Change username, email, or password</li>
                     <li>Change user roles: Click "Edit Role" on any user</li>
                     <li>Delete users when needed (cannot be undone)</li>
