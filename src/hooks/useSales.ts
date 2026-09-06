@@ -281,6 +281,7 @@ export function useUpdateSaleMutation() {
       discountAmount,
       notes,
       customerId,
+      createdAt,
     }: {
       saleId: string;
       paymentMethod?: 'cash' | 'card' | 'credit' | 'insurance';
@@ -288,6 +289,7 @@ export function useUpdateSaleMutation() {
       discountAmount?: number;
       notes?: string;
       customerId?: string | null;
+      createdAt?: string;
     }) => {
       const updateData: Record<string, any> = {};
       
@@ -296,6 +298,7 @@ export function useUpdateSaleMutation() {
       if (discountAmount !== undefined) updateData.discount_amount = discountAmount;
       if (notes !== undefined) updateData.notes = notes;
       if (customerId !== undefined) updateData.customer_id = customerId;
+      if (createdAt !== undefined) updateData.created_at = createdAt;
       
       const { data, error } = await supabase
         .from('sales')

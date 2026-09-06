@@ -20,6 +20,13 @@ import {
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
 import { SaleWithDetails, useUpdateSaleMutation } from "@/hooks/useSales";
+import { useUserRole } from "@/hooks/useUserRole";
+
+const toLocalInputValue = (iso: string) => {
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
 
 interface EditTransactionDialogProps {
   sale: SaleWithDetails | null;
@@ -30,10 +37,14 @@ interface EditTransactionDialogProps {
 export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransactionDialogProps) {
   const updateSale = useUpdateSaleMutation();
   
+  const { data: role } = useUserRole();
+  const canEditDate = role === 'admin' || role === 'owner';
+
   const [paymentMethod, setPaymentMethod] = useState<string>("");
   const [paymentStatus, setPaymentStatus] = useState<string>("");
   const [discountAmount, setDiscountAmount] = useState<string>("0");
   const [notes, setNotes] = useState<string>("");
+  const [transactionDate, setTransactionDate] = useState<string>("");
 
   useEffect(() => {
     if (sale) {
@@ -41,6 +52,7 @@ export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransact
       setPaymentStatus(sale.payment_status);
       setDiscountAmount(sale.discount_amount?.toString() || "0");
       setNotes(sale.notes || "");
+      setTransactionDate(toLocalInputValue(sale.created_at));
     }
   }, [sale]);
 
@@ -54,6 +66,9 @@ export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransact
         paymentStatus,
         discountAmount: parseFloat(discountAmount) || 0,
         notes: notes || undefined,
+        ...(canEditDate && transactionDate
+          ? { createdAt: new Date(transactionDate).toISOString() }
+          : {}),
       },
       {
         onSuccess: () => {
@@ -76,6 +91,18 @@ export function EditTransactionDialog({ sale, open, onOpenChange }: EditTransact
         </DialogHeader>
         
         <div className="grid gap-4 py-4">
+          {canEditDate && (
+            <div className="grid gap-2">
+              <Label htmlFor="transactionDate">Transaction Date & Time (Admin only)</Label>
+              <Input
+                id="transactionDate"
+                type="datetime-local"
+                value={transactionDate}
+                onChange={(e) => setTransactionDate(e.target.value)}
+              />
+            </div>
+          )}
+
           <div className="grid gap-2">
             <Label htmlFor="paymentMethod">Payment Method</Label>
             <Select value={paymentMethod} onValueChange={setPaymentMethod}>
