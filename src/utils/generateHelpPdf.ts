@@ -162,6 +162,17 @@ export const generateHelpPdf = () => {
   addListItem('Cannot set module permissions');
   addSpacer(5);
 
+  addSubtitle('Restock', 12);
+  addText('Remote stock replenishment and supplier document capture');
+  addListItem('Access to assigned modules');
+  addListItem('Replenish stock from low-stock alerts');
+  addListItem('Capture supplier, invoice and delivery-note details');
+  addListItem('Upload invoice and delivery-note files');
+  addListItem('View restock history and download documents');
+  addListItem('No user management');
+  addListItem('Cannot set module permissions');
+  addSpacer(5);
+
   addSubtitle('Owner', 12);
   addText('Complete system control including permissions');
   addListItem('Full system access');
