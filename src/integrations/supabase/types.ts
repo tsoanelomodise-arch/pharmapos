@@ -740,7 +740,7 @@ export type Database = {
         | "audit_trail"
         | "system_updates"
         | "database_status"
-      app_role: "pharmacist" | "admin" | "manager" | "owner"
+      app_role: "pharmacist" | "admin" | "manager" | "owner" | "restock"
       payment_method: "cash" | "card" | "credit" | "insurance"
       product_category:
         | "prescription"
@@ -898,7 +898,7 @@ export const Constants = {
         "system_updates",
         "database_status",
       ],
-      app_role: ["pharmacist", "admin", "manager", "owner"],
+      app_role: ["pharmacist", "admin", "manager", "owner", "restock"],
       payment_method: ["cash", "card", "credit", "insurance"],
       product_category: [
         "prescription",
