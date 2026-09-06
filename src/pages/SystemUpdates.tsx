@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.6.3",
+    date: "2026-09-06",
+    type: "feature",
+    title: "Restock Any Inventory Item",
+    description: "Admins and owners can now restock any product, not only items flagged as low or out of stock.",
+    details: [
+      "A 'Show all products' toggle in the Restock dialog reveals the full inventory for admin and owner roles",
+      "Other roles continue to see only low and out-of-stock items",
+      "Stock badges now show In stock, Low, or Out for each listed product"
+    ]
+  },
+  {
     version: "1.6.2",
     date: "2026-09-06",
     type: "feature",

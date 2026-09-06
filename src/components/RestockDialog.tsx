@@ -4,25 +4,34 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { PackagePlus, Search } from "lucide-react";
-import { useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useProducts, useLowStockProducts, useBulkRestockMutation, useRestockMutation } from "@/hooks/useProducts";
+import { useUserRole } from "@/hooks/useUserRole";
 
 export function RestockDialog() {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const { data: userRole } = useUserRole();
+  const canRestockAny = userRole === 'admin' || userRole === 'owner';
+  const [showAll, setShowAll] = useState(false);
   const { data: lowStockProducts = [] } = useLowStockProducts();
+  const { data: allProducts = [] } = useProducts();
   const bulkRestockMutation = useBulkRestockMutation();
   const restockMutation = useRestockMutation();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
 
+  const baseProducts = canRestockAny && showAll ? allProducts : lowStockProducts;
+
   const normalizedTerm = searchTerm.toLowerCase().trim();
   const filteredProducts = useMemo(() => {
-    if (!normalizedTerm) return lowStockProducts;
-    return lowStockProducts.filter(product =>
+    if (!normalizedTerm) return baseProducts;
+    return baseProducts.filter(product =>
       product.name.toLowerCase().startsWith(normalizedTerm) ||
       (product.generic_name && product.generic_name.toLowerCase().startsWith(normalizedTerm)) ||
       (product.barcode && product.barcode.startsWith(normalizedTerm))
     );
-  }, [lowStockProducts, normalizedTerm]);
+  }, [baseProducts, normalizedTerm]);
 
   const handleQuantityChange = (productId: string, value: string) => {
     const qty = parseInt(value) || 0;
@@ -58,7 +67,7 @@ export function RestockDialog() {
   const hasItems = Object.values(quantities).some(q => q > 0);
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuantities({}); setSearchTerm(""); } }}>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setQuantities({}); setSearchTerm(""); setShowAll(false); } }}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <PackagePlus className="h-4 w-4 mr-2" />
@@ -67,10 +76,12 @@ export function RestockDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-xl leading-tight">Restock Low & Out-of-Stock Items</DialogTitle>
+          <DialogTitle className="text-xl leading-tight">
+            {canRestockAny && showAll ? "Restock Inventory Items" : "Restock Low & Out-of-Stock Items"}
+          </DialogTitle>
         </DialogHeader>
 
-        {lowStockProducts.length === 0 ? (
+        {baseProducts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             All products are well stocked!
           </div>
@@ -86,6 +97,14 @@ export function RestockDialog() {
                 className="pl-9"
               />
             </div>
+            {canRestockAny && (
+              <div className="flex items-center gap-2">
+                <Switch id="show-all-products" checked={showAll} onCheckedChange={setShowAll} />
+                <Label htmlFor="show-all-products" className="text-sm text-muted-foreground">
+                  Show all products (not just low stock)
+                </Label>
+              </div>
+            )}
             <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
               <div>Product</div>
               <div>Stock</div>
@@ -104,7 +123,7 @@ export function RestockDialog() {
                     <div>
                       <p className="font-medium truncate">{product.name}</p>
                       <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs mt-1">
-                        {product.stock_quantity === 0 ? "Out" : "Low"}
+                        {product.stock_quantity === 0 ? "Out" : product.stock_quantity <= product.minimum_stock ? "Low" : "In stock"}
                       </Badge>
                     </div>
                     <div>{product.stock_quantity}</div>
