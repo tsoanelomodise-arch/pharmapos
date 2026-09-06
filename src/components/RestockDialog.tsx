@@ -76,10 +76,12 @@ export function RestockDialog() {
       </DialogTrigger>
       <DialogContent className="max-w-2xl">
         <DialogHeader className="pb-2">
-          <DialogTitle className="text-xl leading-tight">Restock Low & Out-of-Stock Items</DialogTitle>
+          <DialogTitle className="text-xl leading-tight">
+            {canRestockAny && showAll ? "Restock Inventory Items" : "Restock Low & Out-of-Stock Items"}
+          </DialogTitle>
         </DialogHeader>
 
-        {lowStockProducts.length === 0 ? (
+        {baseProducts.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             All products are well stocked!
           </div>
@@ -95,6 +97,14 @@ export function RestockDialog() {
                 className="pl-9"
               />
             </div>
+            {canRestockAny && (
+              <div className="flex items-center gap-2">
+                <Switch id="show-all-products" checked={showAll} onCheckedChange={setShowAll} />
+                <Label htmlFor="show-all-products" className="text-sm text-muted-foreground">
+                  Show all products (not just low stock)
+                </Label>
+              </div>
+            )}
             <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
               <div>Product</div>
               <div>Stock</div>
