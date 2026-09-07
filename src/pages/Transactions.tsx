@@ -180,7 +180,7 @@ const Transactions = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{sales.length}</p>
+            <p className="text-2xl font-bold">{totalCount}</p>
           </CardContent>
         </Card>
         <Card>
