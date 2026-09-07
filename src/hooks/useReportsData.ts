@@ -397,25 +397,26 @@ export function useDispensingStats(params?: DispensingStatsParams) {
       const [periodPrescriptions, medicalAidClaims, chronicPatients] = await Promise.all([
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
         supabase
           .from('sales')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .eq('payment_method', 'insurance')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
-        supabase
+        fetchAllRows<{ customer_id: string }>((from, to) => supabase
           .from('prescriptions')
           .select('customer_id')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
+          .range(from, to))
       ]);
 
       // Count unique chronic patients (patients with multiple prescriptions)
       const patientPrescriptionCount = new Map<string, number>();
-      chronicPatients.data?.forEach(p => {
+      chronicPatients.forEach(p => {
         const count = patientPrescriptionCount.get(p.customer_id) || 0;
         patientPrescriptionCount.set(p.customer_id, count + 1);
       });
@@ -423,10 +424,11 @@ export function useDispensingStats(params?: DispensingStatsParams) {
         .filter(count => count >= 2).length;
 
       return {
-        prescriptionsInPeriod: periodPrescriptions.data?.length || 0,
+        prescriptionsInPeriod: periodPrescriptions.count || 0,
         chronicPatients: chronicPatientCount,
-        medicalAidClaims: medicalAidClaims.data?.length || 0
+        medicalAidClaims: medicalAidClaims.count || 0
       };
+
     },
     staleTime: 60000,
   });
