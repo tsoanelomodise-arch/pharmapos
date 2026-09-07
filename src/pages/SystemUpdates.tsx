@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.2",
+    date: "2026-09-07",
+    type: "improvement",
+    title: "Load More in Transaction History",
+    description: "Transaction History now uses a Load more button instead of page-by-page navigation.",
+    details: [
+      "Each click of Load more adds 50 more transactions to the list without removing any already shown",
+      "The header now shows how many transactions are visible out of the total",
+      "Changing filters or searching resets the list back to the first 20 transactions"
+    ]
+  },
+  {
     version: "1.7.1",
     date: "2026-09-06",
     type: "improvement",
