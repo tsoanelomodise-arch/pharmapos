@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Receipt, Search, Calendar, ArrowLeft, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2, RotateCcw } from "lucide-react";
-import { useAllSalesWithDetails, SaleWithDetails, useDeleteSaleMutation } from "@/hooks/useSales";
+import { useAllSalesWithDetails, SaleWithDetails, useDeleteSaleMutation, useSalesSummary } from "@/hooks/useSales";
 import { useUserModules } from '@/hooks/useModulePermissions';
 import { useUserRole } from "@/hooks/useUserRole";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
@@ -121,9 +121,18 @@ const Transactions = () => {
   const paginatedSales = sales.slice(0, visibleCount);
   const hasMore = visibleCount < sales.length;
 
-  // Summary stats
-  const totalAmount = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
-  const avgTransaction = sales.length > 0 ? totalAmount / sales.length : 0;
+  // Summary stats: server-side totals over ALL filtered records (no row cap).
+  // When a search term is active, fall back to the loaded (searched) records.
+  const { data: summary } = useSalesSummary({
+    paymentMethod,
+    startDate: dateFilter.startDate,
+    endDate: dateFilter.endDate,
+  });
+  const searchedTotal = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
+  const isSearching = debouncedSearch.trim() !== '';
+  const totalCount = isSearching ? sales.length : (summary?.totalCount ?? sales.length);
+  const totalAmount = isSearching ? searchedTotal : (summary?.totalAmount ?? searchedTotal);
+  const avgTransaction = totalCount > 0 ? totalAmount / totalCount : 0;
 
   const getPaymentMethodBadge = (method: string) => {
     const variants: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
@@ -171,7 +180,7 @@ const Transactions = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">{sales.length}</p>
+            <p className="text-2xl font-bold">{totalCount}</p>
           </CardContent>
         </Card>
         <Card>

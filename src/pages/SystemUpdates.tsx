@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.4",
+    date: "2026-09-07",
+    type: "bugfix",
+    title: "Total Sales Now Covers the Full Filtered Period",
+    description: "Transaction History summary cards now add up every transaction in the selected date range and payment method, even when there are more than 1000 records.",
+    details: [
+      "Total Transactions no longer stops at 1000 when the period contains more records",
+      "Total Sales is the sum of all transactions in the filtered period, not just the loaded list",
+      "Average Transaction is calculated from the full period",
+      "When you search, the cards show totals for the matching loaded records"
+    ]
+  },
+  {
     version: "1.7.3",
     date: "2026-09-07",
     type: "improvement",

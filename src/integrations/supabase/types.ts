@@ -801,6 +801,18 @@ export type Database = {
         Args: { _access_type: string; _customer_id: string; _notes?: string }
         Returns: undefined
       }
+      sales_summary: {
+        Args: {
+          _end_date?: string
+          _payment_method?: string
+          _start_date?: string
+        }
+        Returns: {
+          avg_amount: number
+          total_amount: number
+          total_count: number
+        }[]
+      }
     }
     Enums: {
       app_module:

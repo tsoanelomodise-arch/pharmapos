@@ -150,6 +150,34 @@ export function useAllSalesWithDetails(filters?: {
   });
 }
 
+// Server-side summary over ALL records matching the filters (no 1000-row cap)
+export function useSalesSummary(filters?: {
+  paymentMethod?: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  return useQuery({
+    queryKey: ['sales-summary', filters],
+    queryFn: async () => {
+      const { data, error } = await supabase.rpc('sales_summary', {
+        _start_date: filters?.startDate ?? null,
+        _end_date: filters?.endDate ?? null,
+        _payment_method:
+          filters?.paymentMethod && filters.paymentMethod !== 'all'
+            ? filters.paymentMethod
+            : null,
+      });
+      if (error) throw error;
+      const row = data?.[0];
+      return {
+        totalCount: Number(row?.total_count ?? 0),
+        totalAmount: Number(row?.total_amount ?? 0),
+        avgAmount: Number(row?.avg_amount ?? 0),
+      };
+    }
+  });
+}
+
 export function useCreateSaleMutation() {
   const queryClient = useQueryClient();
   
