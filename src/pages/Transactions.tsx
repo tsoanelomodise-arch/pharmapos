@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Receipt, Search, Calendar, ArrowLeft, ChevronLeft, ChevronRight, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2, RotateCcw } from "lucide-react";
+import { Receipt, Search, Calendar, ArrowLeft, DollarSign, CreditCard, TrendingUp, Pencil, CalendarIcon, Trash2, RotateCcw } from "lucide-react";
 import { useAllSalesWithDetails, SaleWithDetails, useDeleteSaleMutation } from "@/hooks/useSales";
 import { useUserModules } from '@/hooks/useModulePermissions';
 import { useUserRole } from "@/hooks/useUserRole";
@@ -294,7 +294,7 @@ const Transactions = () => {
                       <CalendarComponent
                         mode="single"
                         selected={customEndDate}
-                        onSelect={(date) => { setCustomEndDate(date); setCurrentPage(1); }}
+                        onSelect={(date) => { setCustomEndDate(date); setVisibleCount(20); }}
                         disabled={(date) => customStartDate ? date < customStartDate : false}
                         initialFocus
                         className="pointer-events-auto"
@@ -313,11 +313,9 @@ const Transactions = () => {
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center justify-between">
             <span>Transaction History</span>
-            {totalPages > 1 && (
-              <span className="text-sm font-normal text-muted-foreground">
-                Page {currentPage} of {totalPages}
-              </span>
-            )}
+            <span className="text-sm font-normal text-muted-foreground">
+              Showing {paginatedSales.length} of {sales.length}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
