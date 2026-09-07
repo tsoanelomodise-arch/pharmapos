@@ -63,7 +63,7 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
       const yearStart = startOfYear(now).toISOString();
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      // Fetch all required data in parallel
+      // Fetch all required data in parallel (paged so no 1000-row cap applies)
       const [
         periodSales,
         previousPeriodSales,
@@ -74,94 +74,102 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
         previousPeriodPrescriptions,
         allCustomers,
         newCustomers,
-        products,
-        saleItems
+        productList,
+        saleItemsList
       ] = await Promise.all([
         // Period sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
-          .select('total_amount, payment_status')
+          .select('total_amount')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Previous period sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', previousPeriodStart)
           .lt('created_at', previousPeriodEnd)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Week sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', weekStart)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Month sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', monthStart)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Year sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', yearStart)
-          .eq('payment_status', 'completed'),
-        // Period prescriptions
+          .eq('payment_status', 'completed')
+          .range(from, to)),
+        // Period prescriptions (count only)
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
-        // Previous period prescriptions
+        // Previous period prescriptions (count only)
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', previousPeriodStart)
           .lt('created_at', previousPeriodEnd),
-        // All customers
+        // All customers (count only)
         supabase
           .from('customers')
-          .select('id'),
-        // New customers this month
+          .select('*', { count: 'exact', head: true }),
+        // New customers this month (count only)
         supabase
           .from('customers')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', monthStart),
         // Products
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('products')
-          .select('id, stock_quantity, minimum_stock, cost_price, unit_price, expiry_date'),
+          .select('id, stock_quantity, minimum_stock, cost_price, unit_price, expiry_date')
+          .range(from, to)),
         // Sale items for cost calculation
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('sale_items')
           .select('quantity, product_id, total_price, unit_price')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
+          .range(from, to))
       ]);
 
       // Calculate revenues
-      const dailyRevenue = periodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const previousRevenue = previousPeriodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const dailyRevenue = periodSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const previousRevenue = previousPeriodSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
       const dailyRevenueChange = previousRevenue > 0 
         ? ((dailyRevenue - previousRevenue) / previousRevenue) * 100 
         : 0;
-      const weeklyRevenue = weekSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const monthlyRevenue = monthSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const yearlyRevenue = yearSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const weeklyRevenue = weekSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const monthlyRevenue = monthSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const yearlyRevenue = yearSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
 
       // Prescriptions
-      const prescriptionsToday = periodPrescriptions.data?.length || 0;
-      const prescriptionsYesterday = previousPeriodPrescriptions.data?.length || 0;
+      const prescriptionsToday = periodPrescriptions.count || 0;
+      const prescriptionsYesterday = previousPeriodPrescriptions.count || 0;
       const prescriptionsChange = prescriptionsYesterday > 0
         ? ((prescriptionsToday - prescriptionsYesterday) / prescriptionsYesterday) * 100
         : 0;
 
       // Customers
-      const activePatients = allCustomers.data?.length || 0;
-      const newPatientsThisMonth = newCustomers.data?.length || 0;
+      const activePatients = allCustomers.count || 0;
+      const newPatientsThisMonth = newCustomers.count || 0;
+
 
       // Products and stock
       const productList = products.data || [];
