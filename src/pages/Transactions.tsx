@@ -41,7 +41,7 @@ const Transactions = () => {
   useEffect(() => {
     const t = setTimeout(() => {
       setDebouncedSearch(searchTerm);
-      setCurrentPage(1);
+      setVisibleCount(20);
     }, 250);
     return () => clearTimeout(t);
   }, [searchTerm]);
@@ -49,8 +49,7 @@ const Transactions = () => {
   const [editingSale, setEditingSale] = useState<SaleWithDetails | null>(null);
   const [deletingSale, setDeletingSale] = useState<SaleWithDetails | null>(null);
   const [creditingSaleId, setCreditingSaleId] = useState<string | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 20;
+  const [visibleCount, setVisibleCount] = useState(20);
 
   const { data: role } = useUserRole();
   const { data: modules } = useUserModules();
