@@ -236,14 +236,13 @@ export function useTopSellingProducts(params?: TopSellingProductsParams) {
       const periodStart = params?.startDate || startOfMonth(now).toISOString();
       const periodEnd = params?.endDate || endOfDay(now).toISOString();
 
-      // Get all sale items for the period
-      const { data: saleItems, error: saleItemsError } = await supabase
+      // Get all sale items for the period (paged)
+      const saleItems = await fetchAllRows<any>((from, to) => supabase
         .from('sale_items')
         .select('product_id, quantity, total_price')
         .gte('created_at', periodStart)
-        .lte('created_at', periodEnd);
-
-      if (saleItemsError) throw saleItemsError;
+        .lte('created_at', periodEnd)
+        .range(from, to));
 
       // Aggregate by product
       const productStats = new Map<string, { unitsSold: number; revenue: number }>();
@@ -260,12 +259,12 @@ export function useTopSellingProducts(params?: TopSellingProductsParams) {
       const productIds = Array.from(productStats.keys());
       if (productIds.length === 0) return [];
 
-      const { data: products, error: productsError } = await supabase
+      const products = await fetchAllRows<{ id: string; name: string }>((from, to) => supabase
         .from('products')
         .select('id, name')
-        .in('id', productIds);
+        .in('id', productIds)
+        .range(from, to));
 
-      if (productsError) throw productsError;
 
       // Combine and sort
       const result = products?.map(p => ({
