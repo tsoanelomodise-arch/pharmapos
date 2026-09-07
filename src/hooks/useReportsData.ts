@@ -172,7 +172,6 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
 
 
       // Products and stock
-      const productList = products.data || [];
       const totalProducts = productList.length;
       const lowStockItems = productList.filter(p => p.stock_quantity > 0 && p.stock_quantity <= p.minimum_stock).length;
       const outOfStockItems = productList.filter(p => p.stock_quantity === 0).length;
@@ -182,8 +181,8 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
       const stockValue = productList.reduce((sum, p) => sum + (p.stock_quantity * Number(p.cost_price)), 0);
 
       // Cost calculations - estimate based on sale items
-      const saleItemsList = saleItems.data || [];
       let costOfGoods = 0;
+
       
       // Create a map of product costs
       const productCostMap = new Map(productList.map(p => [p.id, Number(p.cost_price)]));
