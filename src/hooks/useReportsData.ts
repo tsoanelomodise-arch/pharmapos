@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { fetchAllRows } from '@/lib/fetchAll';
+
 import { startOfDay, startOfWeek, startOfMonth, startOfYear, subDays, endOfDay, format } from 'date-fns';
 
 export interface ReportsSummary {
@@ -63,7 +65,7 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
       const yearStart = startOfYear(now).toISOString();
       const thirtyDaysFromNow = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
-      // Fetch all required data in parallel
+      // Fetch all required data in parallel (paged so no 1000-row cap applies)
       const [
         periodSales,
         previousPeriodSales,
@@ -74,97 +76,104 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
         previousPeriodPrescriptions,
         allCustomers,
         newCustomers,
-        products,
-        saleItems
+        productList,
+        saleItemsList
       ] = await Promise.all([
         // Period sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
-          .select('total_amount, payment_status')
+          .select('total_amount')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Previous period sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', previousPeriodStart)
           .lt('created_at', previousPeriodEnd)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Week sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', weekStart)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Month sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', monthStart)
-          .eq('payment_status', 'completed'),
+          .eq('payment_status', 'completed')
+          .range(from, to)),
         // Year sales
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', yearStart)
-          .eq('payment_status', 'completed'),
-        // Period prescriptions
+          .eq('payment_status', 'completed')
+          .range(from, to)),
+        // Period prescriptions (count only)
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
-        // Previous period prescriptions
+        // Previous period prescriptions (count only)
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', previousPeriodStart)
           .lt('created_at', previousPeriodEnd),
-        // All customers
+        // All customers (count only)
         supabase
           .from('customers')
-          .select('id'),
-        // New customers this month
+          .select('*', { count: 'exact', head: true }),
+        // New customers this month (count only)
         supabase
           .from('customers')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', monthStart),
         // Products
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('products')
-          .select('id, stock_quantity, minimum_stock, cost_price, unit_price, expiry_date'),
+          .select('id, stock_quantity, minimum_stock, cost_price, unit_price, expiry_date')
+          .range(from, to)),
         // Sale items for cost calculation
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('sale_items')
           .select('quantity, product_id, total_price, unit_price')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
+          .range(from, to))
       ]);
 
       // Calculate revenues
-      const dailyRevenue = periodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const previousRevenue = previousPeriodSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const dailyRevenue = periodSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const previousRevenue = previousPeriodSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
       const dailyRevenueChange = previousRevenue > 0 
         ? ((dailyRevenue - previousRevenue) / previousRevenue) * 100 
         : 0;
-      const weeklyRevenue = weekSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const monthlyRevenue = monthSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
-      const yearlyRevenue = yearSales.data?.reduce((sum, s) => sum + Number(s.total_amount), 0) || 0;
+      const weeklyRevenue = weekSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const monthlyRevenue = monthSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
+      const yearlyRevenue = yearSales.reduce((sum, s) => sum + Number(s.total_amount), 0);
 
       // Prescriptions
-      const prescriptionsToday = periodPrescriptions.data?.length || 0;
-      const prescriptionsYesterday = previousPeriodPrescriptions.data?.length || 0;
+      const prescriptionsToday = periodPrescriptions.count || 0;
+      const prescriptionsYesterday = previousPeriodPrescriptions.count || 0;
       const prescriptionsChange = prescriptionsYesterday > 0
         ? ((prescriptionsToday - prescriptionsYesterday) / prescriptionsYesterday) * 100
         : 0;
 
       // Customers
-      const activePatients = allCustomers.data?.length || 0;
-      const newPatientsThisMonth = newCustomers.data?.length || 0;
+      const activePatients = allCustomers.count || 0;
+      const newPatientsThisMonth = newCustomers.count || 0;
+
 
       // Products and stock
-      const productList = products.data || [];
       const totalProducts = productList.length;
       const lowStockItems = productList.filter(p => p.stock_quantity > 0 && p.stock_quantity <= p.minimum_stock).length;
       const outOfStockItems = productList.filter(p => p.stock_quantity === 0).length;
@@ -174,8 +183,8 @@ export function useReportsSummary(params?: ReportsSummaryParams) {
       const stockValue = productList.reduce((sum, p) => sum + (p.stock_quantity * Number(p.cost_price)), 0);
 
       // Cost calculations - estimate based on sale items
-      const saleItemsList = saleItems.data || [];
       let costOfGoods = 0;
+
       
       // Create a map of product costs
       const productCostMap = new Map(productList.map(p => [p.id, Number(p.cost_price)]));
@@ -229,14 +238,13 @@ export function useTopSellingProducts(params?: TopSellingProductsParams) {
       const periodStart = params?.startDate || startOfMonth(now).toISOString();
       const periodEnd = params?.endDate || endOfDay(now).toISOString();
 
-      // Get all sale items for the period
-      const { data: saleItems, error: saleItemsError } = await supabase
+      // Get all sale items for the period (paged)
+      const saleItems = await fetchAllRows<any>((from, to) => supabase
         .from('sale_items')
         .select('product_id, quantity, total_price')
         .gte('created_at', periodStart)
-        .lte('created_at', periodEnd);
-
-      if (saleItemsError) throw saleItemsError;
+        .lte('created_at', periodEnd)
+        .range(from, to));
 
       // Aggregate by product
       const productStats = new Map<string, { unitsSold: number; revenue: number }>();
@@ -253,12 +261,12 @@ export function useTopSellingProducts(params?: TopSellingProductsParams) {
       const productIds = Array.from(productStats.keys());
       if (productIds.length === 0) return [];
 
-      const { data: products, error: productsError } = await supabase
+      const products = await fetchAllRows<{ id: string; name: string }>((from, to) => supabase
         .from('products')
         .select('id, name')
-        .in('id', productIds);
+        .in('id', productIds)
+        .range(from, to));
 
-      if (productsError) throw productsError;
 
       // Combine and sort
       const result = products?.map(p => ({
@@ -288,27 +296,26 @@ export function useSalesByCategory(params?: SalesByCategoryParams) {
       const periodStart = params?.startDate || startOfMonth(now).toISOString();
       const periodEnd = params?.endDate || endOfDay(now).toISOString();
 
-      // Get all sale items with product info
-      const { data: saleItems, error: saleItemsError } = await supabase
+      // Get all sale items with product info (paged)
+      const saleItems = await fetchAllRows<any>((from, to) => supabase
         .from('sale_items')
         .select('product_id, quantity')
         .gte('created_at', periodStart)
-        .lte('created_at', periodEnd);
-
-      if (saleItemsError) throw saleItemsError;
+        .lte('created_at', periodEnd)
+        .range(from, to));
 
       const productIds = [...new Set(saleItems?.map(s => s.product_id) || [])];
       if (productIds.length === 0) return [];
 
-      const { data: products, error: productsError } = await supabase
+      const products = await fetchAllRows<{ id: string; category: string }>((from, to) => supabase
         .from('products')
         .select('id, category')
-        .in('id', productIds);
-
-      if (productsError) throw productsError;
+        .in('id', productIds)
+        .range(from, to));
 
       // Create product category map
       const productCategoryMap = new Map(products?.map(p => [p.id, p.category]) || []);
+
 
       // Aggregate by category
       const categoryStats = new Map<string, number>();
@@ -347,12 +354,12 @@ export function useStockMovementStats() {
     queryFn: async () => {
       const todayStart = startOfDay(new Date()).toISOString();
 
-      const { data: movements, error } = await supabase
+      const movements = await fetchAllRows<{ movement_type: string; quantity: number }>((from, to) => supabase
         .from('stock_movements')
         .select('movement_type, quantity')
-        .gte('created_at', todayStart);
+        .gte('created_at', todayStart)
+        .range(from, to));
 
-      if (error) throw error;
 
       const stats = {
         received: 0,
@@ -392,25 +399,26 @@ export function useDispensingStats(params?: DispensingStatsParams) {
       const [periodPrescriptions, medicalAidClaims, chronicPatients] = await Promise.all([
         supabase
           .from('prescriptions')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
         supabase
           .from('sales')
-          .select('id')
+          .select('*', { count: 'exact', head: true })
           .eq('payment_method', 'insurance')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd),
-        supabase
+        fetchAllRows<{ customer_id: string }>((from, to) => supabase
           .from('prescriptions')
           .select('customer_id')
           .gte('created_at', periodStart)
           .lte('created_at', periodEnd)
+          .range(from, to))
       ]);
 
       // Count unique chronic patients (patients with multiple prescriptions)
       const patientPrescriptionCount = new Map<string, number>();
-      chronicPatients.data?.forEach(p => {
+      chronicPatients.forEach(p => {
         const count = patientPrescriptionCount.get(p.customer_id) || 0;
         patientPrescriptionCount.set(p.customer_id, count + 1);
       });
@@ -418,10 +426,11 @@ export function useDispensingStats(params?: DispensingStatsParams) {
         .filter(count => count >= 2).length;
 
       return {
-        prescriptionsInPeriod: periodPrescriptions.data?.length || 0,
+        prescriptionsInPeriod: periodPrescriptions.count || 0,
         chronicPatients: chronicPatientCount,
-        medicalAidClaims: medicalAidClaims.data?.length || 0
+        medicalAidClaims: medicalAidClaims.count || 0
       };
+
     },
     staleTime: 60000,
   });
