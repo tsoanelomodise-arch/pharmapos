@@ -21,16 +21,16 @@ export function useDashboardStats(params?: DashboardStatsParams) {
       const thirtyDaysFromNow = new Date();
       thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
       
-      // Run all queries in parallel for faster loading
+      // Run all queries in parallel for faster loading (paged so no 1000-row cap applies)
       const [
         prescriptionsResult,
-        salesResult,
-        lowStockResult,
-        debtorsResult,
+        salesRows,
+        lowStockRows,
+        debtorRows,
         expiringResult,
-        weekSalesResult,
-        topProductsResult,
-        itemsSoldResult
+        weekSalesRows,
+        topProductsRows,
+        itemsSoldRows
       ] = await Promise.all([
         // Prescriptions count for selected period
         supabase
@@ -40,24 +40,27 @@ export function useDashboardStats(params?: DashboardStatsParams) {
           .lte('created_at', endDateTime),
         
         // Sales total for selected period
-        supabase
+        fetchAllRows<{ total_amount: number }>((from, to) => supabase
           .from('sales')
           .select('total_amount')
           .gte('created_at', startDateTime)
-          .lte('created_at', endDateTime),
+          .lte('created_at', endDateTime)
+          .range(from, to)),
         
         // Low stock items with details - fetch all and filter client-side
         // since Supabase doesn't support column-to-column comparison directly
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('products')
           .select('id, name, stock_quantity, minimum_stock')
-          .order('stock_quantity', { ascending: true }),
+          .order('stock_quantity', { ascending: true })
+          .range(from, to)),
         
         // Outstanding debtors
-        supabase
+        fetchAllRows<{ current_balance: number }>((from, to) => supabase
           .from('customers_secure')
           .select('current_balance')
-          .gt('current_balance', 0),
+          .gt('current_balance', 0)
+          .range(from, to)),
         
         // Expiring products count
         supabase
@@ -67,37 +70,41 @@ export function useDashboardStats(params?: DashboardStatsParams) {
           .not('expiry_date', 'is', null),
         
         // Last 7 days sales (single query instead of loop)
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('sales')
           .select('total_amount, created_at')
-          .gte('created_at', `${sevenDaysAgoStr}T00:00:00`),
+          .gte('created_at', `${sevenDaysAgoStr}T00:00:00`)
+          .range(from, to)),
         
         // Top selling products (aggregated below)
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('sale_items')
           .select('product_id, quantity, products(name, category), sales!inner(created_at)')
           .gte('sales.created_at', startDateTime)
-          .lte('sales.created_at', endDateTime),
+          .lte('sales.created_at', endDateTime)
+          .range(from, to)),
 
         // Inventory items sold within selected date range
-        supabase
+        fetchAllRows<any>((from, to) => supabase
           .from('sale_items')
           .select('quantity, unit_price, total_price, products(name), sales!inner(created_at)')
           .gte('sales.created_at', startDateTime)
           .lte('sales.created_at', endDateTime)
+          .range(from, to))
       ]);
 
       // Process results
       const prescriptionsCount = prescriptionsResult.count || 0;
-      const salesTotal = salesResult.data?.reduce((sum, sale) => sum + sale.total_amount, 0) || 0;
+      const salesTotal = salesRows.reduce((sum, sale) => sum + Number(sale.total_amount), 0);
       
       // Filter low stock products client-side (stock_quantity < minimum_stock)
-      const lowStockProducts = (lowStockResult.data || [])
+      const lowStockProducts = lowStockRows
         .filter(product => product.stock_quantity < product.minimum_stock)
         .slice(0, 10);
       const lowStockCount = lowStockProducts.length;
-      const totalDebt = debtorsResult.data?.reduce((sum, customer) => sum + customer.current_balance, 0) || 0;
-      const debtorsCount = debtorsResult.data?.length || 0;
+      const totalDebt = debtorRows.reduce((sum, customer) => sum + Number(customer.current_balance), 0);
+      const debtorsCount = debtorRows.length;
+
       const expiringCount = expiringResult.count || 0;
       
       // Process sales trend data
