@@ -30,33 +30,36 @@ export function useStockMovements({ startDate, endDate, productIds }: UseStockMo
   return useQuery({
     queryKey: ["stock-movements", startDate?.toISOString(), endDate?.toISOString(), productIds],
     queryFn: async () => {
-      let query = supabase
-        .from("stock_movements")
-        .select(`
-          id,
-          product_id,
-          quantity,
-          movement_type,
-          notes,
-          reference_id,
-          created_at,
-          products(name)
-        `)
-        .order("created_at", { ascending: false });
+      const buildQuery = (from: number, to: number) => {
+        let query = supabase
+          .from("stock_movements")
+          .select(`
+            id,
+            product_id,
+            quantity,
+            movement_type,
+            notes,
+            reference_id,
+            created_at,
+            products(name)
+          `)
+          .order("created_at", { ascending: false });
 
-      if (startDate) {
-        query = query.gte("created_at", startOfDay(startDate).toISOString());
-      }
-      if (endDate) {
-        query = query.lte("created_at", endOfDay(endDate).toISOString());
-      }
-      if (productIds && productIds.length > 0) {
-        query = query.in("product_id", productIds);
-      }
+        if (startDate) {
+          query = query.gte("created_at", startOfDay(startDate).toISOString());
+        }
+        if (endDate) {
+          query = query.lte("created_at", endOfDay(endDate).toISOString());
+        }
+        if (productIds && productIds.length > 0) {
+          query = query.in("product_id", productIds);
+        }
 
-      const { data, error } = await query;
+        return query.range(from, to);
+      };
 
-      if (error) throw error;
+      const data = await fetchAllRows<any>(buildQuery);
+
 
       const movements: StockMovement[] = (data || []).map((item: any) => ({
         id: item.id,
