@@ -420,7 +420,7 @@ const Transactions = () => {
                   </p>
                   <Button
                     variant="outline"
-                    onClick={() => setVisibleCount((c) => c + 50)}
+                    onClick={() => setVisibleCount((c) => c + 80)}
                   >
                     Load more transactions
                   </Button>
