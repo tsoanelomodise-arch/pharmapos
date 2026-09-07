@@ -117,12 +117,9 @@ const Transactions = () => {
     });
   }, [allSales, debouncedSearch]);
 
-  // Pagination
-  const totalPages = Math.ceil(sales.length / itemsPerPage);
-  const paginatedSales = sales.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  // Load more: list only ever grows, never removes loaded rows
+  const paginatedSales = sales.slice(0, visibleCount);
+  const hasMore = visibleCount < sales.length;
 
   // Summary stats
   const totalAmount = sales.reduce((sum, sale) => sum + sale.total_amount, 0);
@@ -211,7 +208,7 @@ const Transactions = () => {
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" />
-                <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setCurrentPage(1); }}>
+                <Select value={datePreset} onValueChange={(v) => { setDatePreset(v as DatePreset); setVisibleCount(20); }}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -226,7 +223,7 @@ const Transactions = () => {
               </div>
               <div className="flex items-center gap-2">
                 <CreditCard className="h-4 w-4 text-muted-foreground" />
-                <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setCurrentPage(1); }}>
+                <Select value={paymentMethod} onValueChange={(v) => { setPaymentMethod(v); setVisibleCount(20); }}>
                   <SelectTrigger className="w-[140px]">
                     <SelectValue />
                   </SelectTrigger>
@@ -272,7 +269,7 @@ const Transactions = () => {
                       <CalendarComponent
                         mode="single"
                         selected={customStartDate}
-                        onSelect={(date) => { setCustomStartDate(date); setCurrentPage(1); }}
+                        onSelect={(date) => { setCustomStartDate(date); setVisibleCount(20); }}
                         disabled={(date) => customEndDate ? date > customEndDate : false}
                         initialFocus
                         className="pointer-events-auto"
