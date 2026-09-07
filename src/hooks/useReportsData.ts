@@ -352,12 +352,12 @@ export function useStockMovementStats() {
     queryFn: async () => {
       const todayStart = startOfDay(new Date()).toISOString();
 
-      const { data: movements, error } = await supabase
+      const movements = await fetchAllRows<{ movement_type: string; quantity: number }>((from, to) => supabase
         .from('stock_movements')
         .select('movement_type, quantity')
-        .gte('created_at', todayStart);
+        .gte('created_at', todayStart)
+        .range(from, to));
 
-      if (error) throw error;
 
       const stats = {
         received: 0,
