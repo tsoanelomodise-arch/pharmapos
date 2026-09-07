@@ -412,27 +412,17 @@ const Transactions = () => {
                 </Table>
               </div>
 
-              {/* Pagination */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-4">
+              {/* Load more */}
+              {hasMore && (
+                <div className="flex flex-col items-center gap-2 mt-4">
+                  <p className="text-sm text-muted-foreground">
+                    Showing {paginatedSales.length} of {sales.length} transactions
+                  </p>
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => setVisibleCount((c) => c + 50)}
                   >
-                    <ChevronLeft className="h-4 w-4" />
-                  </Button>
-                  <span className="text-sm text-muted-foreground">
-                    {currentPage} / {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                  >
-                    <ChevronRight className="h-4 w-4" />
+                    Load more transactions
                   </Button>
                 </div>
               )}
