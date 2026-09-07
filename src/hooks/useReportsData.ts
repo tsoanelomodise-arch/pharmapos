@@ -294,27 +294,26 @@ export function useSalesByCategory(params?: SalesByCategoryParams) {
       const periodStart = params?.startDate || startOfMonth(now).toISOString();
       const periodEnd = params?.endDate || endOfDay(now).toISOString();
 
-      // Get all sale items with product info
-      const { data: saleItems, error: saleItemsError } = await supabase
+      // Get all sale items with product info (paged)
+      const saleItems = await fetchAllRows<any>((from, to) => supabase
         .from('sale_items')
         .select('product_id, quantity')
         .gte('created_at', periodStart)
-        .lte('created_at', periodEnd);
-
-      if (saleItemsError) throw saleItemsError;
+        .lte('created_at', periodEnd)
+        .range(from, to));
 
       const productIds = [...new Set(saleItems?.map(s => s.product_id) || [])];
       if (productIds.length === 0) return [];
 
-      const { data: products, error: productsError } = await supabase
+      const products = await fetchAllRows<{ id: string; category: string }>((from, to) => supabase
         .from('products')
         .select('id, category')
-        .in('id', productIds);
-
-      if (productsError) throw productsError;
+        .in('id', productIds)
+        .range(from, to));
 
       // Create product category map
       const productCategoryMap = new Map(products?.map(p => [p.id, p.category]) || []);
+
 
       // Aggregate by category
       const categoryStats = new Map<string, number>();
