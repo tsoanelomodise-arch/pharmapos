@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { startOfDay, endOfDay } from 'date-fns';
+import { fetchAllRows } from '@/lib/fetchAll';
 
 interface DashboardStatsParams {
   startDate?: string;
@@ -109,7 +110,7 @@ export function useDashboardStats(params?: DashboardStatsParams) {
       
       // Process sales trend data
       const salesByDay = new Map<string, number>();
-      weekSalesResult.data?.forEach(sale => {
+      weekSalesRows.forEach(sale => {
         const date = new Date(sale.created_at).toISOString().split('T')[0];
         salesByDay.set(date, (salesByDay.get(date) || 0) + sale.total_amount);
       });
@@ -130,7 +131,7 @@ export function useDashboardStats(params?: DashboardStatsParams) {
       // Aggregate top products by product_id (sum quantities across sale_items)
       const topAggMap = new Map<string, { name: string; sales: number }>();
       const categoryQtyMap = new Map<string, number>();
-      (topProductsResult.data as any[] | null)?.forEach((row) => {
+      topProductsRows.forEach((row) => {
         const name = row.products?.name || 'Unknown';
         const qty = row.quantity || 0;
         const key = row.product_id || name;
@@ -160,7 +161,7 @@ export function useDashboardStats(params?: DashboardStatsParams) {
       // Aggregate inventory items sold by product
       const itemsSoldMap = new Map<string, number>();
       const itemsAmountMap = new Map<string, number>();
-      (itemsSoldResult.data as any[] | null)?.forEach((row) => {
+      itemsSoldRows.forEach((row) => {
         const name = row.products?.name || 'Unknown';
         const qty = row.quantity || 0;
         const amount = Number(row.total_price) || (Number(row.unit_price) * qty) || 0;
