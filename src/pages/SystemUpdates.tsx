@@ -16,6 +16,20 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.5",
+    date: "2026-09-07",
+    type: "bugfix",
+    title: "Reports, Dashboard and Stock Movement Now Include All Records",
+    description: "Figures on Reports & Analytics, the Dashboard and Stock Movement are now calculated from every record in the selected period, not just the first 1000 loaded.",
+    details: [
+      "Revenue, profit and cost totals cover the full selected period",
+      "Top selling products and category breakdowns include all sales",
+      "Dashboard sales totals, items sold and debtor balances are complete",
+      "Stock Movement totals and charts include every movement in the range"
+    ]
+  },
+  {
+
     version: "1.7.4",
     date: "2026-09-07",
     type: "bugfix",
