@@ -69,9 +69,60 @@ export function RestockHistoryLog() {
       const { data, error } = await query;
       if (error) throw error;
 
-      return (data || []) as unknown as RestockRecord[];
+      // Also include restocks recorded without supplier documents
+      // (single-item restocks from the Stock page and historical entries)
+      let legacyQuery = supabase
+        .from("stock_movements")
+        .select("id, quantity, product_id, notes, created_at, products (name)")
+        .eq("movement_type", "adjustment")
+        .is("restock_record_id", null)
+        .like("notes", "Restock:%")
+        .order("created_at", { ascending: false });
+
+      if (dateFilter === "today") {
+        const start = new Date(now);
+        start.setHours(0, 0, 0, 0);
+        legacyQuery = legacyQuery.gte("created_at", start.toISOString());
+      } else if (dateFilter === "7days") {
+        const start = new Date(now);
+        start.setDate(start.getDate() - 7);
+        legacyQuery = legacyQuery.gte("created_at", start.toISOString());
+      } else if (dateFilter === "30days") {
+        const start = new Date(now);
+        start.setDate(start.getDate() - 30);
+        legacyQuery = legacyQuery.gte("created_at", start.toISOString());
+      }
+
+      const { data: legacyData, error: legacyError } = await legacyQuery;
+      if (legacyError) throw legacyError;
+
+      const legacyRecords: RestockRecord[] = (legacyData || []).map((m: any) => ({
+        id: m.id,
+        supplier_name: null,
+        invoice_number: null,
+        delivery_note_number: null,
+        invoice_file_path: null,
+        delivery_note_file_path: null,
+        notes: m.notes,
+        created_at: m.created_at,
+        stock_movements: [
+          {
+            quantity: m.quantity,
+            product_id: m.product_id,
+            products: m.products || null,
+          },
+        ],
+      }));
+
+      const combined = [
+        ...((data || []) as unknown as RestockRecord[]),
+        ...legacyRecords,
+      ].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+      return combined;
     },
   });
+
 
   const handleDownload = async (path: string | null, label: string) => {
     if (!path) return;
