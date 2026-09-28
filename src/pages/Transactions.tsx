@@ -366,7 +366,15 @@ const Transactions = () => {
                         <TableCell className="text-center">
                           <Badge variant="outline">{sale.items_count || 0}</Badge>
                         </TableCell>
-                        <TableCell>{getPaymentMethodBadge(sale.payment_method)}</TableCell>
+                        <TableCell>
+                          {sale.notes?.includes('Adumo Terminal') ? (
+                            <Badge variant="default" className="bg-primary/90 text-primary-foreground font-semibold">
+                              ADUMO CARD
+                            </Badge>
+                          ) : (
+                            getPaymentMethodBadge(sale.payment_method)
+                          )}
+                        </TableCell>
                         <TableCell className="text-right font-medium">
                           R{sale.total_amount.toFixed(2)}
                         </TableCell>

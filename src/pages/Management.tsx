@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound, Settings } from "lucide-react";
+import { Trash2, Search, UserPlus, Stethoscope, Users, Shield, KeyRound, Settings, CreditCard } from "lucide-react";
 import { useCustomers, useDeleteCustomer } from "@/hooks/useCustomers";
 import { useDoctors, useDeleteDoctor } from "@/hooks/useDoctors";
 import { useUsers, useDeleteUser, useResetUserPassword, useSetUserPassword, useUpdateUserProfile, useUpdateUserEmail } from "@/hooks/useUsers";
@@ -23,6 +23,7 @@ import { UserForm } from "@/components/UserForm";
 import { UserRoleDialog } from "@/components/UserRoleDialog";
 import { ModulePermissionsManager } from "@/components/ModulePermissionsManager";
 import { BusinessSettingsForm } from "@/components/BusinessSettingsForm";
+import { AdumoSettingsForm } from "@/components/AdumoSettingsForm";
 import { useUserRole } from "@/hooks/useUserRole";
 import { useUserModules } from "@/hooks/useModulePermissions";
 import { format } from "date-fns";
@@ -268,6 +269,13 @@ export default function Management() {
               <Settings className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Settings</span>
               <span className="sm:hidden">Settings</span>
+            </TabsTrigger>
+          )}
+          {canAccessSettings && (
+            <TabsTrigger value="adumo" className="flex-1 md:flex-initial text-xs sm:text-sm">
+              <CreditCard className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">Adumo Payments</span>
+              <span className="sm:hidden">Adumo</span>
             </TabsTrigger>
           )}
         </TabsList>
@@ -625,6 +633,12 @@ export default function Management() {
         {canAccessSettings && (
           <TabsContent value="settings" className="space-y-4">
             <BusinessSettingsForm />
+          </TabsContent>
+        )}
+
+        {canAccessSettings && (
+          <TabsContent value="adumo" className="space-y-4">
+            <AdumoSettingsForm />
           </TabsContent>
         )}
       </Tabs>

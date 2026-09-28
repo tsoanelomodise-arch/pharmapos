@@ -15,6 +15,9 @@ import { toast } from "@/hooks/use-toast";
 import { ReceiptDialog } from "@/components/ReceiptDialog";
 import { CreditTransactionDialog } from "@/components/CreditTransactionDialog";
 import { QuickPatientForm } from "@/components/QuickPatientForm";
+import { AdumoPaymentDialog } from "@/components/AdumoPaymentDialog";
+import { useAdumoSettings } from "@/hooks/useAdumoSettings";
+import { AdumoTransactionResult } from "@/types/adumo";
 import { useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
@@ -32,7 +35,7 @@ const POS = () => {
   const queryClient = useQueryClient();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit' | 'insurance'>('cash');
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'card' | 'credit' | 'insurance' | 'adumo'>('cash');
   const [cashPaid, setCashPaid] = useState<string>("");
   const [lastSaleId, setLastSaleId] = useState<string | null>(null);
   const [showLastReceipt, setShowLastReceipt] = useState(false);
@@ -41,6 +44,9 @@ const POS = () => {
   const [customerSearchTerm, setCustomerSearchTerm] = useState("");
   const [customDate, setCustomDate] = useState<string>("");
   const [selectedCustomer, setSelectedCustomer] = useState<{ id: string; name: string; phone?: string } | null>(null);
+  const [adumoDialogOpen, setAdumoDialogOpen] = useState(false);
+  const [adumoPendingReference, setAdumoPendingReference] = useState("");
+  const { settings: adumoSettings } = useAdumoSettings();
   
   const { data: searchResults = [] } = useProductSearch(searchTerm);
   const { data: recentSales = [] } = useRecentSales(5);
@@ -190,44 +196,37 @@ const POS = () => {
     }
   };
 
-  const processPayment = async () => {
-    if (cartItems.length === 0) return;
-
-    // Patient selection is optional for POS sales
-
-    // Validate cash payment
-    if (paymentMethod === 'cash') {
-      if (!cashPaid || cashAmount < total) {
-        toast({ 
-          title: "Insufficient cash", 
-          description: `Amount paid (R${cashAmount.toFixed(2)}) is less than total (R${total.toFixed(2)})`,
-          variant: "destructive"
-        });
-        return;
-      }
-    }
-
+  const completeSale = (method: 'cash' | 'card' | 'credit' | 'insurance', adumoResult?: AdumoTransactionResult) => {
     const items = cartItems.map(item => ({
       productId: item.id,
       quantity: item.quantity,
       unitPrice: item.price
     }));
 
+    let saleNotes = '';
+    if (activePrescription) {
+      saleNotes = `Prescription dispensed - Dr. ${activePrescription.doctor_name}`;
+    } else if (selectedCustomer) {
+      saleNotes = `POS Sale - ${selectedCustomer.name}`;
+    } else {
+      saleNotes = `POS Sale - ${method} payment`;
+    }
+
+    if (adumoResult) {
+      saleNotes += ` | Adumo Terminal: ${adumoResult.terminalId || 'PED'} | Auth: ${adumoResult.authCode || 'OK'} | Ref: ${adumoResult.reference} | Card: ${adumoResult.maskedPan || adumoResult.cardScheme || 'CARD'}`;
+    }
+
     createSaleMutation.mutate({
       items,
-      paymentMethod,
+      paymentMethod: method,
       customerId: activePrescription?.customer_id || selectedCustomer?.id,
       prescriptionId: activePrescription?.id,
-      cashPaid: paymentMethod === 'cash' ? cashAmount : undefined,
-      changeGiven: paymentMethod === 'cash' ? changeAmount : undefined,
+      cashPaid: method === 'cash' ? cashAmount : undefined,
+      changeGiven: method === 'cash' ? changeAmount : undefined,
       vatRate,
       vatInclusive,
       createdAt: canBackdateTransactions && customDate ? new Date(customDate).toISOString() : undefined,
-      notes: activePrescription 
-        ? `Prescription dispensed - Dr. ${activePrescription.doctor_name}` 
-        : selectedCustomer 
-          ? `POS Sale - ${selectedCustomer.name}` 
-          : `POS Sale - ${paymentMethod} payment`
+      notes: saleNotes,
     }, {
       onSuccess: async (sale) => {
         // Update prescription status if this was a prescription sale
@@ -254,12 +253,44 @@ const POS = () => {
         setCustomerSearchTerm("");
         toast({
           title: "Payment processed successfully!", 
-          description: paymentMethod === 'cash' 
+          description: method === 'cash' 
             ? `Change: R${changeAmount.toFixed(2)} - Receipt ready to print`
             : `Transaction #${sale.id.slice(-8)} completed - Receipt ready to print`
         });
       }
     });
+  };
+
+  const processPayment = async () => {
+    if (cartItems.length === 0) return;
+
+    // Validate cash payment
+    if (paymentMethod === 'cash') {
+      if (!cashPaid || cashAmount < total) {
+        toast({ 
+          title: "Insufficient cash", 
+          description: `Amount paid (R${cashAmount.toFixed(2)}) is less than total (R${total.toFixed(2)})`,
+          variant: "destructive"
+        });
+        return;
+      }
+      completeSale('cash');
+      return;
+    }
+
+    // Intercept Adumo payment
+    if (paymentMethod === 'adumo') {
+      const generatedRef = `ADUMO-${Date.now().toString().slice(-6)}`;
+      setAdumoPendingReference(generatedRef);
+      setAdumoDialogOpen(true);
+      return;
+    }
+
+    completeSale(paymentMethod as 'card' | 'credit' | 'insurance');
+  };
+
+  const handleAdumoSuccess = (result: AdumoTransactionResult) => {
+    completeSale('card', result);
   };
 
   return (
@@ -598,15 +629,18 @@ const POS = () => {
                   </div>
                 )}
                 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   <Button 
-                    variant={paymentMethod === 'card' ? 'default' : 'outline'} 
-                    className="h-16"
-                    onClick={() => setPaymentMethod('card')}
+                    variant={paymentMethod === 'adumo' ? 'default' : 'outline'} 
+                    className="h-16 border-primary/40 hover:border-primary"
+                    onClick={() => setPaymentMethod('adumo')}
                   >
                     <div className="text-center">
-                      <CreditCard className="h-5 w-5 mx-auto mb-1" />
-                      <span className="text-xs">Card</span>
+                      <div className="flex items-center justify-center gap-1 mb-1">
+                        <CreditCard className="h-5 w-5 text-primary" />
+                        <span className="text-xs font-bold text-primary">Adumo</span>
+                      </div>
+                      <span className="text-xs font-medium">Smart Card</span>
                     </div>
                   </Button>
                   <Button 
@@ -617,6 +651,16 @@ const POS = () => {
                     <div className="text-center">
                       <span className="text-lg mb-1">💰</span>
                       <div className="text-xs">Cash</div>
+                    </div>
+                  </Button>
+                  <Button 
+                    variant={paymentMethod === 'card' ? 'default' : 'outline'} 
+                    className="h-16"
+                    onClick={() => setPaymentMethod('card')}
+                  >
+                    <div className="text-center">
+                      <CreditCard className="h-5 w-5 mx-auto mb-1" />
+                      <span className="text-xs">Standard Card</span>
                     </div>
                   </Button>
                   <Button 
@@ -710,6 +754,17 @@ const POS = () => {
         saleId={creditingSaleId}
         open={!!creditingSaleId}
         onOpenChange={(open) => !open && setCreditingSaleId(null)}
+      />
+
+      {/* Adumo Payment Terminal Dialog */}
+      <AdumoPaymentDialog
+        open={adumoDialogOpen}
+        onOpenChange={setAdumoDialogOpen}
+        amount={total}
+        customerName={activePrescription?.customers?.name || selectedCustomer?.name}
+        reference={adumoPendingReference}
+        settings={adumoSettings}
+        onSuccess={handleAdumoSuccess}
       />
     </div>
   );

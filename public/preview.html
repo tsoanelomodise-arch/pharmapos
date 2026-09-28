@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PharmaPOS — Mobile Device Simulator</title>
+  <link rel="icon" type="image/png" href="/favicon.png">
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --panel-bg: rgba(22, 30, 46, 0.85);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --accent: #2563eb;
+      --accent-hover: #3b82f6;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    /* Top Navigation Toolbar */
+    header {
+      background: var(--panel-bg);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--card-border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-badge {
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #fff;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 9999px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .controls-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .ctrl-label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    select, button, input {
+      background: rgba(30, 41, 59, 0.9);
+      color: var(--text);
+      border: 1px solid var(--card-border);
+      padding: 7px 12px;
+      border-radius: 8px;
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    select:hover, button:hover {
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(51, 65, 85, 0.9);
+    }
+
+    button.active {
+      background: var(--accent);
+      border-color: var(--accent-hover);
+      color: #fff;
+      font-weight: 600;
+    }
+
+    .btn-icon {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Device Preview Workspace */
+    main {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+      overflow: auto;
+      gap: 32px;
+      position: relative;
+    }
+
+    /* Phone Mockup Frame */
+    .device-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .device-meta {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .device-meta span {
+      background: rgba(255, 255, 255, 0.06);
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: ui-monospace, monospace;
+      font-size: 0.78rem;
+    }
+
+    .phone-chassis {
+      position: relative;
+      background: #1e2433;
+      border-radius: 48px;
+      padding: 12px;
+      box-shadow: 
+        0 0 0 4px #2a3449,
+        0 0 0 6px #131722,
+        0 25px 60px -15px rgba(0, 0, 0, 0.7),
+        0 10px 25px rgba(0, 0, 0, 0.5);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .phone-screen {
+      position: relative;
+      background: #000;
+      border-radius: 38px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Dynamic Island / Notch */
+    .island {
+      position: absolute;
+      top: 9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 105px;
+      height: 26px;
+      background: #000;
+      border-radius: 20px;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 10px;
+      pointer-events: none;
+    }
+
+    .camera-lens {
+      width: 10px;
+      height: 10px;
+      background: #141724;
+      border-radius: 50%;
+      box-shadow: inset 0 0 2px #3b82f6;
+    }
+
+    .sensor {
+      width: 8px;
+      height: 8px;
+      background: #10121a;
+      border-radius: 50%;
+    }
+
+    /* Iframe */
+    .phone-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #fff;
+    }
+
+    /* Bottom Home Indicator */
+    .home-bar {
+      position: absolute;
+      bottom: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 120px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 4px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* Floating Quick Tips */
+    .tip-banner {
+      background: rgba(30, 41, 59, 0.6);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 10px 18px;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 0 20px 16px;
+    }
+
+    .tip-banner strong {
+      color: var(--text);
+    }
+
+    .kbd {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 0.74rem;
+      color: #fff;
+      font-family: ui-monospace, monospace;
+    }
+
+    /* Landscape Mode */
+    .landscape .phone-chassis {
+      border-radius: 40px;
+    }
+    .landscape .island {
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%) rotate(90deg);
+    }
+    .landscape .home-bar {
+      bottom: 50%;
+      right: 8px;
+      left: auto;
+      transform: translateY(50%) rotate(90deg);
+      width: 90px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <span style="font-size:1.3rem;">📱</span>
+      <span>PharmaPOS Mobile Studio</span>
+      <span class="brand-badge">Multi-Device Preview</span>
+    </div>
+
+    <div class="controls-group">
+      <span class="ctrl-label">Device</span>
+      <select id="deviceSelect" onchange="applyDevice()">
+        <option value="393x852|iPhone 15 Pro">iPhone 15 Pro (393 × 852)</option>
+        <option value="430x932|iPhone 15 Pro Max">iPhone 15 Pro Max (430 × 932)</option>
+        <option value="375x667|iPhone SE">iPhone SE / 8 (375 × 667)</option>
+        <option value="412x915|Samsung Galaxy S24">Samsung Galaxy S24 (412 × 915)</option>
+        <option value="412x923|Google Pixel 8">Google Pixel 8 (412 × 923)</option>
+        <option value="768x1024|iPad Mini">iPad Mini Tablet (768 × 1024)</option>
+      </select>
+
+      <span class="ctrl-label">Orientation</span>
+      <button id="orientBtn" class="btn-icon" onclick="toggleOrientation()">
+        <span id="orientIcon">🔄</span>
+        <span id="orientLabel">Portrait</span>
+      </button>
+
+      <span class="ctrl-label">Scale</span>
+      <select id="zoomSelect" onchange="applyZoom()">
+        <option value="1">100%</option>
+        <option value="0.9" selected>90%</option>
+        <option value="0.8">80%</option>
+        <option value="0.7">70%</option>
+      </select>
+
+      <span class="ctrl-label">Page</span>
+      <select id="routeSelect" onchange="changeRoute()">
+        <option value="/">Home / Dashboard</option>
+        <option value="/pos">POS Terminal</option>
+        <option value="/dispensing">Dispensing</option>
+        <option value="/stock">Stock / Inventory</option>
+        <option value="/reports">Reports</option>
+        <option value="/patients">Patients</option>
+        <option value="/auth">Login / Auth</option>
+      </select>
+
+      <button class="btn-icon" onclick="reloadFrame()" title="Reload Frame">
+        <span>🔄</span> Reload
+      </button>
+
+      <button id="compareBtn" class="btn-icon" onclick="toggleCompareMode()">
+        <span>👥</span> Side-by-Side
+      </button>
+    </div>
+  </header>
+
+  <div class="tip-banner">
+    <div>
+      🌐 <strong>Remote Public Link (Phone &amp; Outside Wi-Fi):</strong> 
+      <a href="https://round-improvements-advert-escape.trycloudflare.com" target="_blank" style="color:#38bdf8; text-decoration:underline; font-weight:700; margin-right:12px;">
+        https://round-improvements-advert-escape.trycloudflare.com ↗
+      </a>
+      &bull; <span>Local Wi-Fi: <strong style="color:#a7f3d0;">http://192.168.0.152:8080/</strong></span>
+    </div>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <a href="/" target="_blank" style="color:#60a5fa; text-decoration:none; font-weight:600;">Open Direct App ↗</a>
+    </div>
+  </div>
+
+  <main id="workspace">
+    <!-- Primary Device -->
+    <div class="device-container" id="device1">
+      <div class="device-meta">
+        <strong id="device1Title">iPhone 15 Pro</strong>
+        <span id="device1Dims">393 × 852 px</span>
+      </div>
+      <div class="phone-chassis" id="chassis1">
+        <div class="island" id="island1">
+          <div class="sensor"></div>
+          <div class="camera-lens"></div>
+        </div>
+        <div class="phone-screen" id="screen1" style="width: 393px; height: 852px;">
+          <iframe id="frame1" class="phone-iframe" src="/"></iframe>
+        </div>
+        <div class="home-bar"></div>
+      </div>
+    </div>
+
+    <!-- Secondary Device (for side-by-side mode) -->
+    <div class="device-container" id="device2" style="display: none;">
+      <div class="device-meta">
+        <strong id="device2Title">Samsung Galaxy S24</strong>
+        <span id="device2Dims">412 × 915 px</span>
+      </div>
+      <div class="phone-chassis" id="chassis2">
+        <div class="island" id="island2">
+          <div class="sensor"></div>
+          <div class="camera-lens"></div>
+        </div>
+        <div class="phone-screen" id="screen2" style="width: 412px; height: 915px;">
+          <iframe id="frame2" class="phone-iframe" src="/"></iframe>
+        </div>
+        <div class="home-bar"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let isLandscape = false;
+    let isComparing = false;
+    let currentWidth = 393;
+    let currentHeight = 852;
+    let currentName = "iPhone 15 Pro";
+
+    function applyDevice() {
+      const val = document.getElementById("deviceSelect").value;
+      const [dims, name] = val.split("|");
+      const [w, h] = dims.split("x").map(Number);
+
+      currentWidth = w;
+      currentHeight = h;
+      currentName = name;
+
+      updateLayout();
+    }
+
+    function toggleOrientation() {
+      isLandscape = !isLandscape;
+      document.getElementById("orientLabel").textContent = isLandscape ? "Landscape" : "Portrait";
+      updateLayout();
+    }
+
+    function applyZoom() {
+      const zoom = document.getElementById("zoomSelect").value;
+      document.getElementById("chassis1").style.transform = `scale(${zoom})`;
+      document.getElementById("chassis2").style.transform = `scale(${zoom})`;
+    }
+
+    function updateLayout() {
+      const w = isLandscape ? currentHeight : currentWidth;
+      const h = isLandscape ? currentWidth : currentHeight;
+
+      const screen1 = document.getElementById("screen1");
+      const chassis1 = document.getElementById("chassis1");
+      const title1 = document.getElementById("device1Title");
+      const dims1 = document.getElementById("device1Dims");
+
+      screen1.style.width = w + "px";
+      screen1.style.height = h + "px";
+      title1.textContent = currentName + (isLandscape ? " (Landscape)" : "");
+      dims1.textContent = `${w} × ${h} px`;
+
+      if (isLandscape) {
+        chassis1.classList.add("landscape");
+      } else {
+        chassis1.classList.remove("landscape");
+      }
+
+      applyZoom();
+    }
+
+    function changeRoute() {
+      const route = document.getElementById("routeSelect").value;
+      document.getElementById("frame1").src = route;
+      if (isComparing) {
+        document.getElementById("frame2").src = route;
+      }
+    }
+
+    function reloadFrame() {
+      const f1 = document.getElementById("frame1");
+      f1.src = f1.src;
+      if (isComparing) {
+        const f2 = document.getElementById("frame2");
+        f2.src = f2.src;
+      }
+    }
+
+    function toggleCompareMode() {
+      isComparing = !isComparing;
+      const dev2 = document.getElementById("device2");
+      const btn = document.getElementById("compareBtn");
+
+      if (isComparing) {
+        dev2.style.display = "flex";
+        btn.classList.add("active");
+        document.getElementById("frame2").src = document.getElementById("frame1").src;
+      } else {
+        dev2.style.display = "none";
+        btn.classList.remove("active");
+      }
+      applyZoom();
+    }
+
+    // Initialize layout
+    applyDevice();
+  </script>
+</body>
+</html>

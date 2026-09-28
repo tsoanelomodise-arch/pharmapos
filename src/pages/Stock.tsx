@@ -13,6 +13,7 @@ import { useSupplierProductCounts, useAllProductSuppliers } from "@/hooks/usePro
 import { ProductForm } from "@/components/ProductForm";
 import { SupplierForm } from "@/components/SupplierForm";
 import { StockReportDialog } from "@/components/StockReportDialog";
+import { SendRestockAlertDialog } from "@/components/SendRestockAlertDialog";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCanAccessFinancialData, useUserRole } from "@/hooks/useUserRole";
@@ -172,7 +173,8 @@ const Stock = () => {
     <div className="space-y-4 md:space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <h1 className="text-2xl md:text-3xl font-bold">Stock Control</h1>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <SendRestockAlertDialog />
           <RestockDialog />
           <StockReportDialog />
           <ProductForm />
@@ -415,11 +417,16 @@ const Stock = () => {
           </div>
 
           <Card>
-            <CardHeader>
+            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-3">
               <CardTitle className="flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-destructive" />
                 Low Stock Items ({lowStockProducts.length})
               </CardTitle>
+              <SendRestockAlertDialog
+                variant="default"
+                size="sm"
+                buttonText="Email Restock Team"
+              />
             </CardHeader>
             <CardContent>
               {lowStockProducts.length > 0 ? (

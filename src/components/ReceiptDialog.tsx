@@ -494,7 +494,18 @@ export function ReceiptDialog({ saleId, open, onOpenChange }: ReceiptDialogProps
 
           {saleData.notes && (
             <div className="notes">
-              <p className="text-xs text-muted-foreground">Notes: {saleData.notes}</p>
+              {saleData.notes.includes('Adumo Terminal') ? (
+                <div className="p-2.5 rounded bg-muted/60 border border-primary/20 space-y-1">
+                  <p className="font-semibold text-xs text-primary flex items-center gap-1">
+                    💳 Adumo Integrated Card Authorization
+                  </p>
+                  <p className="text-xs font-mono text-muted-foreground whitespace-pre-line">
+                    {saleData.notes}
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-muted-foreground">Notes: {saleData.notes}</p>
+              )}
             </div>
           )}
 
