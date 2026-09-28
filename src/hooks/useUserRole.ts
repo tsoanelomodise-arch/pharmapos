@@ -33,3 +33,27 @@ export function useCanAccessFinancialData() {
   // All roles can access cost pricing and supplier data
   return role && (['pharmacist', 'manager', 'admin', 'owner', 'restock'] as UserRole[]).includes(role);
 }
+
+export function useCanSendRestockAlert() {
+  const { user } = useAuth();
+  
+  return useQuery({
+    queryKey: ['can-send-restock-alert', user?.id],
+    queryFn: async () => {
+      if (!user) return false;
+      
+      const { data, error } = await supabase
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', user.id);
+        
+      if (error) throw error;
+      
+      const roles = data?.map((r: any) => r.role) || [];
+      return roles.includes('owner') || roles.includes('admin');
+    },
+    enabled: !!user,
+    staleTime: 0,
+    refetchOnMount: true,
+  });
+}

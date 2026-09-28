@@ -298,10 +298,56 @@ Deno.serve(async (req) => {
 
     const isTargeted = requestedRecipients !== undefined || triggerSource === 'manual'
 
+    let callerUserId: string | null = null
+
     // Resolve responsible recipients:
     let recipients: string[] = []
 
     if (isTargeted) {
+      // Authorization Check: Only owner and admin roles are authorized to manually trigger restock alerts
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader) {
+        return new Response(
+          JSON.stringify({
+            error: 'Authentication required. Only users with owner or admin roles can trigger manual restock alerts.',
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      const token = authHeader.replace(/^Bearer\s+/i, '')
+      const { data: userData, error: userError } = await admin.auth.getUser(token)
+      if (userError || !userData?.user) {
+        return new Response(
+          JSON.stringify({
+            error: 'Invalid authentication session. Please sign in again.',
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      callerUserId = userData.user.id
+
+      // Check caller's assigned roles in user_roles
+      const { data: roleRecords, error: roleError } = await admin
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', callerUserId)
+
+      if (roleError) throw roleError
+
+      const callerRoles = (roleRecords || []).map((r: any) => r.role)
+      const isOwnerOrAdmin = callerRoles.includes('owner') || callerRoles.includes('admin')
+
+      if (!isOwnerOrAdmin) {
+        return new Response(
+          JSON.stringify({
+            error: 'Access denied. Only users with owner or admin roles are authorized to manually trigger restock alerts.',
+          }),
+          { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
       // STRICT REQUIREMENT: Only send to the target recipients specified in the manual trigger modal
       if (requestedRecipients && requestedRecipients.length > 0) {
         recipients = Array.from(new Set(requestedRecipients))
@@ -421,6 +467,7 @@ Deno.serve(async (req) => {
     const { error: logError } = await admin.from('restock_alert_log').insert({
       recipient_count: recipients.length,
       item_count: items.length,
+      created_by: callerUserId,
     })
 
     if (logError) {

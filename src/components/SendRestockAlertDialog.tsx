@@ -25,6 +25,7 @@ import { Mail, Send, Loader2, Plus, X, AlertTriangle, CheckCircle2, Users } from
 import { supabase } from "@/integrations/supabase/client";
 import { useLowStockProducts } from "@/hooks/useProducts";
 import { useAuth } from "@/contexts/AuthContext";
+import { useCanSendRestockAlert } from "@/hooks/useUserRole";
 import { toast } from "sonner";
 
 interface SendRestockAlertDialogProps {
@@ -45,7 +46,13 @@ export function SendRestockAlertDialog({
   const [open, setOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const { user } = useAuth();
+  const { data: canSendAlert, isLoading: loadingPermissions } = useCanSendRestockAlert();
   const { data: lowStockProducts = [], isLoading: loadingProducts } = useLowStockProducts();
+
+  // If user is not owner or admin, do not render the manual restock trigger
+  if (!loadingPermissions && !canSendAlert) {
+    return null;
+  }
 
   // Initialize recipients with owner/target email
   const [recipients, setRecipients] = useState<string[]>(() => {
@@ -102,6 +109,11 @@ export function SendRestockAlertDialog({
   };
 
   const handleSendAlert = async () => {
+    if (!canSendAlert) {
+      toast.error("Only users with owner or admin roles are authorized to trigger restock alerts.");
+      return;
+    }
+
     if (recipients.length === 0) {
       toast.error("Please specify at least one recipient email address");
       return;
