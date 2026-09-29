@@ -28,6 +28,7 @@ interface CartItem {
   price: number;
   quantity: number;
   total: number;
+  stock?: number;
 }
 
 const POS = () => {
@@ -134,8 +135,18 @@ const POS = () => {
   const changeAmount = cashAmount - total;
 
   const addToCart = (product: any) => {
+    const stock = Number(product.stock_quantity ?? 0);
     const existingItem = cartItems.find(item => item.id === product.id);
-    
+
+    if (stock <= 0) {
+      toast({
+        title: "Out of stock",
+        description: `${product.name} has no stock available and cannot be sold. Please restock first.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (existingItem) {
       updateQuantity(product.id, existingItem.quantity + 1);
     } else {
@@ -144,9 +155,16 @@ const POS = () => {
         name: product.name,
         price: product.unit_price,
         quantity: 1,
-        total: product.unit_price
+        total: product.unit_price,
+        stock,
       };
       setCartItems(prev => [...prev, newItem]);
+      if (stock <= Number(product.minimum_stock ?? 0)) {
+        toast({
+          title: "Low stock",
+          description: `Only ${stock} unit${stock === 1 ? '' : 's'} of ${product.name} left.`,
+        });
+      }
     }
     setSearchTerm("");
   };
@@ -154,6 +172,16 @@ const POS = () => {
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       removeFromCart(id);
+      return;
+    }
+
+    const item = cartItems.find(i => i.id === id);
+    if (item?.stock !== undefined && newQuantity > item.stock) {
+      toast({
+        title: "Not enough stock",
+        description: `Only ${item.stock} unit${item.stock === 1 ? '' : 's'} of ${item.name} available.`,
+        variant: "destructive",
+      });
       return;
     }
     
