@@ -210,6 +210,21 @@ export function useCreateSaleMutation() {
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) throw new Error("User not authenticated");
 
+      // Prevent negative stock: verify live stock levels before creating the sale
+      const qtyByProduct = new Map<string, number>();
+      for (const it of items) qtyByProduct.set(it.productId, (qtyByProduct.get(it.productId) ?? 0) + it.quantity);
+      const { data: stockRows, error: stockErr } = await supabase
+        .from('products')
+        .select('id, name, stock_quantity')
+        .in('id', Array.from(qtyByProduct.keys()));
+      if (stockErr) throw stockErr;
+      const shortages = (stockRows || [])
+        .filter(p => (qtyByProduct.get(p.id) ?? 0) > p.stock_quantity)
+        .map(p => `${p.name} (requested ${qtyByProduct.get(p.id)}, available ${Math.max(0, p.stock_quantity)})`);
+      if (shortages.length) {
+        throw new Error(`Insufficient stock: ${shortages.join('; ')}`);
+      }
+
       const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
       const afterDiscount = subtotal - discountAmount;
       

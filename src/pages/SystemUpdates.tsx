@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.6",
+    date: "2026-09-29",
+    type: "improvement",
+    title: "Negative Stock Prevention",
+    description: "The POS now blocks selling items that are out of stock or beyond available quantity.",
+    details: [
+      "Out-of-stock items cannot be added to the cart",
+      "Quantity cannot exceed available stock",
+      "Low-stock warning when adding items at or below minimum stock",
+      "Live stock re-check before a sale is completed",
+    ],
+  },
+  {
     version: "1.7.5",
     date: "2026-09-07",
     type: "bugfix",
