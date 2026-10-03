@@ -66,20 +66,25 @@ const sanitizeSearchTerm = (term: string): string => {
   return term.replace(/[%_\\]/g, '\\$&').trim().slice(0, 100);
 };
 
-export function useProductSearch(searchTerm: string) {
+export function useProductSearch(searchTerm: string, includeOutOfStock: boolean = true) {
   return useQuery({
-    queryKey: ['products-search', searchTerm],
+    queryKey: ['products-search', searchTerm, includeOutOfStock],
     queryFn: async () => {
       if (searchTerm.length < 1) return [];
       
       const sanitized = sanitizeSearchTerm(searchTerm);
       if (!sanitized) return [] as Product[];
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('products')
         .select('*')
-        .or(`name.ilike.%${sanitized}%,barcode.ilike.%${sanitized}%,generic_name.ilike.%${sanitized}%`)
-        .gt('stock_quantity', 0)
+        .or(`name.ilike.%${sanitized}%,barcode.ilike.%${sanitized}%,generic_name.ilike.%${sanitized}%`);
+
+      if (!includeOutOfStock) {
+        query = query.gt('stock_quantity', 0);
+      }
+      
+      const { data, error } = await query
         .order('name')
         .limit(10);
       

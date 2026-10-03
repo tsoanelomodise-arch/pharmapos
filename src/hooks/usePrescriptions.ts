@@ -154,6 +154,23 @@ export function useProcessPrescription() {
         );
       }
 
+      // Check for out-of-stock or insufficient stock
+      const shortMeds = billable.filter((med) => {
+        const prod = productMap.get(med.product_id);
+        const available = Number(prod?.stock_quantity ?? 0);
+        return available < med.quantity;
+      });
+
+      if (shortMeds.length > 0) {
+        const details = shortMeds
+          .map((m) => {
+            const prod = productMap.get(m.product_id);
+            return `${m.name || 'Product'} (requested ${m.quantity}, available ${prod?.stock_quantity ?? 0})`;
+          })
+          .join(', ');
+        throw new Error(`Dispensing cancelled: Insufficient stock for ${details}`);
+      }
+
       // Calculate totals
       const subtotal = billable.reduce((sum, med) => sum + (med.quantity * med.unit_price), 0);
       const taxAmount = subtotal * 0.15;
@@ -193,13 +210,16 @@ export function useProcessPrescription() {
       
       if (itemsError) throw itemsError;
 
-      // Update stock quantities and create stock movements
+      // Update stock quantities and create stock movements (ensure non-negative)
       for (const med of billable) {
         const product = productMap.get(med.product_id);
         if (product) {
+          const currentStock = Number(product.stock_quantity ?? 0);
+          const safeNewStock = Math.max(0, currentStock - med.quantity);
+
           await supabase
             .from('products')
-            .update({ stock_quantity: product.stock_quantity - med.quantity })
+            .update({ stock_quantity: safeNewStock })
             .eq('id', med.product_id);
           
           await supabase

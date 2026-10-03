@@ -235,6 +235,35 @@ export function useCreateSaleMutation() {
       
       const totalAmount = vatInclusive ? afterDiscount : afterDiscount + taxAmount;
       
+      // Verify stock levels right before sale creation to prevent negative stock and catch concurrent sales
+      const productIds = items.map(item => item.productId);
+      const { data: freshProducts, error: stockCheckError } = await supabase
+        .from('products')
+        .select('id, name, stock_quantity')
+        .in('id', productIds);
+
+      if (stockCheckError) throw stockCheckError;
+
+      const shortItems: Array<{ name: string; requested: number; available: number }> = [];
+      for (const item of items) {
+        const product = freshProducts?.find(p => p.id === item.productId);
+        const available = Number(product?.stock_quantity ?? 0);
+        if (available < item.quantity) {
+          shortItems.push({
+            name: product?.name || `Product ${item.productId}`,
+            requested: item.quantity,
+            available
+          });
+        }
+      }
+
+      if (shortItems.length > 0) {
+        const shortageDetails = shortItems
+          .map(s => `${s.name} (requested ${s.requested}, only ${s.available} available)`)
+          .join(', ');
+        throw new Error(`Sale cancelled: Insufficient stock for ${shortageDetails}`);
+      }
+
       // Create sale
       const { data: sale, error: saleError } = await supabase
         .from('sales')
@@ -271,7 +300,7 @@ export function useCreateSaleMutation() {
       
       if (itemsError) throw itemsError;
       
-      // Update stock quantities
+      // Update stock quantities (never allow stock to go below zero)
       for (const item of items) {
         const { data: product } = await supabase
           .from('products')
@@ -280,9 +309,12 @@ export function useCreateSaleMutation() {
           .single();
         
         if (product) {
+          const currentStock = Number(product.stock_quantity ?? 0);
+          const safeNewStock = Math.max(0, currentStock - item.quantity);
+
           await supabase
             .from('products')
-            .update({ stock_quantity: product.stock_quantity - item.quantity })
+            .update({ stock_quantity: safeNewStock })
             .eq('id', item.productId);
           
           // Record stock movement
