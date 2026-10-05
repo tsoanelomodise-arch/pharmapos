@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.8.0",
+    date: "2026-10-05",
+    type: "bugfix",
+    title: "ACC 200 Duplicate Merged",
+    description: "Merged the two ACC 200 records into a single \"ACC 200 Effervescent\" product.",
+    details: [
+      "Kept the record with expiry 31 Mar 2028",
+      "Stock set to the physical count of 2 units",
+      "Redundant record removed",
+    ],
+  },
+  {
     version: "1.7.9",
     date: "2026-10-05",
     type: "bugfix",
