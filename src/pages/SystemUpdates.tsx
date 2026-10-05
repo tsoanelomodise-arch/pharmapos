@@ -16,6 +16,19 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.7",
+    date: "2026-10-05",
+    type: "bugfix",
+    title: "Point of Sale Screen Restored",
+    description: "Unresolved merge-conflict text left in the checkout code prevented the Point of Sale screen from opening. The conflicting versions have been reconciled into one working copy.",
+    details: [
+      "Removed leftover conflict markers from the POS page",
+      "Kept the stock guards that block out-of-stock and over-quantity sales",
+      "Removed duplicated stock checks that would have run twice",
+      "Checkout now compiles and loads normally",
+    ],
+  },
+  {
     version: "1.7.6",
     date: "2026-09-29",
     type: "improvement",
