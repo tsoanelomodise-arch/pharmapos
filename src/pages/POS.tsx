@@ -219,8 +219,6 @@ const POS = () => {
 
     const existingItem = cartItems.find(item => item.id === product.id);
 
-
-
     if (existingItem) {
       const newQuantity = existingItem.quantity + 1;
 
