@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.9",
+    date: "2026-10-05",
+    type: "bugfix",
+    title: "Vicks Acta Plus Duplicate Merged",
+    description: "Merged the duplicate \"Acta Plus 100 ml\" product into \"Vicks Acta Plus 100 ml\".",
+    details: [
+      "Historical sale moved to Vicks Acta Plus 100 ml (now 4 sales)",
+      "Old Acta Plus 100 ml record removed; stock remains 2 units",
+    ],
+  },
+  {
     version: "1.7.8",
     date: "2026-10-05",
     type: "bugfix",
