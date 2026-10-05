@@ -38,12 +38,8 @@ interface CartItem {
   price: number;
   quantity: number;
   total: number;
-<<<<<<< Updated upstream
-  stock?: number;
-=======
   stock_quantity: number;
   minimum_stock: number;
->>>>>>> Stashed changes
 }
 
 const POS = () => {
@@ -208,9 +204,6 @@ const POS = () => {
   const changeAmount = cashAmount - total;
 
   const addToCart = (product: any) => {
-<<<<<<< Updated upstream
-    const stock = Number(product.stock_quantity ?? 0);
-=======
     const availableStock = Number(product.stock_quantity ?? 0);
     const minStock = Number(product.minimum_stock ?? 0);
 
@@ -224,17 +217,9 @@ const POS = () => {
       return;
     }
 
->>>>>>> Stashed changes
     const existingItem = cartItems.find(item => item.id === product.id);
 
-    if (stock <= 0) {
-      toast({
-        title: "Out of stock",
-        description: `${product.name} has no stock available and cannot be sold. Please restock first.`,
-        variant: "destructive",
-      });
-      return;
-    }
+
 
     if (existingItem) {
       const newQuantity = existingItem.quantity + 1;
@@ -283,20 +268,10 @@ const POS = () => {
         price: product.unit_price,
         quantity: 1,
         total: product.unit_price,
-<<<<<<< Updated upstream
-        stock,
-=======
         stock_quantity: availableStock,
         minimum_stock: minStock
->>>>>>> Stashed changes
       };
       setCartItems(prev => [...prev, newItem]);
-      if (stock <= Number(product.minimum_stock ?? 0)) {
-        toast({
-          title: "Low stock",
-          description: `Only ${stock} unit${stock === 1 ? '' : 's'} of ${product.name} left.`,
-        });
-      }
     }
     setSearchTerm("");
   };
@@ -310,14 +285,6 @@ const POS = () => {
       return;
     }
 
-<<<<<<< Updated upstream
-    const item = cartItems.find(i => i.id === id);
-    if (item?.stock !== undefined && newQuantity > item.stock) {
-      toast({
-        title: "Not enough stock",
-        description: `Only ${item.stock} unit${item.stock === 1 ? '' : 's'} of ${item.name} available.`,
-        variant: "destructive",
-=======
     const availableStock = item.stock_quantity ?? 0;
 
     // Stop the quantity going above what's on the shelf ("Not enough stock")
@@ -326,7 +293,6 @@ const POS = () => {
         title: "Not enough stock",
         description: `Cannot increase quantity. Only ${availableStock} unit${availableStock === 1 ? '' : 's'} on the shelf for ${item.name}.`,
         variant: "destructive"
->>>>>>> Stashed changes
       });
       return;
     }
