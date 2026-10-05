@@ -118,6 +118,7 @@ export function useProcessPrescription() {
         product_id: string;
         quantity: number;
         unit_price: number;
+        name?: string;
       }>;
 
       if (!medications || medications.length === 0) {
