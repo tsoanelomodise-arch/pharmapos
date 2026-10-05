@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.7.8",
+    date: "2026-10-05",
+    type: "bugfix",
+    title: "Bio Cimetidine Duplicate Merged",
+    description: "The duplicate \"Bio Cimetidine\" product was merged into \"Bio Cimetidine 400 mg\" so all sales and stock history now sit under one item.",
+    details: [
+      "Moved 251 past sales and 253 stock movements to Bio Cimetidine 400 mg",
+      "Removed the duplicate Bio Cimetidine product",
+      "Reports and transaction history keep every past sale",
+    ],
+  },
+  {
     version: "1.7.7",
     date: "2026-10-05",
     type: "bugfix",
