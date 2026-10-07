@@ -49,10 +49,6 @@ export function SendRestockAlertDialog({
   const { data: canSendAlert, isLoading: loadingPermissions } = useCanSendRestockAlert();
   const { data: lowStockProducts = [], isLoading: loadingProducts } = useLowStockProducts();
 
-  // If user is not owner or admin, do not render the manual restock trigger
-  if (!loadingPermissions && !canSendAlert) {
-    return null;
-  }
 
   // Initialize recipients with owner/target email
   const [recipients, setRecipients] = useState<string[]>(() => {
