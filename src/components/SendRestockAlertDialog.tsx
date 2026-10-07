@@ -152,6 +152,12 @@ export function SendRestockAlertDialog({
 
   const lowStockCount = items.length;
 
+  // Hide the trigger for users who can't send alerts (after all hooks have run)
+  if (loadingPermissions || !canSendAlert) {
+    return null;
+  }
+
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
