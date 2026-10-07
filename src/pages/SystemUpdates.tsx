@@ -16,6 +16,16 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.8.2",
+    date: "2026-10-07",
+    type: "bugfix",
+    title: "Stock Control No Longer Disappears for Pharmacists",
+    description: "Fixed an issue where the Stock Control page appeared briefly and then went blank for users without restock-alert rights.",
+    details: [
+      "The Send Restock Alert button is now simply hidden for these users instead of crashing the page",
+    ],
+  },
+  {
     version: "1.8.1",
     date: "2026-10-07",
     type: "bugfix",
