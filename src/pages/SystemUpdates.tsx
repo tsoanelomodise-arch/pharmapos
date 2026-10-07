@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.8.1",
+    date: "2026-10-07",
+    type: "bugfix",
+    title: "POS Payment Survives Brief Connection Drops",
+    description: "The stock check before payment now retries automatically when the internet connection blips, instead of failing with \"Failed to fetch\".",
+    details: [
+      "Up to 3 automatic attempts before showing an error",
+      "Clear message if the connection is truly down; the cart is kept",
+    ],
+  },
+  {
     version: "1.8.0",
     date: "2026-10-05",
     type: "bugfix",

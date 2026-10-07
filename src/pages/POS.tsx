@@ -437,12 +437,34 @@ const POS = () => {
     setIsVerifyingStock(true);
     try {
       const productIds = cartItems.map(item => item.id);
-      const { data: freshProducts, error: stockCheckError } = await supabase
-        .from('products')
-        .select('id, name, stock_quantity, minimum_stock')
-        .in('id', productIds);
-
-      if (stockCheckError) throw stockCheckError;
+      // Retry on brief connection drops ("Failed to fetch") before giving up
+      let freshProducts: Array<{ id: string; name: string; stock_quantity: number | null; minimum_stock: number | null }> | null = null;
+      let lastErr: any = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const { data, error } = await supabase
+            .from('products')
+            .select('id, name, stock_quantity, minimum_stock')
+            .in('id', productIds);
+          if (error) throw error;
+          freshProducts = data;
+          lastErr = null;
+          break;
+        } catch (e: any) {
+          lastErr = e;
+          const isNetwork = /failed to fetch|network|load failed/i.test(String(e?.message ?? e));
+          if (!isNetwork) break;
+          await new Promise(r => setTimeout(r, 800 * (attempt + 1)));
+        }
+      }
+      if (lastErr) {
+        const isNetwork = /failed to fetch|network|load failed/i.test(String(lastErr?.message ?? lastErr));
+        throw new Error(
+          isNetwork
+            ? "Connection to the server was lost. Check the internet connection and press Process Payment again — the cart has been kept."
+            : lastErr.message
+        );
+      }
 
       // Update cartItems with latest available stock and detect shortages
       const freshMap = new Map<string, { stock_quantity: number; minimum_stock: number; name: string }>();
