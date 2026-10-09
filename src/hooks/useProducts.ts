@@ -19,6 +19,7 @@ export interface Product {
   batch_number?: string;
   supplier_id?: string;
   requires_prescription: boolean;
+  is_low_demand?: boolean;
   created_at: string;
   updated_at: string;
 }
