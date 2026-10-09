@@ -35,6 +35,7 @@ const productSchema = z.object({
   expiry_date: z.string().optional(),
   batch_number: z.string().optional(),
   requires_prescription: z.boolean(),
+  is_low_demand: z.boolean().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -93,6 +94,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       expiry_date: product.expiry_date || "",
       batch_number: product.batch_number || "",
       requires_prescription: product.requires_prescription,
+      is_low_demand: !!(product as any).is_low_demand,
     } : {
       name: "",
       generic_name: "",
@@ -108,6 +110,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
       expiry_date: "",
       batch_number: "",
       requires_prescription: false,
+      is_low_demand: false,
     },
   });
   
@@ -155,6 +158,7 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
         expiry_date: data.expiry_date || null,
         batch_number: data.batch_number || null,
         requires_prescription: data.requires_prescription,
+        is_low_demand: !!data.is_low_demand,
       };
 
       if (product) {
@@ -544,6 +548,23 @@ export function ProductForm({ product, onSuccess }: ProductFormProps) {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="is_low_demand"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                    <div className="space-y-0.5 flex items-center">
+                      <FormLabel>Low Demand / Slow Mover</FormLabel>
+                      <FieldTooltip description="Slow-moving item; stays on the restock list but can be filtered out" example="ON for rarely sold items" />
+                    </div>
+                    <FormControl>
+                      <Switch checked={!!field.value} onCheckedChange={field.onChange} />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+
 
               <div className="flex justify-end gap-2">
                 <Button type="button" variant="outline" onClick={() => setOpen(false)}>

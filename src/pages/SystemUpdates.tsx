@@ -16,6 +16,17 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.9.0",
+    date: "2026-10-09",
+    type: "feature",
+    title: "Low Demand Products",
+    description: "Mark slow-moving items as Low Demand and filter them on the restock list.",
+    details: [
+      "Tap the 'Low demand' tag on any item in the Restock window, or use the switch in the product edit form",
+      "Restock window filter: Hide low demand (default), Show all, or Low demand only",
+    ],
+  },
+  {
     version: "1.8.2",
     date: "2026-10-07",
     type: "bugfix",
