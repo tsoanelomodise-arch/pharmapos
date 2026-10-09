@@ -17,6 +17,9 @@ import {
 import { useProducts, useLowStockProducts, useDocumentedBulkRestockMutation } from "@/hooks/useProducts";
 import { useSuppliers } from "@/hooks/useSuppliers";
 import { useUserRole } from "@/hooks/useUserRole";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 export function RestockDialog() {
   const [open, setOpen] = useState(false);
@@ -39,17 +42,36 @@ export function RestockDialog() {
   const invoiceInputRef = useRef<HTMLInputElement>(null);
   const deliveryNoteInputRef = useRef<HTMLInputElement>(null);
 
+  const [demandFilter, setDemandFilter] = useState<"hide" | "all" | "only">("hide");
+  const queryClient = useQueryClient();
+  const toggleLowDemand = useMutation({
+    mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
+      const { error } = await supabase.from("products").update({ is_low_demand: value }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: (_d, v) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["low-stock-products"] });
+      toast({ title: v.value ? "Marked as low demand" : "Low demand mark removed" });
+    },
+    onError: (e: Error) => toast({ title: "Could not update", description: e.message, variant: "destructive" }),
+  });
+
   const baseProducts = canRestock && showAll ? allProducts : lowStockProducts;
+  const lowDemandCount = baseProducts.filter(p => p.is_low_demand).length;
 
   const normalizedTerm = searchTerm.toLowerCase().trim();
   const filteredProducts = useMemo(() => {
-    if (!normalizedTerm) return baseProducts;
-    return baseProducts.filter(product =>
+    const byDemand = baseProducts.filter(p =>
+      demandFilter === "all" ? true : demandFilter === "only" ? p.is_low_demand : !p.is_low_demand
+    );
+    if (!normalizedTerm) return byDemand;
+    return byDemand.filter(product =>
       product.name.toLowerCase().startsWith(normalizedTerm) ||
       (product.generic_name && product.generic_name.toLowerCase().startsWith(normalizedTerm)) ||
       (product.barcode && product.barcode.startsWith(normalizedTerm))
     );
-  }, [baseProducts, normalizedTerm]);
+  }, [baseProducts, normalizedTerm, demandFilter]);
 
   const selectedSupplierName = useMemo(() => {
     if (!supplierId) return "";
@@ -135,6 +157,19 @@ export function RestockDialog() {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
               />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="text-sm text-muted-foreground">Demand:</Label>
+              {([
+                ["hide", "Hide low demand"],
+                ["all", "Show all"],
+                ["only", "Low demand only"],
+              ] as const).map(([v, label]) => (
+                <Button key={v} type="button" size="sm" variant={demandFilter === v ? "default" : "outline"} onClick={() => setDemandFilter(v)}>
+                  {label}
+                </Button>
+              ))}
+              <span className="text-xs text-muted-foreground">({lowDemandCount} marked low demand)</span>
             </div>
             {canRestock && (
               <div className="flex items-center gap-2">
@@ -265,9 +300,21 @@ export function RestockDialog() {
                   <div key={product.id} className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 items-center text-sm p-2 border rounded-lg">
                     <div>
                       <p className="font-medium truncate">{product.name}</p>
-                      <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs mt-1">
-                        {product.stock_quantity === 0 ? "Out" : product.stock_quantity <= product.minimum_stock ? "Low" : "In stock"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1 mt-1">
+                        <Badge variant={product.stock_quantity === 0 ? "destructive" : "outline"} className="text-xs">
+                          {product.stock_quantity === 0 ? "Out" : product.stock_quantity <= product.minimum_stock ? "Low" : "In stock"}
+                        </Badge>
+                        <button
+                          type="button"
+                          onClick={() => toggleLowDemand.mutate({ id: product.id, value: !product.is_low_demand })}
+                          disabled={toggleLowDemand.isPending}
+                          title={product.is_low_demand ? "Click to unmark low demand" : "Click to mark as low demand"}
+                        >
+                          <Badge variant={product.is_low_demand ? "secondary" : "outline"} className="text-xs cursor-pointer opacity-90">
+                            {product.is_low_demand ? "Low Demand" : "+ Low demand"}
+                          </Badge>
+                        </button>
+                      </div>
                     </div>
                     <div>{product.stock_quantity}</div>
                     <div>{product.minimum_stock}</div>
