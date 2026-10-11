@@ -42,28 +42,28 @@ export function RestockDialog() {
   const invoiceInputRef = useRef<HTMLInputElement>(null);
   const deliveryNoteInputRef = useRef<HTMLInputElement>(null);
 
-  const [demandFilter, setDemandFilter] = useState<"hide" | "all" | "only">("hide");
+  const [demandFilter, setDemandFilter] = useState<"hide" | "all" | "only">("only");
   const queryClient = useQueryClient();
-  const toggleLowDemand = useMutation({
+  const toggleHighDemand = useMutation({
     mutationFn: async ({ id, value }: { id: string; value: boolean }) => {
-      const { error } = await supabase.from("products").update({ is_low_demand: value }).eq("id", id);
+      const { error } = await supabase.from("products").update({ is_high_demand: value }).eq("id", id);
       if (error) throw error;
     },
     onSuccess: (_d, v) => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
       queryClient.invalidateQueries({ queryKey: ["low-stock-products"] });
-      toast({ title: v.value ? "Marked as low demand" : "Low demand mark removed" });
+      toast({ title: v.value ? "Marked as high demand" : "High demand mark removed" });
     },
     onError: (e: Error) => toast({ title: "Could not update", description: e.message, variant: "destructive" }),
   });
 
   const baseProducts = canRestock && showAll ? allProducts : lowStockProducts;
-  const lowDemandCount = baseProducts.filter(p => p.is_low_demand).length;
+  const highDemandCount = baseProducts.filter(p => p.is_high_demand).length;
 
   const normalizedTerm = searchTerm.toLowerCase().trim();
   const filteredProducts = useMemo(() => {
     const byDemand = baseProducts.filter(p =>
-      demandFilter === "all" ? true : demandFilter === "only" ? p.is_low_demand : !p.is_low_demand
+      demandFilter === "all" ? true : demandFilter === "only" ? p.is_high_demand : !p.is_high_demand
     );
     if (!normalizedTerm) return byDemand;
     return byDemand.filter(product =>
@@ -161,15 +161,15 @@ export function RestockDialog() {
             <div className="flex items-center gap-2 flex-wrap">
               <Label className="text-sm text-muted-foreground">Demand:</Label>
               {([
-                ["hide", "Hide low demand"],
+                ["only", "High demand only"],
                 ["all", "Show all"],
-                ["only", "Low demand only"],
+                ["hide", "Hide high demand"],
               ] as const).map(([v, label]) => (
                 <Button key={v} type="button" size="sm" variant={demandFilter === v ? "default" : "outline"} onClick={() => setDemandFilter(v)}>
                   {label}
                 </Button>
               ))}
-              <span className="text-xs text-muted-foreground">({lowDemandCount} marked low demand)</span>
+              <span className="text-xs text-muted-foreground">({highDemandCount} marked high demand)</span>
             </div>
             {canRestock && (
               <div className="flex items-center gap-2">
@@ -293,7 +293,13 @@ export function RestockDialog() {
             <div className="space-y-2 max-h-[300px] overflow-y-auto">
               {filteredProducts.length === 0 ? (
                 <div className="text-center py-6 text-sm text-muted-foreground">
-                  No products match &quot;{searchTerm}&quot;.
+                  {normalizedTerm ? (
+                    <>No products match &quot;{searchTerm}&quot;.</>
+                  ) : demandFilter === "only" ? (
+                    <>No items are marked High Demand yet. Use &quot;Show all&quot; to see every item on the restock list.</>
+                  ) : (
+                    <>No items to show for this filter.</>
+                  )}
                 </div>
               ) : (
                 filteredProducts.map(product => (
@@ -306,12 +312,12 @@ export function RestockDialog() {
                         </Badge>
                         <button
                           type="button"
-                          onClick={() => toggleLowDemand.mutate({ id: product.id, value: !product.is_low_demand })}
-                          disabled={toggleLowDemand.isPending}
-                          title={product.is_low_demand ? "Click to unmark low demand" : "Click to mark as low demand"}
+                          onClick={() => toggleHighDemand.mutate({ id: product.id, value: !product.is_high_demand })}
+                          disabled={toggleHighDemand.isPending}
+                          title={product.is_high_demand ? "Click to unmark high demand" : "Click to mark as high demand"}
                         >
-                          <Badge variant={product.is_low_demand ? "secondary" : "outline"} className="text-xs cursor-pointer opacity-90">
-                            {product.is_low_demand ? "Low Demand" : "+ Low demand"}
+                          <Badge variant={product.is_high_demand ? "secondary" : "outline"} className="text-xs cursor-pointer opacity-90">
+                            {product.is_high_demand ? "High Demand" : "+ High demand"}
                           </Badge>
                         </button>
                       </div>

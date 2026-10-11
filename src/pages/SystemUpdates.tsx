@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.9.1",
+    date: "2026-10-11",
+    type: "improvement",
+    title: "High Demand Products",
+    description: "The restock tag is now High Demand — mark your fast-moving items and see only those when restocking.",
+    details: [
+      "Tap the '+ High demand' tag on any item in the Restock window, or use the switch in the product edit form",
+      "Restock window filter: High demand only (default), Show all, or Hide high demand",
+      "The restock list now opens showing only your high-demand items; items already tagged low demand were cleared so you can start fresh",
+    ],
+  },
+  {
     version: "1.9.0",
     date: "2026-10-09",
     type: "feature",
