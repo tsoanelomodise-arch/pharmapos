@@ -83,13 +83,19 @@ export function RestockDialog() {
     setQuantities(prev => ({ ...prev, [productId]: qty }));
   };
 
+  const [pendingItems, setPendingItems] = useState<{ productId: string; quantity: number }[] | null>(null);
+
   const handleRestockAll = () => {
     const items = Object.entries(quantities)
       .filter(([, qty]) => qty > 0)
       .map(([productId, quantity]) => ({ productId, quantity }));
-    
     if (items.length === 0) return;
-    
+    setPendingItems(items);
+  };
+
+  const confirmRestock = () => {
+    const items = pendingItems;
+    if (!items || items.length === 0) return;
     documentedRestockMutation.mutate({
       items,
       supplierId: supplierId || undefined,
@@ -101,6 +107,7 @@ export function RestockDialog() {
       notes: notes || undefined,
     }, {
       onSuccess: () => {
+        setPendingItems(null);
         setQuantities({});
         setSupplierId("");
         setInvoiceNumber("");
@@ -108,7 +115,6 @@ export function RestockDialog() {
         setNotes("");
         setInvoiceFile(null);
         setDeliveryNoteFile(null);
-        setOpen(false);
       }
     });
   };
@@ -116,6 +122,7 @@ export function RestockDialog() {
   const hasItems = Object.values(quantities).some(q => q > 0);
 
   const resetState = () => {
+    setPendingItems(null);
     setQuantities({});
     setSearchTerm("");
     setShowAll(false);
@@ -142,44 +149,15 @@ export function RestockDialog() {
           </DialogTitle>
         </DialogHeader>
 
-        {baseProducts.length === 0 ? (
-          <div className="text-center py-8 text-muted-foreground">
-            All products are well stocked!
-          </div>
-        ) : (
+        {pendingItems ? (
           <div className="space-y-4 pt-2">
-            <div className="relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input
-                autoFocus
-                placeholder="Search by product name, barcode, or generic name..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+            <div className="border rounded-lg p-3 text-sm space-y-1">
+              <p className="font-medium">Restocking {pendingItems.length} item{pendingItems.length === 1 ? "" : "s"}:</p>
+              {pendingItems.map(i => {
+                const p = allProducts.find(x => x.id === i.productId) || lowStockProducts.find(x => x.id === i.productId);
+                return <div key={i.productId} className="flex justify-between"><span>{p?.name ?? "Item"}</span><span>+{i.quantity}</span></div>;
+              })}
             </div>
-            <div className="flex items-center gap-2 flex-wrap">
-              <Label className="text-sm text-muted-foreground">Demand:</Label>
-              {([
-                ["only", "High demand only"],
-                ["all", "Show all"],
-                ["hide", "Hide high demand"],
-              ] as const).map(([v, label]) => (
-                <Button key={v} type="button" size="sm" variant={demandFilter === v ? "default" : "outline"} onClick={() => setDemandFilter(v)}>
-                  {label}
-                </Button>
-              ))}
-              <span className="text-xs text-muted-foreground">({highDemandCount} marked high demand)</span>
-            </div>
-            {canRestock && (
-              <div className="flex items-center gap-2">
-                <Switch id="show-all-products" checked={showAll} onCheckedChange={setShowAll} />
-                <Label htmlFor="show-all-products" className="text-sm text-muted-foreground">
-                  Show all products (not just low stock)
-                </Label>
-              </div>
-            )}
-
             <div className="grid gap-4 border rounded-lg p-4 bg-muted/30">
               <h3 className="text-sm font-medium flex items-center gap-2">
                 <FileText className="h-4 w-4" />
@@ -283,6 +261,51 @@ export function RestockDialog() {
               </div>
             </div>
 
+            <div className="flex justify-between pt-2 border-t">
+              <Button variant="outline" onClick={() => setPendingItems(null)} disabled={documentedRestockMutation.isPending}>Back</Button>
+              <Button onClick={confirmRestock} disabled={documentedRestockMutation.isPending}>
+                {documentedRestockMutation.isPending ? "Restocking..." : "Confirm Restock"}
+              </Button>
+            </div>
+          </div>
+        ) : baseProducts.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            All products are well stocked!
+          </div>
+        ) : (
+          <div className="space-y-4 pt-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Input
+                autoFocus
+                placeholder="Search by product name, barcode, or generic name..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <Label className="text-sm text-muted-foreground">Demand:</Label>
+              {([
+                ["only", "High demand only"],
+                ["all", "Show all"],
+                ["hide", "Hide high demand"],
+              ] as const).map(([v, label]) => (
+                <Button key={v} type="button" size="sm" variant={demandFilter === v ? "default" : "outline"} onClick={() => setDemandFilter(v)}>
+                  {label}
+                </Button>
+              ))}
+              <span className="text-xs text-muted-foreground">({highDemandCount} marked high demand)</span>
+            </div>
+            {canRestock && (
+              <div className="flex items-center gap-2">
+                <Switch id="show-all-products" checked={showAll} onCheckedChange={setShowAll} />
+                <Label htmlFor="show-all-products" className="text-sm text-muted-foreground">
+                  Show all products (not just low stock)
+                </Label>
+              </div>
+            )}
+
             <div className="grid grid-cols-[1fr_80px_80px_100px_80px] gap-2 text-sm font-medium text-muted-foreground border-b pb-2">
               <div>Product</div>
               <div>Stock</div>
@@ -339,20 +362,7 @@ export function RestockDialog() {
                       onClick={() => {
                         const qty = quantities[product.id];
                         if (!qty || qty <= 0) return;
-                        documentedRestockMutation.mutate({
-                          items: [{ productId: product.id, quantity: qty }],
-                          supplierId: supplierId || undefined,
-                          supplierName: selectedSupplierName,
-                          invoiceNumber: invoiceNumber || undefined,
-                          deliveryNoteNumber: deliveryNoteNumber || undefined,
-                          invoiceFile,
-                          deliveryNoteFile,
-                          notes: notes || undefined,
-                        }, {
-                          onSuccess: () => {
-                            setQuantities(prev => ({ ...prev, [product.id]: 0 }));
-                          }
-                        });
+                        setPendingItems([{ productId: product.id, quantity: qty }]);
                       }}
                     >
                       Restock
