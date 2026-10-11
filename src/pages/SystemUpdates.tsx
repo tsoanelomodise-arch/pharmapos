@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.9.2",
+    date: "2026-10-11",
+    type: "improvement",
+    title: "Supplier & Documents Step on Restock",
+    description: "Supplier, invoice and delivery note details are now asked for after you press Restock, as a confirmation step.",
+    details: [
+      "Enter quantities first, then press Restock or Restock All",
+      "A summary of the items appears with the Supplier & Documents form",
+      "Press Confirm Restock to update stock, or Back to change quantities",
+    ],
+  },
+  {
     version: "1.9.1",
     date: "2026-10-11",
     type: "improvement",
