@@ -335,7 +335,7 @@ export type Database = {
           expiry_date: string | null
           generic_name: string | null
           id: string
-          is_low_demand: boolean
+          is_high_demand: boolean
           markup_percentage: number
           minimum_stock: number
           name: string
@@ -355,7 +355,7 @@ export type Database = {
           expiry_date?: string | null
           generic_name?: string | null
           id?: string
-          is_low_demand?: boolean
+          is_high_demand?: boolean
           markup_percentage?: number
           minimum_stock?: number
           name: string
@@ -375,7 +375,7 @@ export type Database = {
           expiry_date?: string | null
           generic_name?: string | null
           id?: string
-          is_low_demand?: boolean
+          is_high_demand?: boolean
           markup_percentage?: number
           minimum_stock?: number
           name?: string

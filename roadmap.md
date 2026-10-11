@@ -9,6 +9,7 @@
 - Help/User guide and System Updates entries
 - Gmail connector linked; restock alerts now send from the verified Gmail address (BCC to all users)
 - Typecheck and build passed
+- Restock tag renamed Low Demand → High Demand (column is_high_demand, marks cleared); restock list now defaults to High demand only
 
 ## Pending
 - None
