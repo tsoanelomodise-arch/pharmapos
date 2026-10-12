@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.9.4",
+    date: "2026-10-12",
+    type: "bugfix",
+    title: "Iliadin Duplicate Merged",
+    description: "The two adult Iliadin entries are now one product: Iliadin Adult Spray.",
+    details: [
+      "Kept the original record with the barcode and all 9 past sales",
+      "Stock combined to 2 units, expiry set to 05 Jan 2029, price R142.00",
+      "Iliadin Kids Drops stays a separate product",
+    ],
+  },
+  {
     version: "1.9.3",
     date: "2026-10-12",
     type: "bugfix",
