@@ -16,6 +16,18 @@ interface UpdateEntry {
 
 const updates: UpdateEntry[] = [
   {
+    version: "1.9.3",
+    date: "2026-10-12",
+    type: "bugfix",
+    title: "Restocking One Item Keeps Other Typed Quantities",
+    description: "Restocking a single item no longer clears the quantities you typed for the other items on the restock list.",
+    details: [
+      "After confirming a single-item restock, quantities on other rows stay filled in so you can continue with the delivery",
+      "Supplier, invoice and delivery note details are also kept for the next item",
+      "Restock All still clears everything as before once completed",
+    ],
+  },
+  {
     version: "1.9.2",
     date: "2026-10-11",
     type: "improvement",
