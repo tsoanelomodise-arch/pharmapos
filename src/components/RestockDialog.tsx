@@ -96,6 +96,7 @@ export function RestockDialog() {
   const confirmRestock = () => {
     const items = pendingItems;
     if (!items || items.length === 0) return;
+    const isSingleItem = items.length === 1;
     documentedRestockMutation.mutate({
       items,
       supplierId: supplierId || undefined,
@@ -108,13 +109,19 @@ export function RestockDialog() {
     }, {
       onSuccess: () => {
         setPendingItems(null);
-        setQuantities({});
-        setSupplierId("");
-        setInvoiceNumber("");
-        setDeliveryNoteNumber("");
-        setNotes("");
-        setInvoiceFile(null);
-        setDeliveryNoteFile(null);
+        if (isSingleItem) {
+          // Keep quantities typed on other rows (and the supplier/document
+          // details) so staff can continue working through the delivery.
+          setQuantities(prev => ({ ...prev, [items[0].productId]: 0 }));
+        } else {
+          setQuantities({});
+          setSupplierId("");
+          setInvoiceNumber("");
+          setDeliveryNoteNumber("");
+          setNotes("");
+          setInvoiceFile(null);
+          setDeliveryNoteFile(null);
+        }
       }
     });
   };
